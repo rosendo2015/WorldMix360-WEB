@@ -3,6 +3,7 @@ import FoneJBL from "../public/produtos/D_NQ_NP_2X_913023-MLA110131689717_042026
 import Fone from "../public/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp";
 import FoneSony from "../public/produtos/s-l960.webp";
 import { Banner } from "./components/Banner";
+import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { ProductCard } from "./components/ProductCard";
 import { Session } from "./components/Session";
@@ -61,6 +62,7 @@ export function App() {
           />
         ))}
       </Session>
+      <Footer></Footer>
     </div>
   );
 }
