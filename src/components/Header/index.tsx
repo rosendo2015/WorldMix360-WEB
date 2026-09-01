@@ -5,7 +5,7 @@ import { Icon } from "../Icon";
 
 export function Header() {
   return (
-    <header className="flex items-center justify-between bg-gray-100 p-2 ">
+    <header className="flex items-center justify-between mx-auto w-full md:max-w-[1200px] p-6">
       <button type="button" aria-label="Abrir menu">
         <Icon svg={MenuIcon} size="md" />
       </button>
@@ -26,7 +26,7 @@ export function Header() {
             </div>
           </div>
 
-          <p className="text-green-dark text-sm leading-5">
+          <p className="text-green-dark text-sm leading-5 mt-2 md:mt-0">
             Um mundo de escolhas.
           </p>
         </div>

@@ -5,7 +5,7 @@ interface SessionProps {
 }
 export function Session({ children }: SessionProps) {
   return (
-    <section className="w-full bg-gradient-to-b from-gray-100 to-gray-50 p-6 shadow-md">
+    <section className="mx-auto w-full md:max-w-[1200px] bg-gradient-to-b from-gray-100 to-gray-50 p-6 shadow-md">
       {/* Cabeçalho */}
       <header className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -18,7 +18,7 @@ export function Session({ children }: SessionProps) {
       </header>
 
       {/* Área central para os cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {children}
       </div>
     </section>

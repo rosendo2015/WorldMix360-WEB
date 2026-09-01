@@ -33,6 +33,14 @@ const products = [
     price: 500.9,
     to: "",
   },
+  {
+    id: uuidv4(),
+    image: Fone,
+    rating: 5,
+    title: "Anker Soundcore Q30",
+    price: 500.9,
+    to: "",
+  },
 ];
 
 export function App() {
