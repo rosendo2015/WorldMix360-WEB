@@ -1,12 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
-import FoneJBL from "../public/produtos/D_NQ_NP_2X_913023-MLA110131689717_042026-F.webp";
-import Fone from "../public/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp";
-import FoneSony from "../public/produtos/s-l960.webp";
 import { Banner } from "./components/Banner";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { ProductCard } from "./components/ProductCard";
 import { Session } from "./components/Session";
+
+const FoneJBL = "/produtos/D_NQ_NP_2X_913023-MLA110131689717_042026-F.webp";
+const Fone = "/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp";
+const FoneSony = "/produtos/s-l960.webp";
 
 const products = [
   {
@@ -49,7 +50,20 @@ export function App() {
     <div>
       <Header />
       <Banner />
-      <Session>
+      <Session title="Ofertas em destaque">
+        {products.map((product) => (
+          <ProductCard
+            key={product.id}
+            id={product.id}
+            image={product.image}
+            price={product.price}
+            title={product.title}
+            rating={product.rating}
+            to={product.to}
+          />
+        ))}
+      </Session>
+      <Session title="Produtos mais vendidos">
         {products.map((product) => (
           <ProductCard
             key={product.id}

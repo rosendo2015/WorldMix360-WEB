@@ -1,19 +1,210 @@
+import { useEffect, useRef, useState } from "react";
+
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
 import { Logo } from "../../Logo";
 
 import { Icon } from "../Icon";
+import { InputText } from "../InputText";
 
 export function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   return (
-    <header className="flex items-center justify-between mx-auto w-full md:max-w-[1200px] p-6">
-      <button type="button" aria-label="Abrir menu">
-        <Icon svg={MenuIcon} size="md" />
-      </button>
-      <Logo />
-      <button type="button" aria-label="Pesquisar">
-        <Icon svg={SearchIcon} size="md" />
-      </button>
+    <header className="relative mx-auto w-full px-6 py-10 md:max-w-[1200px] md:flex">
+      <div className="flex items-center justify-between md:min-h-[60px]">
+        <button
+          type="button"
+          aria-label="Abrir menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => {
+            setIsMenuOpen((prev) => !prev);
+            setIsSearchOpen(false);
+          }}
+          className="block md:hidden"
+        >
+          <Icon svg={MenuIcon} size="md" />
+        </button>
+
+        <div className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:flex md:items-center">
+          <Logo />
+        </div>
+
+        {!isSearchOpen && (
+          <button
+            type="button"
+            aria-label="Pesquisar"
+            aria-expanded={isSearchOpen}
+            onClick={() => {
+              setIsSearchOpen((prev) => !prev);
+              setIsMenuOpen(false);
+            }}
+            className="ml-auto block md:hidden"
+          >
+            <Icon svg={SearchIcon} size="md" />
+          </button>
+        )}
+      </div>
+
+      <div className="ml-auto hidden w-full max-w-[50%] md:flex md:items-center md:justify-end">
+        <InputText
+          className="h-12 w-full min-w-0"
+          iconPosition="right"
+          placeholder="Buscar produtos, categorias ou artigos"
+          icon={<Icon svg={SearchIcon} />}
+        />
+      </div>
+
+      {isSearchOpen && (
+        <div
+          ref={searchRef}
+          className="mt-10 flex items-center gap-2 md:hidden"
+        >
+          <div className="flex-1">
+            <InputText
+              className="w-full"
+              iconPosition="right"
+              placeholder="Buscar produtos, categorias ou artigos"
+              icon={<Icon svg={SearchIcon} />}
+            />
+          </div>
+
+          <button
+            type="button"
+            aria-label="Fechar pesquisa"
+            onClick={() => setIsSearchOpen(false)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-100 bg-white text-lg text-gray-700"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-[#071a2f]/60 md:hidden">
+          <div
+            ref={menuRef}
+            className="h-full w-[85%] max-w-[360px] bg-[#071a2f] px-5 py-6 text-white"
+          >
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
+                  W
+                </div>
+                <div>
+                  <p className="text-xl font-bold leading-none">WORLD</p>
+                  <p className="text-lg font-bold leading-none">MIX 360</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Fechar menu"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-2xl font-light text-white"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
+              <span className="text-lg">⌕</span>
+              <input
+                type="text"
+                placeholder="Buscar"
+                className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
+              />
+            </div>
+
+            <nav className="flex flex-col gap-2">
+              {[
+                "Início",
+                "Tecnologia",
+                "Casa & Utilidades",
+                "Moda",
+                "Pets",
+                "Produtos Digitais",
+                "Ofertas",
+                "Blog",
+              ].map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className="flex items-center justify-between rounded-lg px-3 py-3 text-left text-base font-medium text-white/90 transition hover:bg-white/5"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
+                      {item === "Início" && "⌂"}
+                      {item === "Tecnologia" && "◫"}
+                      {item === "Casa & Utilidades" && "◧"}
+                      {item === "Moda" && "◌"}
+                      {item === "Pets" && "◍"}
+                      {item === "Produtos Digitais" && "▣"}
+                      {item === "Ofertas" && "⚑"}
+                      {item === "Blog" && "◫"}
+                    </span>
+                    {item}
+                  </span>
+                  {item !== "Blog" && <span className="text-lg">›</span>}
+                </button>
+              ))}
+            </nav>
+
+            <div className="mt-8 border-t border-white/10 pt-5 text-sm text-white/70">
+              <button type="button" className="block py-2">
+                Sobre nós
+              </button>
+              <button type="button" className="block py-2">
+                Contato
+              </button>
+              <button type="button" className="block py-2">
+                Política de Privacidade
+              </button>
+              <button type="button" className="block py-2">
+                Termos de Uso
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
