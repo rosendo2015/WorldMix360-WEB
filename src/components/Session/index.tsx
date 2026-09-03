@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 
 interface SessionProps {
   title?: string;
-  children: React.ReactNode[];
+  children: React.ReactNode | React.ReactNode[];
 }
 
 export function Session({ title, children }: SessionProps) {
@@ -34,7 +34,11 @@ export function Session({ title, children }: SessionProps) {
       >
         {React.Children.map(children, (child) =>
           React.isValidElement(child) ? (
-            <SwiperSlide key={uuidv4()} id={uuidv4()}>
+            <SwiperSlide
+              key={uuidv4()}
+              id={uuidv4()}
+              className="!flex !h-auto !items-stretch"
+            >
               {child}
             </SwiperSlide>
           ) : (

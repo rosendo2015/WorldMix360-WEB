@@ -16,3 +16,38 @@
   --color-yellow: #f5b700;
   --color-danger: #d92d20;
 }
+
+.home-banner .swiper-button-prev,
+.home-banner .swiper-button-next {
+  color: #1769e0;
+  width: 2.75rem;
+  height: 2.75rem;
+  filter: drop-shadow(0 0 5px rgb(255 255 255 / 90%))
+    drop-shadow(0 0 10px rgb(23 105 224 / 80%));
+  transition:
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.home-banner .swiper-button-prev:hover,
+.home-banner .swiper-button-next:hover {
+  filter: drop-shadow(0 0 7px rgb(255 255 255 / 100%))
+    drop-shadow(0 0 14px rgb(23 105 224 / 100%));
+  transform: scale(1.08);
+}
+
+.home-banner .swiper-button-prev::after,
+.home-banner .swiper-button-next::after {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.home-banner .swiper-pagination-bullet {
+  background: #ffffff;
+  opacity: 0.55;
+}
+
+.home-banner .swiper-pagination-bullet-active {
+  background: #20b35b;
+  opacity: 1;
+}

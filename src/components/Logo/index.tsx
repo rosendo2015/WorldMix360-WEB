@@ -1,4 +1,4 @@
-import LogoIcon from "../assets/images/WorldMix360-logo.png";
+import LogoIcon from "../../assets/images/WorldMix360-logo.png";
 
 interface LogoProps {
   location?: "header" | "footer";

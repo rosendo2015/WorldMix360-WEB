@@ -1,6 +1,9 @@
 import { FaFacebook, FaGithub, FaInstagram } from "react-icons/fa";
 import { RiTwitterXLine } from "react-icons/ri";
-import { Logo } from "../../Logo";
+import { Link } from "react-router-dom";
+
+import { Logo } from "../Logo";
+import { Menu } from "../Menu";
 
 export function Footer() {
   return (
@@ -10,8 +13,13 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 md:grid-cols-4 md:gap-8">
           {/* Logo */}
           <div className="flex max-w-[290px] flex-col gap-2">
-            <Logo location="footer" />
+            <Link to="/" className="inline-block w-fit">
+              <Logo location="footer" />
+            </Link>
             {/* Redes sociais */}
+            <p className="text-gray-100 font-semibold md:text-xl my-2">
+              Um mundo de escolhas, Descubra, Compare e Escolha melhor.
+            </p>
             <div className="flex items-center mt-3 justify-between max-w-[220px]">
               <a
                 href="https://facebook.com"
@@ -48,25 +56,47 @@ export function Footer() {
           <div className="flex flex-col">
             <h3 className="font-semibold mb-2">Institucional</h3>
             <ul className="space-y-1 text-sm">
-              <li>Sobre nós</li>
-              <li>Como funciona</li>
-              <li>Política de privacidade</li>
-              <li>Termos de uso</li>
-              <li>Contato</li>
+              <li>
+                <Link to="/sobre" className="transition hover:text-white">
+                  Sobre nós
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/como-funciona"
+                  className="transition hover:text-white"
+                >
+                  Como funciona
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/politica-de-privacidade"
+                  className="transition hover:text-white"
+                >
+                  Política de privacidade
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/termos-de-uso"
+                  className="transition hover:text-white"
+                >
+                  Termos de uso
+                </Link>
+              </li>
+              <li>
+                <Link to="/contato" className="transition hover:text-white">
+                  Contato
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Categorias */}
           <div className="flex flex-col">
             <h3 className="font-semibold mb-2">Categorias</h3>
-            <ul className="space-y-1 text-sm">
-              <li>Tecnologia</li>
-              <li>Casa & Utilidades</li>
-              <li>Moda</li>
-              <li>Pets</li>
-              <li>Produtos Digitais</li>
-              <li>Ofertas</li>
-            </ul>
+            <Menu variant="footer" />
           </div>
 
           {/* Newsletter */}
