@@ -9,9 +9,12 @@ import {
 import { Link } from "react-router-dom";
 
 import { Banner } from "../components/Banner";
+import { BlogBanner } from "../components/BlogBanner";
 import { menuItems } from "../components/Menu/items";
+
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
+import { SocialBanner } from "../components/SocialBanner";
 import { useProducts } from "../contexts/useProducts";
 
 export function HomePage() {
@@ -104,11 +107,15 @@ export function HomePage() {
         )}
       </Session>
 
+      <BlogBanner />
+
       <Session title="Produtos mais vendidos">
         {products.map((product) => (
           <ProductCard key={`${product.id}-secondary`} product={product} />
         ))}
       </Session>
+
+      <SocialBanner />
 
       <section className="mx-auto grid max-w-[1200px] gap-4 px-6 py-10 md:grid-cols-4 md:py-14">
         {[
