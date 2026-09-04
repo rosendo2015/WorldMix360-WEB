@@ -1,10 +1,16 @@
-import { MercadoLivreProvider } from "./contexts/MercadoLivreContext";
+import { AuthProvider } from "./contexts/AuthProvider";
+import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
+import { ProductsProvider } from "./contexts/ProductsProvider";
 import { AppRoutes } from "./routes";
 
 export function App() {
   return (
-    <MercadoLivreProvider>
-      <AppRoutes />
-    </MercadoLivreProvider>
+    <AuthProvider>
+      <MercadoLivreProvider>
+        <ProductsProvider>
+          <AppRoutes />
+        </ProductsProvider>
+      </MercadoLivreProvider>
+    </AuthProvider>
   );
 }

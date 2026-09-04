@@ -1,30 +1,26 @@
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
-
-import type { AffiliateProduct } from "../types/AffiliateProduct";
-
-export type MercadoLivreProduct = AffiliateProduct;
-
-type MercadoLivreContextValue = {
-  products: MercadoLivreProduct[];
-  loading: boolean;
-  error: string | null;
-  search: (term: string) => Promise<void>;
-};
+  MercadoLivreContext,
+  type MercadoLivreProduct,
+} from "./MercadoLivreContext";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
-const MercadoLivreContext = createContext<MercadoLivreContextValue | undefined>(
-  undefined,
-);
+type ApiProduct = {
+  id: string;
+  title: string;
+  price?: number | string;
+  imageUrl?: string | null;
+  thumbnail?: string | null;
+  pictures?: Array<{
+    url: string;
+  }>;
+  affiliateUrl?: string | null;
+  permalink?: string | null;
+};
 
-function normalizeProduct(item: any): MercadoLivreProduct {
+function normalizeProduct(item: ApiProduct): MercadoLivreProduct {
   return {
     id: item.id,
     title: item.title,
@@ -61,9 +57,11 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
+
       const mappedProducts = (data.products ?? [])
         .slice(0, 8)
         .map(normalizeProduct);
+
       setProducts(mappedProducts);
     } catch (requestError) {
       console.error(requestError);
@@ -75,7 +73,12 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ products, loading, error, search }),
+    () => ({
+      products,
+      loading,
+      error,
+      search,
+    }),
     [products, loading, error, search],
   );
 
@@ -84,16 +87,4 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
       {children}
     </MercadoLivreContext.Provider>
   );
-}
-
-export function useMercadoLivre() {
-  const context = useContext(MercadoLivreContext);
-
-  if (!context) {
-    throw new Error(
-      "useMercadoLivre deve ser usado dentro de MercadoLivreProvider",
-    );
-  }
-
-  return context;
 }

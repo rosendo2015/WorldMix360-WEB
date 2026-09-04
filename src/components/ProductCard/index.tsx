@@ -1,72 +1,63 @@
 import { FaRegStar, FaStar, FaStarHalfAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
-import type { AffiliateProduct } from "../../types/AffiliateProduct";
+import type { Product } from "../../contexts/ProductsContext";
 
 interface ProductCardProps {
-  product: AffiliateProduct;
+  product: Product;
 }
-
-const marketplaceLabels: Record<AffiliateProduct["marketplace"], string> = {
-  "mercado-livre": "Mercado Livre",
-  amazon: "Amazon",
-  shopee: "Shopee",
-  outro: "Marketplace parceiro",
-};
 
 export function ProductCard({ product }: ProductCardProps) {
   const rating = Math.min(Math.max(product.rating ?? 0, 0), 5);
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
   const emptyStars = 5 - Math.ceil(rating);
+
   const formattedPrice = product.price.toLocaleString("pt-BR", {
     style: "currency",
-    currency: "BRL",
+    currency: product.currency || "BRL",
   });
+
   const formattedOriginalPrice = product.originalPrice?.toLocaleString(
     "pt-BR",
     {
       style: "currency",
-      currency: "BRL",
+      currency: product.currency || "BRL",
     },
   );
 
-  // Valores fixos para criar as estrelas
   const starPositions = [1, 2, 3, 4, 5];
 
   return (
     <div className="flex h-[420px] w-full flex-col items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg">
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-3 flex h-40 w-full shrink-0 items-center justify-center rounded-xl bg-[#f8fafc] p-2"
         aria-label={`Ver detalhes de ${product.title}`}
       >
         <img
-          src={product.image}
+          src={product.imageUrl}
           alt={product.title}
           className="h-full w-full object-contain"
           loading="lazy"
         />
       </Link>
 
-      <p className="mb-2 flex h-6 shrink-0 items-center self-start rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-semibold text-[#0b3d66]">
-        {marketplaceLabels[product.marketplace]}
-      </p>
+      {product.category && (
+        <p className="mb-2 flex h-6 shrink-0 items-center self-start rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-semibold text-[#0b3d66]">
+          {product.category}
+        </p>
+      )}
 
-      {/* Avaliação dinâmica */}
       <div className="mb-1 flex h-5 shrink-0 items-center justify-center">
-        {/* Estrelas completas */}
         {starPositions.slice(0, fullStars).map((star) => (
           <FaStar key={`${product.id}-full-${star}`} className="text-yellow" />
         ))}
 
-        {/* Meia estrela */}
         {hasHalfStar && (
           <FaStarHalfAlt key={`${product.id}-half`} className="text-yellow" />
         )}
 
-        {/* Estrelas vazias */}
         {starPositions.slice(0, emptyStars).map((star) => (
           <FaRegStar
             key={`${product.id}-empty-${star}`}
@@ -76,8 +67,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-1 line-clamp-2 min-h-10 w-full text-left text-sm font-semibold text-gray-800 hover:text-[#1769e0]"
       >
         {product.title}
@@ -89,12 +79,12 @@ export function ProductCard({ product }: ProductCardProps) {
             {formattedOriginalPrice}
           </p>
         )}
+
         <p className="font-bold text-gray-900">{formattedPrice}</p>
       </div>
 
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-green px-4 py-2 text-sm font-medium text-white hover:bg-green-dark"
       >
         VER DETALHES

@@ -11,7 +11,7 @@ import { SubcategoryPage } from "../pages/SubcategoryPage";
 import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
-  { path: "produto/:id", element: <ProductPage /> },
+  { path: "produto/:slug", element: <ProductPage /> },
   { path: "tecnologia", element: <TechnologyPage /> },
   { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
   { path: "moda", element: <FashionPage /> },

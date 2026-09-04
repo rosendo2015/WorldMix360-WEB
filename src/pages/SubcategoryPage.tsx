@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-import type { AffiliateProduct } from "../types/AffiliateProduct";
+import { useProducts } from "../contexts/useProducts";
 
 type SubcategoryData = {
   title: string;
@@ -212,44 +211,22 @@ function normalizeSlug(value: string) {
   return value.replace(/-e-/g, "-");
 }
 
-function createFallbackProducts(data: SubcategoryData, slug: string) {
-  const productTypes = [
-    "Seleção essencial",
-    "Opção mais procurada",
-    "Escolha premium",
-    "Alternativa para sua rotina",
-  ];
-
-  return productTypes.map<AffiliateProduct>((productType, index) => ({
-    id: `fallback-${slug}-${index}`,
-    title: `${data.title} - ${productType}`,
-    image: data.image,
-    price: [89.9, 149.9, 249.9, 399.9][index],
-    rating: 4.5,
-    marketplace: "mercado-livre",
-    affiliateUrl: `https://lista.mercadolivre.com.br/${encodeURIComponent(data.query)}`,
-    category: data.category,
-  }));
-}
-
 export function SubcategoryPage() {
   const { subcategory } = useParams();
-  const { products, loading, error, search } = useMercadoLivre();
+
+  const { products, loading, error, fetchProducts } = useProducts();
+
   const data = subcategory
     ? (subcategories[subcategory] ?? subcategories[normalizeSlug(subcategory)])
     : undefined;
-  const fallbackProducts = data
-    ? createFallbackProducts(data, subcategory ?? "subcategoria")
-    : [];
 
   useEffect(() => {
-    if (data) void search(data.query);
-  }, [data, search]);
+    if (data) {
+      void fetchProducts(data.category);
+    }
+  }, [data, fetchProducts]);
 
-  const visibleProducts =
-    products.length >= 4
-      ? products
-      : [...products, ...fallbackProducts].slice(0, 4);
+  const visibleProducts = products.slice(0, 4);
 
   if (!data) {
     return (
@@ -257,6 +234,7 @@ export function SubcategoryPage() {
         <h1 className="text-3xl font-bold text-[#071a2f]">
           Subcategoria não encontrada
         </h1>
+
         <Link to="/" className="mt-4 inline-block font-semibold text-[#1769e0]">
           Voltar para a página inicial
         </Link>
@@ -270,7 +248,9 @@ export function SubcategoryPage() {
         <Link to="/" className="hover:text-[#1769e0]">
           Início
         </Link>
+
         <span className="px-2">/</span>
+
         <span>{data.category}</span>
       </nav>
 
@@ -279,23 +259,28 @@ export function SubcategoryPage() {
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#0b3d66]">
             Seleção de produtos
           </p>
+
           <h1 className="text-3xl font-black text-[#071a2f] md:text-5xl">
             {data.title}
           </h1>
+
           <p className="mt-4 max-w-xl text-base leading-7 text-[#52657c]">
             {data.description}
           </p>
+
           <p className="mt-5 text-xs text-[#667085]">
             Produtos apresentados por marketplaces parceiros. A compra acontece
             no site do anunciante.
           </p>
         </div>
+
         <div className="relative min-h-[240px] overflow-hidden md:min-h-[320px]">
           <img
             src={data.image}
             alt={data.imageAlt}
             className="absolute inset-0 h-full w-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-r from-[#071a2f]/20 to-transparent" />
         </div>
       </div>
@@ -305,10 +290,12 @@ export function SubcategoryPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
             Ofertas encontradas
           </p>
+
           <h2 className="mt-2 text-2xl font-bold text-[#071a2f]">
             Escolha o que combina com você
           </h2>
         </div>
+
         <span className="hidden text-sm text-[#52657c] sm:inline">
           Links patrocinados identificados
         </span>
@@ -317,12 +304,15 @@ export function SubcategoryPage() {
       {loading && (
         <p className="py-10 text-sm text-[#52657c]">Buscando produtos...</p>
       )}
+
       {error && <p className="py-4 text-sm text-red-600">{error}</p>}
-      {error && (
-        <p className="mb-4 text-xs text-[#667085]">
-          Exibindo sugestões da categoria enquanto a busca é atualizada.
+
+      {!loading && !error && visibleProducts.length === 0 && (
+        <p className="py-10 text-sm text-[#52657c]">
+          Nenhum produto encontrado nesta categoria.
         </p>
       )}
+
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {visibleProducts.map((product) => (
           <ProductCard key={product.id} product={product} />

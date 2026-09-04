@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+import { useAuth } from "../../contexts/useAuth";
 import { Icon } from "../Icon";
 import { InputText } from "../InputText";
 import { Logo } from "../Logo";
@@ -10,8 +10,11 @@ import { Menu } from "../Menu";
 import { menuItems } from "../Menu/items";
 
 export function Header() {
+  const { user, signOut } = useAuth();
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -91,13 +94,42 @@ export function Header() {
             </button>
           )}
 
-          <div className="hidden w-full max-w-[50%] md:flex md:items-center md:justify-end">
-            <InputText
-              className="h-12 w-full min-w-0"
-              iconPosition="right"
-              placeholder="Buscar produtos, categorias ou artigos"
-              icon={<Icon svg={SearchIcon} />}
-            />
+          <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
+            <div className="w-full">
+              <InputText
+                className="h-12 w-full min-w-0"
+                iconPosition="right"
+                placeholder="Buscar produtos, categorias ou artigos"
+                icon={<Icon svg={SearchIcon} />}
+              />
+            </div>
+
+            {user ? (
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Olá,</p>
+
+                  <p className="max-w-[120px] truncate text-sm font-semibold text-navy">
+                    {user.name}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-navy transition bg-gray-100 hover:bg-gray-50"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="flex shrink-0 items-center rounded-lg bg-[#1769e0] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0f56bd]"
+              >
+                Entrar
+              </Link>
+            )}
           </div>
         </div>
 
@@ -141,6 +173,7 @@ export function Header() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
                     W
                   </div>
+
                   <div>
                     <p className="text-xl font-bold leading-none">WORLD</p>
                     <p className="text-lg font-bold leading-none">MIX 360</p>
@@ -159,11 +192,43 @@ export function Header() {
 
               <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
                 <span className="text-lg">⌕</span>
+
                 <input
                   type="text"
                   placeholder="Buscar"
                   className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
                 />
+              </div>
+
+              <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                {user ? (
+                  <div>
+                    <p className="text-xs text-white/60">Olá,</p>
+
+                    <p className="mt-1 truncate text-base font-bold text-white">
+                      {user.name}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="mt-3 text-sm font-semibold text-white/80 hover:text-white"
+                    >
+                      Sair
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block rounded-lg bg-[#1769e0] px-4 py-3 text-center text-sm font-bold text-white"
+                  >
+                    Entrar
+                  </Link>
+                )}
               </div>
 
               <nav className="flex flex-col gap-2">
@@ -178,8 +243,10 @@ export function Header() {
                       <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
                         <Icon className="text-base" />
                       </span>
+
                       {label}
                     </span>
+
                     {label !== "Blog" && <span className="text-lg">›</span>}
                   </Link>
                 ))}
@@ -193,6 +260,7 @@ export function Header() {
                 >
                   Sobre nós
                 </Link>
+
                 <Link
                   to="/contato"
                   onClick={() => setIsMenuOpen(false)}
@@ -200,6 +268,7 @@ export function Header() {
                 >
                   Contato
                 </Link>
+
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
@@ -207,6 +276,7 @@ export function Header() {
                 >
                   Política de Privacidade
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
