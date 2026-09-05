@@ -85,14 +85,20 @@ export default defineConfig([
 ## src\App.tsx
 
 ```tsx
-import { MercadoLivreProvider } from "./contexts/MercadoLivreContext";
+import { AuthProvider } from "./contexts/AuthProvider";
+import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
+import { ProductsProvider } from "./contexts/ProductsProvider";
 import { AppRoutes } from "./routes";
 
 export function App() {
   return (
-    <MercadoLivreProvider>
-      <AppRoutes />
-    </MercadoLivreProvider>
+    <AuthProvider>
+      <MercadoLivreProvider>
+        <ProductsProvider>
+          <AppRoutes />
+        </ProductsProvider>
+      </MercadoLivreProvider>
+    </AuthProvider>
   );
 }
 
@@ -210,6 +216,117 @@ export function Banner() {
                     </span>
                   </h1>
                   <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-white/90 md:text-xl">
+                    {banner.description}
+                  </p>
+                  <a
+                    href={banner.href}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green px-5 py-3 font-bold text-white transition hover:bg-green-dark"
+                  >
+                    {banner.cta}
+                    <Icon svg={ArrowRight} className="h-5 w-5 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+}
+
+```
+
+## src\components\BlogBanner\index.tsx
+
+```tsx
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
+import { Icon } from "../Icon";
+
+const blogBanners = [
+  {
+    eyebrow: "No nosso blog",
+    title: "Dicas práticas sobre",
+    highlight: " tecnologia",
+    description:
+      "Descubra como escolher gadgets e apps que realmente facilitam sua rotina.",
+    image:
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Pessoa usando notebook e smartphone",
+    href: "/blog/tecnologia",
+    cta: "Ler matéria",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    bgColor: "bg-blue", // usa azul da paleta
+  },
+  {
+    eyebrow: "Conteúdo exclusivo",
+    title: "Tendências em",
+    highlight: " consumo consciente",
+    description:
+      "Saiba como fazer escolhas mais sustentáveis e inteligentes no dia a dia.",
+    image:
+      "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Sacolas ecológicas e produtos sustentáveis",
+    href: "/blog/sustentabilidade",
+    cta: "Explorar artigo",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    bgColor: "bg-green", // verde da paleta
+  },
+  {
+    eyebrow: "Insights do mercado",
+    title: "O futuro das",
+    highlight: " compras online",
+    description:
+      "Entenda como marketplaces estão mudando a forma de consumir e vender.",
+    image:
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Carrinho de compras digital",
+    href: "/blog/ecommerce",
+    cta: "Ver análise",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    bgColor: "bg-yellow", // amarelo da paleta
+  },
+];
+
+export function BlogBanner() {
+  return (
+    <section
+      aria-label="Matérias do Blog WorldMix360"
+      className="w-full overflow-hidden bg-navy mt-10"
+    >
+      <Swiper
+        modules={[Autoplay, Navigation, Pagination]}
+        autoplay={{ delay: 6000, disableOnInteraction: false }}
+        navigation
+        pagination={{ clickable: true }}
+        loop
+        className="blog-banner h-[400px] md:h-[500px]"
+      >
+        {blogBanners.map((banner) => (
+          <SwiperSlide key={banner.title}>
+            <div
+              className={`relative h-full overflow-hidden ${banner.bgColor}`}
+            >
+              <img
+                src={banner.image}
+                alt={banner.imageAlt}
+                className={`absolute z-0 h-auto ${banner.imageClassName}`}
+              />
+              <div className="absolute inset-0 z-10 bg-black/50" />
+              <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
+                <div className="max-w-2xl bg-navy/70 p-6 rounded-lg">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-light">
+                    {banner.eyebrow}
+                  </p>
+                  <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl drop-shadow">
+                    {banner.title}
+                    <span className="font-bold text-yellow">
+                      {banner.highlight}
+                    </span>
+                  </h2>
+                  <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-gray-50 md:text-lg">
                     {banner.description}
                   </p>
                   <a
@@ -371,9 +488,9 @@ export function Footer() {
 ```tsx
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+import { useAuth } from "../../contexts/useAuth";
 import { Icon } from "../Icon";
 import { InputText } from "../InputText";
 import { Logo } from "../Logo";
@@ -381,8 +498,11 @@ import { Menu } from "../Menu";
 import { menuItems } from "../Menu/items";
 
 export function Header() {
+  const { user, signOut } = useAuth();
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -462,13 +582,42 @@ export function Header() {
             </button>
           )}
 
-          <div className="hidden w-full max-w-[50%] md:flex md:items-center md:justify-end">
-            <InputText
-              className="h-12 w-full min-w-0"
-              iconPosition="right"
-              placeholder="Buscar produtos, categorias ou artigos"
-              icon={<Icon svg={SearchIcon} />}
-            />
+          <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
+            <div className="w-full">
+              <InputText
+                className="h-12 w-full min-w-0"
+                iconPosition="right"
+                placeholder="Buscar produtos, categorias ou artigos"
+                icon={<Icon svg={SearchIcon} />}
+              />
+            </div>
+
+            {user ? (
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Olá,</p>
+
+                  <p className="max-w-[120px] truncate text-sm font-semibold text-navy">
+                    {user.name}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-navy transition bg-gray-100 hover:bg-gray-50"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="flex shrink-0 items-center rounded-lg bg-[#1769e0] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0f56bd]"
+              >
+                Entrar
+              </Link>
+            )}
           </div>
         </div>
 
@@ -512,6 +661,7 @@ export function Header() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
                     W
                   </div>
+
                   <div>
                     <p className="text-xl font-bold leading-none">WORLD</p>
                     <p className="text-lg font-bold leading-none">MIX 360</p>
@@ -530,11 +680,43 @@ export function Header() {
 
               <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
                 <span className="text-lg">⌕</span>
+
                 <input
                   type="text"
                   placeholder="Buscar"
                   className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
                 />
+              </div>
+
+              <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                {user ? (
+                  <div>
+                    <p className="text-xs text-white/60">Olá,</p>
+
+                    <p className="mt-1 truncate text-base font-bold text-white">
+                      {user.name}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="mt-3 text-sm font-semibold text-white/80 hover:text-white"
+                    >
+                      Sair
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block rounded-lg bg-[#1769e0] px-4 py-3 text-center text-sm font-bold text-white"
+                  >
+                    Entrar
+                  </Link>
+                )}
               </div>
 
               <nav className="flex flex-col gap-2">
@@ -549,8 +731,10 @@ export function Header() {
                       <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
                         <Icon className="text-base" />
                       </span>
+
                       {label}
                     </span>
+
                     {label !== "Blog" && <span className="text-lg">›</span>}
                   </Link>
                 ))}
@@ -564,6 +748,7 @@ export function Header() {
                 >
                   Sobre nós
                 </Link>
+
                 <Link
                   to="/contato"
                   onClick={() => setIsMenuOpen(false)}
@@ -571,6 +756,7 @@ export function Header() {
                 >
                   Contato
                 </Link>
+
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
@@ -578,6 +764,7 @@ export function Header() {
                 >
                   Política de Privacidade
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
@@ -834,78 +1021,149 @@ export const menuItems: MenuItem[] = [
 
 ```
 
+## src\components\OffersBanner\index.tsx
+
+```tsx
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
+import { Icon } from "../Icon";
+
+const offersBanners = [
+  {
+    eyebrow: "Ofertas imperdíveis",
+    title: "Descontos de até",
+    highlight: " 50%",
+    description:
+      "Aproveite promoções exclusivas em tecnologia, moda e muito mais.",
+    image:
+      "https://images.unsplash.com/photo-1585386959984-a4155223f9c8?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Produtos em promoção com grandes descontos",
+    href: "/ofertas",
+    cta: "Aproveitar agora",
+    imageClassName: "inset-0 h-full w-full object-cover",
+  },
+];
+
+export function OffersBanner() {
+  return (
+    <section
+      aria-label="Ofertas especiais"
+      className="w-full overflow-hidden bg-navy mt-10"
+    >
+      <Swiper
+        modules={[Autoplay, Navigation, Pagination]}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        navigation
+        pagination={{ clickable: true }}
+        loop
+        className="offers-banner h-[400px] md:h-[500px]"
+      >
+        {offersBanners.map((banner) => (
+          <SwiperSlide key={banner.title}>
+            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-blue">
+              <img
+                src={banner.image}
+                alt={banner.imageAlt}
+                className={`absolute z-0 h-auto ${banner.imageClassName}`}
+              />
+              <div className="absolute inset-0 z-10 bg-gradient-to-r from-navy via-navy/80 to-transparent" />
+              <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
+                <div className="max-w-2xl">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9ad7ff]">
+                    {banner.eyebrow}
+                  </p>
+                  <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+                    {banner.title}
+                    <span className="font-bold text-green">
+                      {banner.highlight}
+                    </span>
+                  </h2>
+                  <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-white/90 md:text-lg">
+                    {banner.description}
+                  </p>
+                  <a
+                    href={banner.href}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green px-5 py-3 font-bold text-white transition hover:bg-green-dark"
+                  >
+                    {banner.cta}
+                    <Icon svg={ArrowRight} className="h-5 w-5 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+}
+
+```
+
 ## src\components\ProductCard\index.tsx
 
 ```tsx
 import { FaRegStar, FaStar, FaStarHalfAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
-import type { AffiliateProduct } from "../../types/AffiliateProduct";
+import type { Product } from "../../contexts/ProductsContext";
 
 interface ProductCardProps {
-  product: AffiliateProduct;
+  product: Product;
 }
-
-const marketplaceLabels: Record<AffiliateProduct["marketplace"], string> = {
-  "mercado-livre": "Mercado Livre",
-  amazon: "Amazon",
-  shopee: "Shopee",
-  outro: "Marketplace parceiro",
-};
 
 export function ProductCard({ product }: ProductCardProps) {
   const rating = Math.min(Math.max(product.rating ?? 0, 0), 5);
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
   const emptyStars = 5 - Math.ceil(rating);
+
   const formattedPrice = product.price.toLocaleString("pt-BR", {
     style: "currency",
-    currency: "BRL",
+    currency: product.currency || "BRL",
   });
+
   const formattedOriginalPrice = product.originalPrice?.toLocaleString(
     "pt-BR",
     {
       style: "currency",
-      currency: "BRL",
+      currency: product.currency || "BRL",
     },
   );
 
-  // Valores fixos para criar as estrelas
   const starPositions = [1, 2, 3, 4, 5];
 
   return (
     <div className="flex h-[420px] w-full flex-col items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg">
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-3 flex h-40 w-full shrink-0 items-center justify-center rounded-xl bg-[#f8fafc] p-2"
         aria-label={`Ver detalhes de ${product.title}`}
       >
         <img
-          src={product.image}
+          src={product.imageUrl}
           alt={product.title}
           className="h-full w-full object-contain"
           loading="lazy"
         />
       </Link>
 
-      <p className="mb-2 flex h-6 shrink-0 items-center self-start rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-semibold text-[#0b3d66]">
-        {marketplaceLabels[product.marketplace]}
-      </p>
+      {product.category && (
+        <p className="mb-2 flex h-6 shrink-0 items-center self-start rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-semibold text-[#0b3d66]">
+          {product.category}
+        </p>
+      )}
 
-      {/* Avaliação dinâmica */}
       <div className="mb-1 flex h-5 shrink-0 items-center justify-center">
-        {/* Estrelas completas */}
         {starPositions.slice(0, fullStars).map((star) => (
           <FaStar key={`${product.id}-full-${star}`} className="text-yellow" />
         ))}
 
-        {/* Meia estrela */}
         {hasHalfStar && (
           <FaStarHalfAlt key={`${product.id}-half`} className="text-yellow" />
         )}
 
-        {/* Estrelas vazias */}
         {starPositions.slice(0, emptyStars).map((star) => (
           <FaRegStar
             key={`${product.id}-empty-${star}`}
@@ -915,8 +1173,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-1 line-clamp-2 min-h-10 w-full text-left text-sm font-semibold text-gray-800 hover:text-[#1769e0]"
       >
         {product.title}
@@ -928,12 +1185,12 @@ export function ProductCard({ product }: ProductCardProps) {
             {formattedOriginalPrice}
           </p>
         )}
+
         <p className="font-bold text-gray-900">{formattedPrice}</p>
       </div>
 
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-green px-4 py-2 text-sm font-medium text-white hover:bg-green-dark"
       >
         VER DETALHES
@@ -1001,36 +1258,283 @@ export function Session({ title, children }: SessionProps) {
 
 ```
 
-## src\contexts\MercadoLivreContext.tsx
+## src\components\SocialBanner\index.tsx
 
 ```tsx
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
+import { Icon } from "../Icon";
+
+const socialBanners = [
+  {
+    eyebrow: "Conecte-se conosco",
+    title: "Siga no",
+    highlight: " Instagram",
+    description:
+      "Acompanhe novidades, bastidores e dicas exclusivas diretamente no nosso perfil.",
+    image:
+      "https://images.unsplash.com/photo-1702390734475-d81dd8ae8fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHV0b3N8ZW58MHx8MHx8fDA%3D",
+    imageAlt: "Feed do Instagram com posts inspiradores",
+    href: "https://instagram.com/seuperfil",
+    cta: "Visitar Instagram",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    gradient: "from-purple-900 via-pink-700 to-red-500",
+  },
+  {
+    eyebrow: "Conteúdo em vídeo",
+    title: "Assista no",
+    highlight: " YouTube",
+    description:
+      "Tutoriais, reviews e muito mais para você aprender e se inspirar.",
+    image:
+      "https://images.unsplash.com/photo-1615883962708-708904fe162e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTM2fHx5b3V0dWJlfGVufDB8fDB8fHww",
+    imageAlt: "Tela de vídeos no YouTube",
+    href: "https://youtube.com/seucanal",
+    cta: "Ir para YouTube",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    gradient: "from-red-800 via-red-600 to-orange-500",
+  },
+  {
+    eyebrow: "Novidades rápidas",
+    title: "Acompanhe no",
+    highlight: " Twitter",
+    description:
+      "Fique por dentro das últimas atualizações e interaja em tempo real.",
+    image:
+      "https://images.unsplash.com/photo-1631856955350-77f4023dff2b?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    imageAlt: "Timeline do Twitter com posts recentes",
+    href: "https://twitter.com/seuperfil",
+    cta: "Seguir no Twitter",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    gradient: "from-sky-900 via-blue-700 to-cyan-500",
+  },
+];
+
+export function SocialBanner() {
+  return (
+    <section
+      aria-label="Redes sociais WorldMix360"
+      className="w-full overflow-hidden bg-navy mt-10"
+    >
+      <Swiper
+        modules={[Autoplay, Navigation, Pagination]}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        navigation
+        pagination={{ clickable: true }}
+        loop
+        className="social-banner h-[400px] md:h-[500px]"
+      >
+        {socialBanners.map((banner) => (
+          <SwiperSlide key={banner.title}>
+            <div
+              className={`relative h-full overflow-hidden ${banner.gradient}`}
+            >
+              <img
+                src={banner.image}
+                alt={banner.imageAlt}
+                className={`absolute z-0 h-auto ${banner.imageClassName}`}
+              />
+              {/* Overlay mais escuro para contraste */}
+              <div className="absolute inset-0 z-10 bg-black/50" />
+              <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
+                <div className="max-w-2xl bg-navy/70 p-6 rounded-lg">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-light">
+                    {banner.eyebrow}
+                  </p>
+                  <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl drop-shadow">
+                    {banner.title}
+                    <span className="font-bold text-green">
+                      {banner.highlight}
+                    </span>
+                  </h2>
+                  <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-gray-50 md:text-lg">
+                    {banner.description}
+                  </p>
+                  <a
+                    href={banner.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue px-5 py-3 font-bold text-white transition hover:bg-navy"
+                  >
+                    {banner.cta}
+                    <Icon svg={ArrowRight} className="h-5 w-5 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+}
+
+```
+
+## src\contexts\AuthContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: "customer" | "admin" | "sale";
+};
+
+export type AuthContextValue = {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => void;
+};
+
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined,
+);
+
+```
+
+## src\contexts\AuthProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import { AuthContext, type User } from "./AuthContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+const TOKEN_KEY = "@worldmix360:token";
+const USER_KEY = "@worldmix360:user";
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem(TOKEN_KEY);
+  });
+
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem(USER_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Não foi possível realizar o login.");
+      }
+
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+
+      setToken(data.token);
+      setUser(data.user);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const signOut = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      signIn,
+      signOut,
+    }),
+    [user, token, isLoading, signIn, signOut],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+```
+
+## src\contexts\MercadoLivreContext.ts
+
+```ts
+import { createContext } from "react";
 
 import type { AffiliateProduct } from "../types/AffiliateProduct";
 
 export type MercadoLivreProduct = AffiliateProduct;
 
-type MercadoLivreContextValue = {
+export type MercadoLivreContextValue = {
   products: MercadoLivreProduct[];
   loading: boolean;
   error: string | null;
   search: (term: string) => Promise<void>;
 };
 
+export const MercadoLivreContext = createContext<
+  MercadoLivreContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\MercadoLivreProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import {
+  MercadoLivreContext,
+  type MercadoLivreProduct,
+} from "./MercadoLivreContext";
+
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
-const MercadoLivreContext = createContext<MercadoLivreContextValue | undefined>(
-  undefined,
-);
+type ApiProduct = {
+  id: string;
+  title: string;
+  price?: number | string;
+  imageUrl?: string | null;
+  thumbnail?: string | null;
+  pictures?: Array<{
+    url: string;
+  }>;
+  affiliateUrl?: string | null;
+  permalink?: string | null;
+};
 
-function normalizeProduct(item: any): MercadoLivreProduct {
+function normalizeProduct(item: ApiProduct): MercadoLivreProduct {
   return {
     id: item.id,
     title: item.title,
@@ -1067,9 +1571,11 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
+
       const mappedProducts = (data.products ?? [])
         .slice(0, 8)
         .map(normalizeProduct);
+
       setProducts(mappedProducts);
     } catch (requestError) {
       console.error(requestError);
@@ -1081,7 +1587,12 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ products, loading, error, search }),
+    () => ({
+      products,
+      loading,
+      error,
+      search,
+    }),
     [products, loading, error, search],
   );
 
@@ -1092,6 +1603,185 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
   );
 }
 
+```
+
+## src\contexts\ProductsContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type Product = {
+  id: string;
+  title: string;
+  slug: string;
+
+  description?: string | null;
+  shortDescription?: string | null;
+
+  imageUrl: string;
+
+  price: number;
+  originalPrice?: number | null;
+
+  currency: string;
+
+  rating?: number | null;
+  reviewsCount: number;
+
+  affiliateUrl: string;
+
+  category?: string | null;
+
+  available: boolean;
+  featured: boolean;
+  active: boolean;
+};
+
+export type ProductsContextValue = {
+  products: Product[];
+  loading: boolean;
+  error: string | null;
+
+  fetchProducts: (category?: string) => Promise<void>;
+
+  getProductBySlug: (slug: string) => Promise<Product | null>;
+};
+
+export const ProductsContext = createContext<ProductsContextValue | undefined>(
+  undefined,
+);
+
+```
+
+## src\contexts\ProductsProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import { type Product, ProductsContext } from "./ProductsContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+type ProductsResponse = {
+  products?: Product[];
+};
+
+export function ProductsProvider({ children }: { children: ReactNode }) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = useCallback(async (category?: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (category) {
+        params.set("category", category);
+      }
+
+      const queryString = params.toString();
+
+      const response = await fetch(
+        `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
+      );
+
+      const data = (await response.json()) as ProductsResponse;
+
+      if (!response.ok) {
+        throw new Error("Não foi possível carregar os produtos.");
+      }
+
+      setProducts(data.products ?? []);
+    } catch (requestError) {
+      console.error(requestError);
+
+      setProducts([]);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível carregar os produtos.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getProductBySlug = useCallback(
+    async (slug: string): Promise<Product | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/products/${encodeURIComponent(slug)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = (await response.json()) as { product: Product };
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar o produto.");
+        }
+
+        return data.product;
+      } catch (requestError) {
+        console.error(requestError);
+
+        return null;
+      }
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      products,
+      loading,
+      error,
+      fetchProducts,
+      getProductBySlug,
+    }),
+    [products, loading, error, fetchProducts, getProductBySlug],
+  );
+
+  return (
+    <ProductsContext.Provider value={value}>
+      {children}
+    </ProductsContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\useAuth.ts
+
+```ts
+import { useContext } from "react";
+
+import { AuthContext } from "./AuthContext";
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de AuthProvider");
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useMercadoLivre.ts
+
+```ts
+import { useContext } from "react";
+
+import { MercadoLivreContext } from "./MercadoLivreContext";
+
 export function useMercadoLivre() {
   const context = useContext(MercadoLivreContext);
 
@@ -1099,6 +1789,25 @@ export function useMercadoLivre() {
     throw new Error(
       "useMercadoLivre deve ser usado dentro de MercadoLivreProvider",
     );
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useProducts.ts
+
+```ts
+import { useContext } from "react";
+
+import { ProductsContext } from "./ProductsContext";
+
+export function useProducts() {
+  const context = useContext(ProductsContext);
+
+  if (!context) {
+    throw new Error("useProducts deve ser usado dentro de ProductsProvider");
   }
 
   return context;
@@ -1885,63 +2594,22 @@ import {
   FiStar,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { Banner } from "../components/Banner";
+import { BlogBanner } from "../components/BlogBanner";
 import { menuItems } from "../components/Menu/items";
+
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-
-const fallbackProducts = [
-  {
-    id: uuidv4(),
-    image: "/produtos/D_NQ_NP_2X_913023-MLA110131689717_042026-F.webp",
-    rating: 4.5,
-    title: "Fone de Ouvido JBL Quantum 100M2 Gamer Over-ear com Microfone",
-    price: 229.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-  {
-    id: uuidv4(),
-    image: "/produtos/s-l960.webp",
-    rating: 4,
-    title: "Sony WH-CH510",
-    price: 1199.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-  {
-    id: uuidv4(),
-    image:
-      "/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp",
-    rating: 5,
-    title: "Anker Soundcore Q30",
-    price: 500.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-  {
-    id: uuidv4(),
-    image:
-      "/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp",
-    rating: 5,
-    title: "Anker Soundcore Q30",
-    price: 500.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-];
+import { SocialBanner } from "../components/SocialBanner";
+import { useProducts } from "../contexts/useProducts";
 
 export function HomePage() {
-  const { products, loading, error, search } = useMercadoLivre();
+  const { products, loading, error, fetchProducts } = useProducts();
 
   useEffect(() => {
-    void search("fone bluetooth");
-  }, [search]);
-
-  const visibleProducts = products.length > 0 ? products : fallbackProducts;
+    void fetchProducts();
+  }, [fetchProducts]);
 
   return (
     <>
@@ -1959,10 +2627,12 @@ export function HomePage() {
             <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
               Explore por interesse
             </p>
+
             <h2 className="text-2xl font-bold text-[#071a2f] md:text-3xl">
               Encontre o que combina com você
             </h2>
           </div>
+
           <Link
             to="/ofertas"
             className="hidden items-center gap-1 text-sm font-semibold text-[#0b3d66] transition hover:text-[#1769e0] sm:flex"
@@ -1991,6 +2661,7 @@ export function HomePage() {
               >
                 <Icon />
               </span>
+
               <span
                 className={`text-sm font-semibold leading-5 ${
                   label === "Blog" ? "text-white" : "text-[#071a2f]"
@@ -1998,6 +2669,7 @@ export function HomePage() {
               >
                 {label}
               </span>
+
               {label === "Blog" && (
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
                   Conteúdos
@@ -2009,20 +2681,28 @@ export function HomePage() {
       </section>
 
       <Session title="Ofertas em destaque">
-        {loading && visibleProducts.length === 0 ? (
+        {loading ? (
           <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
+        ) : products.length === 0 ? (
+          <p className="px-6 text-sm text-[#52657c]">
+            Nenhum produto disponível no momento.
+          </p>
         ) : (
-          visibleProducts.map((product) => (
+          products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
       </Session>
 
+      <BlogBanner />
+
       <Session title="Produtos mais vendidos">
-        {visibleProducts.map((product) => (
+        {products.map((product) => (
           <ProductCard key={`${product.id}-secondary`} product={product} />
         ))}
       </Session>
+
+      <SocialBanner />
 
       <section className="mx-auto grid max-w-[1200px] gap-4 px-6 py-10 md:grid-cols-4 md:py-14">
         {[
@@ -2054,10 +2734,12 @@ export function HomePage() {
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dff5e8] text-[#159447]">
               <Icon />
             </span>
+
             <div>
               <h3 className="font-semibold text-[#071a2f]">
                 {title as string}
               </h3>
+
               <p className="mt-1 text-sm leading-5 text-[#52657c]">
                 {description as string}
               </p>
@@ -2157,6 +2839,120 @@ export function HowItWorksPage() {
         },
       ]}
     />
+  );
+}
+
+```
+
+## src\pages\LoginPage.tsx
+
+```tsx
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+
+export function LoginPage() {
+  const navigate = useNavigate();
+  const { signIn, isLoading } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    try {
+      await signIn(email, password);
+      navigate("/", { replace: true });
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível realizar o login.",
+      );
+    }
+  }
+
+  return (
+    <section className="mx-auto flex min-h-[70vh] w-full max-w-[1200px] items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-navy">Entrar</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Acesse sua conta WorldMix360
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              E-mail
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seu@email.com"
+              autoComplete="email"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Senha
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Sua senha"
+              autoComplete="current-password"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-lg bg-[#1769e0] px-5 py-3 font-bold text-white transition hover:bg-[#0f56bd] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Ainda não possui uma conta?{" "}
+          <Link
+            to="/register"
+            className="font-semibold text-[#1769e0] hover:underline"
+          >
+            Criar conta
+          </Link>
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -2302,25 +3098,54 @@ export function PrivacyPolicyPage() {
 ## src\pages\ProductPage.tsx
 
 ```tsx
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-import type { AffiliateProduct } from "../types/AffiliateProduct";
-
-const marketplaceLabels: Record<AffiliateProduct["marketplace"], string> = {
-  "mercado-livre": "Mercado Livre",
-  amazon: "Amazon",
-  shopee: "Shopee",
-  outro: "Marketplace parceiro",
-};
+import type { Product } from "../contexts/ProductsContext";
+import { useProducts } from "../contexts/useProducts";
 
 export function ProductPage() {
-  const { id } = useParams();
-  const location = useLocation();
-  const { products } = useMercadoLivre();
-  const stateProduct = (location.state as { product?: AffiliateProduct } | null)
-    ?.product;
-  const product = products.find((item) => item.id === id) ?? stateProduct;
+  const { slug } = useParams();
+
+  const { getProductBySlug } = useProducts();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProduct() {
+      if (!slug) {
+        setProduct(null);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      const data = await getProductBySlug(slug);
+
+      if (!cancelled) {
+        setProduct(data);
+        setLoading(false);
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, getProductBySlug]);
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <p className="text-sm text-[#52657c]">Carregando produto...</p>
+      </section>
+    );
+  }
 
   if (!product) {
     return (
@@ -2328,9 +3153,11 @@ export function ProductPage() {
         <h1 className="text-3xl font-bold text-[#071a2f]">
           Produto não encontrado
         </h1>
+
         <p className="mt-3 text-[#52657c]">
-          Esse produto pode ter sido atualizado ou removido pelo marketplace.
+          Esse produto pode ter sido atualizado ou removido do catálogo.
         </p>
+
         <Link
           to="/"
           className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white"
@@ -2343,7 +3170,12 @@ export function ProductPage() {
 
   const price = product.price.toLocaleString("pt-BR", {
     style: "currency",
-    currency: "BRL",
+    currency: product.currency || "BRL",
+  });
+
+  const originalPrice = product.originalPrice?.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: product.currency || "BRL",
   });
 
   return (
@@ -2352,48 +3184,228 @@ export function ProductPage() {
         <Link to="/" className="hover:text-[#1769e0]">
           Início
         </Link>
+
         <span className="px-2">/</span>
+
         <span>Detalhes do produto</span>
       </nav>
 
       <div className="grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.07)] md:grid-cols-[0.9fr_1.1fr]">
         <div className="flex min-h-[340px] items-center justify-center bg-[#f7f9fc] p-8 md:min-h-[520px] md:p-12">
           <img
-            src={product.image}
+            src={product.imageUrl}
             alt={product.title}
             className="max-h-[420px] w-full object-contain"
           />
         </div>
+
         <div className="flex flex-col justify-center p-8 md:p-12">
-          <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
-            {marketplaceLabels[product.marketplace]}
-          </span>
+          {product.category && (
+            <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
+              {product.category}
+            </span>
+          )}
+
           <h1 className="text-3xl font-black leading-tight text-[#071a2f] md:text-4xl">
             {product.title}
           </h1>
+
+          {product.shortDescription && (
+            <p className="mt-5 text-sm leading-6 text-[#52657c]">
+              {product.shortDescription}
+            </p>
+          )}
+
           <div className="mt-8 border-y border-[#edf2f7] py-6">
             <p className="text-sm text-[#667085]">
               Preço apresentado no momento da consulta
             </p>
-            <p className="mt-2 text-3xl font-black text-[#071a2f]">{price}</p>
+
+            {originalPrice && (
+              <p className="mt-2 text-sm text-gray-500 line-through">
+                {originalPrice}
+              </p>
+            )}
+
+            <p className="mt-1 text-3xl font-black text-[#071a2f]">{price}</p>
           </div>
+
           <p className="mt-6 text-sm leading-6 text-[#52657c]">
-            Você será direcionado ao site do marketplace parceiro para conferir
+            Você será direcionado ao site do parceiro para conferir
             disponibilidade, frete, avaliações e finalizar a compra.
           </p>
+
           <a
             href={product.affiliateUrl}
             target="_blank"
             rel="sponsored noopener noreferrer"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-[#20b35b] px-6 font-bold text-white transition hover:bg-[#159447]"
           >
-            Ver oferta no {marketplaceLabels[product.marketplace]}
+            Ver oferta
           </a>
+
           <p className="mt-4 text-xs text-[#667085]">
-            Este é um link de afiliado. A compra é realizada diretamente no
-            marketplace.
+            Este é um link de afiliado. A compra é realizada diretamente no site
+            do parceiro.
           </p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+```
+
+## src\pages\RegisterPage.tsx
+
+```tsx
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function RegisterPage() {
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Não foi possível criar sua conta.");
+      }
+
+      navigate("/login", { replace: true });
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível criar sua conta.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <section className="mx-auto flex min-h-[70vh] w-full max-w-[1200px] items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-navy">Criar conta</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Faça seu cadastro no WorldMix360
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="name"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Nome
+            </label>
+
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Seu nome"
+              autoComplete="name"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="register-email"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              E-mail
+            </label>
+
+            <input
+              id="register-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seu@email.com"
+              autoComplete="email"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="register-password"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Senha
+            </label>
+
+            <input
+              id="register-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Crie uma senha"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-lg bg-[#1769e0] px-5 py-3 font-bold text-white transition hover:bg-[#0f56bd] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? "Criando conta..." : "Criar conta"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Já possui uma conta?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-[#1769e0] hover:underline"
+          >
+            Entrar
+          </Link>
+        </p>
       </div>
     </section>
   );
@@ -2408,8 +3420,7 @@ import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-import type { AffiliateProduct } from "../types/AffiliateProduct";
+import { useProducts } from "../contexts/useProducts";
 
 type SubcategoryData = {
   title: string;
@@ -2618,44 +3629,22 @@ function normalizeSlug(value: string) {
   return value.replace(/-e-/g, "-");
 }
 
-function createFallbackProducts(data: SubcategoryData, slug: string) {
-  const productTypes = [
-    "Seleção essencial",
-    "Opção mais procurada",
-    "Escolha premium",
-    "Alternativa para sua rotina",
-  ];
-
-  return productTypes.map<AffiliateProduct>((productType, index) => ({
-    id: `fallback-${slug}-${index}`,
-    title: `${data.title} - ${productType}`,
-    image: data.image,
-    price: [89.9, 149.9, 249.9, 399.9][index],
-    rating: 4.5,
-    marketplace: "mercado-livre",
-    affiliateUrl: `https://lista.mercadolivre.com.br/${encodeURIComponent(data.query)}`,
-    category: data.category,
-  }));
-}
-
 export function SubcategoryPage() {
   const { subcategory } = useParams();
-  const { products, loading, error, search } = useMercadoLivre();
+
+  const { products, loading, error, fetchProducts } = useProducts();
+
   const data = subcategory
     ? (subcategories[subcategory] ?? subcategories[normalizeSlug(subcategory)])
     : undefined;
-  const fallbackProducts = data
-    ? createFallbackProducts(data, subcategory ?? "subcategoria")
-    : [];
 
   useEffect(() => {
-    if (data) void search(data.query);
-  }, [data, search]);
+    if (data) {
+      void fetchProducts(data.category);
+    }
+  }, [data, fetchProducts]);
 
-  const visibleProducts =
-    products.length >= 4
-      ? products
-      : [...products, ...fallbackProducts].slice(0, 4);
+  const visibleProducts = products.slice(0, 4);
 
   if (!data) {
     return (
@@ -2663,6 +3652,7 @@ export function SubcategoryPage() {
         <h1 className="text-3xl font-bold text-[#071a2f]">
           Subcategoria não encontrada
         </h1>
+
         <Link to="/" className="mt-4 inline-block font-semibold text-[#1769e0]">
           Voltar para a página inicial
         </Link>
@@ -2676,7 +3666,9 @@ export function SubcategoryPage() {
         <Link to="/" className="hover:text-[#1769e0]">
           Início
         </Link>
+
         <span className="px-2">/</span>
+
         <span>{data.category}</span>
       </nav>
 
@@ -2685,23 +3677,28 @@ export function SubcategoryPage() {
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#0b3d66]">
             Seleção de produtos
           </p>
+
           <h1 className="text-3xl font-black text-[#071a2f] md:text-5xl">
             {data.title}
           </h1>
+
           <p className="mt-4 max-w-xl text-base leading-7 text-[#52657c]">
             {data.description}
           </p>
+
           <p className="mt-5 text-xs text-[#667085]">
             Produtos apresentados por marketplaces parceiros. A compra acontece
             no site do anunciante.
           </p>
         </div>
+
         <div className="relative min-h-[240px] overflow-hidden md:min-h-[320px]">
           <img
             src={data.image}
             alt={data.imageAlt}
             className="absolute inset-0 h-full w-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-r from-[#071a2f]/20 to-transparent" />
         </div>
       </div>
@@ -2711,10 +3708,12 @@ export function SubcategoryPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
             Ofertas encontradas
           </p>
+
           <h2 className="mt-2 text-2xl font-bold text-[#071a2f]">
             Escolha o que combina com você
           </h2>
         </div>
+
         <span className="hidden text-sm text-[#52657c] sm:inline">
           Links patrocinados identificados
         </span>
@@ -2723,12 +3722,15 @@ export function SubcategoryPage() {
       {loading && (
         <p className="py-10 text-sm text-[#52657c]">Buscando produtos...</p>
       )}
+
       {error && <p className="py-4 text-sm text-red-600">{error}</p>}
-      {error && (
-        <p className="mb-4 text-xs text-[#667085]">
-          Exibindo sugestões da categoria enquanto a busca é atualizada.
+
+      {!loading && !error && visibleProducts.length === 0 && (
+        <p className="py-10 text-sm text-[#52657c]">
+          Nenhum produto encontrado nesta categoria.
         </p>
       )}
+
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {visibleProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
@@ -2831,6 +3833,27 @@ export function TermsOfUsePage() {
 
 ```
 
+## src\routes\authRoutes.tsx
+
+```tsx
+import type { RouteObject } from "react-router-dom";
+
+import { LoginPage } from "../pages/LoginPage";
+import { RegisterPage } from "../pages/RegisterPage";
+
+export const authRoutes: RouteObject[] = [
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+];
+
+```
+
 ## src\routes\homeRoutes.tsx
 
 ```tsx
@@ -2853,6 +3876,7 @@ export const homeRoutes: RouteObject[] = [
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
+import { authRoutes } from "./authRoutes";
 import { homeRoutes } from "./homeRoutes";
 import { institutionalRoutes } from "./institutionalRoutes";
 import { productRoutes } from "./productRoutes";
@@ -2864,6 +3888,7 @@ const routes: RouteObject[] = [
       ...homeRoutes,
       ...institutionalRoutes,
       ...productRoutes,
+      ...authRoutes,
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },
@@ -2915,7 +3940,7 @@ import { SubcategoryPage } from "../pages/SubcategoryPage";
 import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
-  { path: "produto/:id", element: <ProductPage /> },
+  { path: "produto/:slug", element: <ProductPage /> },
   { path: "tecnologia", element: <TechnologyPage /> },
   { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
   { path: "moda", element: <FashionPage /> },
@@ -3283,14 +4308,20 @@ export default defineConfig([
 ## src\App.tsx
 
 ```tsx
-import { MercadoLivreProvider } from "./contexts/MercadoLivreContext";
+import { AuthProvider } from "./contexts/AuthProvider";
+import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
+import { ProductsProvider } from "./contexts/ProductsProvider";
 import { AppRoutes } from "./routes";
 
 export function App() {
   return (
-    <MercadoLivreProvider>
-      <AppRoutes />
-    </MercadoLivreProvider>
+    <AuthProvider>
+      <MercadoLivreProvider>
+        <ProductsProvider>
+          <AppRoutes />
+        </ProductsProvider>
+      </MercadoLivreProvider>
+    </AuthProvider>
   );
 }
 
@@ -3408,6 +4439,117 @@ export function Banner() {
                     </span>
                   </h1>
                   <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-white/90 md:text-xl">
+                    {banner.description}
+                  </p>
+                  <a
+                    href={banner.href}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green px-5 py-3 font-bold text-white transition hover:bg-green-dark"
+                  >
+                    {banner.cta}
+                    <Icon svg={ArrowRight} className="h-5 w-5 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+}
+
+```
+
+## src\components\BlogBanner\index.tsx
+
+```tsx
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
+import { Icon } from "../Icon";
+
+const blogBanners = [
+  {
+    eyebrow: "No nosso blog",
+    title: "Dicas práticas sobre",
+    highlight: " tecnologia",
+    description:
+      "Descubra como escolher gadgets e apps que realmente facilitam sua rotina.",
+    image:
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Pessoa usando notebook e smartphone",
+    href: "/blog/tecnologia",
+    cta: "Ler matéria",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    bgColor: "bg-blue", // usa azul da paleta
+  },
+  {
+    eyebrow: "Conteúdo exclusivo",
+    title: "Tendências em",
+    highlight: " consumo consciente",
+    description:
+      "Saiba como fazer escolhas mais sustentáveis e inteligentes no dia a dia.",
+    image:
+      "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Sacolas ecológicas e produtos sustentáveis",
+    href: "/blog/sustentabilidade",
+    cta: "Explorar artigo",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    bgColor: "bg-green", // verde da paleta
+  },
+  {
+    eyebrow: "Insights do mercado",
+    title: "O futuro das",
+    highlight: " compras online",
+    description:
+      "Entenda como marketplaces estão mudando a forma de consumir e vender.",
+    image:
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Carrinho de compras digital",
+    href: "/blog/ecommerce",
+    cta: "Ver análise",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    bgColor: "bg-yellow", // amarelo da paleta
+  },
+];
+
+export function BlogBanner() {
+  return (
+    <section
+      aria-label="Matérias do Blog WorldMix360"
+      className="w-full overflow-hidden bg-navy mt-10"
+    >
+      <Swiper
+        modules={[Autoplay, Navigation, Pagination]}
+        autoplay={{ delay: 6000, disableOnInteraction: false }}
+        navigation
+        pagination={{ clickable: true }}
+        loop
+        className="blog-banner h-[400px] md:h-[500px]"
+      >
+        {blogBanners.map((banner) => (
+          <SwiperSlide key={banner.title}>
+            <div
+              className={`relative h-full overflow-hidden ${banner.bgColor}`}
+            >
+              <img
+                src={banner.image}
+                alt={banner.imageAlt}
+                className={`absolute z-0 h-auto ${banner.imageClassName}`}
+              />
+              <div className="absolute inset-0 z-10 bg-black/50" />
+              <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
+                <div className="max-w-2xl bg-navy/70 p-6 rounded-lg">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-light">
+                    {banner.eyebrow}
+                  </p>
+                  <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl drop-shadow">
+                    {banner.title}
+                    <span className="font-bold text-yellow">
+                      {banner.highlight}
+                    </span>
+                  </h2>
+                  <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-gray-50 md:text-lg">
                     {banner.description}
                   </p>
                   <a
@@ -3569,9 +4711,9 @@ export function Footer() {
 ```tsx
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+import { useAuth } from "../../contexts/useAuth";
 import { Icon } from "../Icon";
 import { InputText } from "../InputText";
 import { Logo } from "../Logo";
@@ -3579,8 +4721,11 @@ import { Menu } from "../Menu";
 import { menuItems } from "../Menu/items";
 
 export function Header() {
+  const { user, signOut } = useAuth();
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -3660,13 +4805,42 @@ export function Header() {
             </button>
           )}
 
-          <div className="hidden w-full max-w-[50%] md:flex md:items-center md:justify-end">
-            <InputText
-              className="h-12 w-full min-w-0"
-              iconPosition="right"
-              placeholder="Buscar produtos, categorias ou artigos"
-              icon={<Icon svg={SearchIcon} />}
-            />
+          <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
+            <div className="w-full">
+              <InputText
+                className="h-12 w-full min-w-0"
+                iconPosition="right"
+                placeholder="Buscar produtos, categorias ou artigos"
+                icon={<Icon svg={SearchIcon} />}
+              />
+            </div>
+
+            {user ? (
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Olá,</p>
+
+                  <p className="max-w-[120px] truncate text-sm font-semibold text-navy">
+                    {user.name}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-navy transition bg-gray-100 hover:bg-gray-50"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="flex shrink-0 items-center rounded-lg bg-[#1769e0] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0f56bd]"
+              >
+                Entrar
+              </Link>
+            )}
           </div>
         </div>
 
@@ -3710,6 +4884,7 @@ export function Header() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
                     W
                   </div>
+
                   <div>
                     <p className="text-xl font-bold leading-none">WORLD</p>
                     <p className="text-lg font-bold leading-none">MIX 360</p>
@@ -3728,11 +4903,43 @@ export function Header() {
 
               <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
                 <span className="text-lg">⌕</span>
+
                 <input
                   type="text"
                   placeholder="Buscar"
                   className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
                 />
+              </div>
+
+              <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
+                {user ? (
+                  <div>
+                    <p className="text-xs text-white/60">Olá,</p>
+
+                    <p className="mt-1 truncate text-base font-bold text-white">
+                      {user.name}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="mt-3 text-sm font-semibold text-white/80 hover:text-white"
+                    >
+                      Sair
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block rounded-lg bg-[#1769e0] px-4 py-3 text-center text-sm font-bold text-white"
+                  >
+                    Entrar
+                  </Link>
+                )}
               </div>
 
               <nav className="flex flex-col gap-2">
@@ -3747,8 +4954,10 @@ export function Header() {
                       <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
                         <Icon className="text-base" />
                       </span>
+
                       {label}
                     </span>
+
                     {label !== "Blog" && <span className="text-lg">›</span>}
                   </Link>
                 ))}
@@ -3762,6 +4971,7 @@ export function Header() {
                 >
                   Sobre nós
                 </Link>
+
                 <Link
                   to="/contato"
                   onClick={() => setIsMenuOpen(false)}
@@ -3769,6 +4979,7 @@ export function Header() {
                 >
                   Contato
                 </Link>
+
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
@@ -3776,6 +4987,7 @@ export function Header() {
                 >
                   Política de Privacidade
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setIsMenuOpen(false)}
@@ -4032,78 +5244,149 @@ export const menuItems: MenuItem[] = [
 
 ```
 
+## src\components\OffersBanner\index.tsx
+
+```tsx
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
+import { Icon } from "../Icon";
+
+const offersBanners = [
+  {
+    eyebrow: "Ofertas imperdíveis",
+    title: "Descontos de até",
+    highlight: " 50%",
+    description:
+      "Aproveite promoções exclusivas em tecnologia, moda e muito mais.",
+    image:
+      "https://images.unsplash.com/photo-1585386959984-a4155223f9c8?auto=format&fit=crop&w=1600&q=85",
+    imageAlt: "Produtos em promoção com grandes descontos",
+    href: "/ofertas",
+    cta: "Aproveitar agora",
+    imageClassName: "inset-0 h-full w-full object-cover",
+  },
+];
+
+export function OffersBanner() {
+  return (
+    <section
+      aria-label="Ofertas especiais"
+      className="w-full overflow-hidden bg-navy mt-10"
+    >
+      <Swiper
+        modules={[Autoplay, Navigation, Pagination]}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        navigation
+        pagination={{ clickable: true }}
+        loop
+        className="offers-banner h-[400px] md:h-[500px]"
+      >
+        {offersBanners.map((banner) => (
+          <SwiperSlide key={banner.title}>
+            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-blue">
+              <img
+                src={banner.image}
+                alt={banner.imageAlt}
+                className={`absolute z-0 h-auto ${banner.imageClassName}`}
+              />
+              <div className="absolute inset-0 z-10 bg-gradient-to-r from-navy via-navy/80 to-transparent" />
+              <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
+                <div className="max-w-2xl">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9ad7ff]">
+                    {banner.eyebrow}
+                  </p>
+                  <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+                    {banner.title}
+                    <span className="font-bold text-green">
+                      {banner.highlight}
+                    </span>
+                  </h2>
+                  <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-white/90 md:text-lg">
+                    {banner.description}
+                  </p>
+                  <a
+                    href={banner.href}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green px-5 py-3 font-bold text-white transition hover:bg-green-dark"
+                  >
+                    {banner.cta}
+                    <Icon svg={ArrowRight} className="h-5 w-5 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+}
+
+```
+
 ## src\components\ProductCard\index.tsx
 
 ```tsx
 import { FaRegStar, FaStar, FaStarHalfAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
-import type { AffiliateProduct } from "../../types/AffiliateProduct";
+import type { Product } from "../../contexts/ProductsContext";
 
 interface ProductCardProps {
-  product: AffiliateProduct;
+  product: Product;
 }
-
-const marketplaceLabels: Record<AffiliateProduct["marketplace"], string> = {
-  "mercado-livre": "Mercado Livre",
-  amazon: "Amazon",
-  shopee: "Shopee",
-  outro: "Marketplace parceiro",
-};
 
 export function ProductCard({ product }: ProductCardProps) {
   const rating = Math.min(Math.max(product.rating ?? 0, 0), 5);
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
   const emptyStars = 5 - Math.ceil(rating);
+
   const formattedPrice = product.price.toLocaleString("pt-BR", {
     style: "currency",
-    currency: "BRL",
+    currency: product.currency || "BRL",
   });
+
   const formattedOriginalPrice = product.originalPrice?.toLocaleString(
     "pt-BR",
     {
       style: "currency",
-      currency: "BRL",
+      currency: product.currency || "BRL",
     },
   );
 
-  // Valores fixos para criar as estrelas
   const starPositions = [1, 2, 3, 4, 5];
 
   return (
     <div className="flex h-[420px] w-full flex-col items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg">
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-3 flex h-40 w-full shrink-0 items-center justify-center rounded-xl bg-[#f8fafc] p-2"
         aria-label={`Ver detalhes de ${product.title}`}
       >
         <img
-          src={product.image}
+          src={product.imageUrl}
           alt={product.title}
           className="h-full w-full object-contain"
           loading="lazy"
         />
       </Link>
 
-      <p className="mb-2 flex h-6 shrink-0 items-center self-start rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-semibold text-[#0b3d66]">
-        {marketplaceLabels[product.marketplace]}
-      </p>
+      {product.category && (
+        <p className="mb-2 flex h-6 shrink-0 items-center self-start rounded-full bg-[#edf5ff] px-2.5 py-1 text-[11px] font-semibold text-[#0b3d66]">
+          {product.category}
+        </p>
+      )}
 
-      {/* Avaliação dinâmica */}
       <div className="mb-1 flex h-5 shrink-0 items-center justify-center">
-        {/* Estrelas completas */}
         {starPositions.slice(0, fullStars).map((star) => (
           <FaStar key={`${product.id}-full-${star}`} className="text-yellow" />
         ))}
 
-        {/* Meia estrela */}
         {hasHalfStar && (
           <FaStarHalfAlt key={`${product.id}-half`} className="text-yellow" />
         )}
 
-        {/* Estrelas vazias */}
         {starPositions.slice(0, emptyStars).map((star) => (
           <FaRegStar
             key={`${product.id}-empty-${star}`}
@@ -4113,8 +5396,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-1 line-clamp-2 min-h-10 w-full text-left text-sm font-semibold text-gray-800 hover:text-[#1769e0]"
       >
         {product.title}
@@ -4126,12 +5408,12 @@ export function ProductCard({ product }: ProductCardProps) {
             {formattedOriginalPrice}
           </p>
         )}
+
         <p className="font-bold text-gray-900">{formattedPrice}</p>
       </div>
 
       <Link
-        to={`/produto/${encodeURIComponent(product.id)}`}
-        state={{ product }}
+        to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-green px-4 py-2 text-sm font-medium text-white hover:bg-green-dark"
       >
         VER DETALHES
@@ -4199,36 +5481,283 @@ export function Session({ title, children }: SessionProps) {
 
 ```
 
-## src\contexts\MercadoLivreContext.tsx
+## src\components\SocialBanner\index.tsx
 
 ```tsx
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
+import { Icon } from "../Icon";
+
+const socialBanners = [
+  {
+    eyebrow: "Conecte-se conosco",
+    title: "Siga no",
+    highlight: " Instagram",
+    description:
+      "Acompanhe novidades, bastidores e dicas exclusivas diretamente no nosso perfil.",
+    image:
+      "https://images.unsplash.com/photo-1702390734475-d81dd8ae8fde?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHV0b3N8ZW58MHx8MHx8fDA%3D",
+    imageAlt: "Feed do Instagram com posts inspiradores",
+    href: "https://instagram.com/seuperfil",
+    cta: "Visitar Instagram",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    gradient: "from-purple-900 via-pink-700 to-red-500",
+  },
+  {
+    eyebrow: "Conteúdo em vídeo",
+    title: "Assista no",
+    highlight: " YouTube",
+    description:
+      "Tutoriais, reviews e muito mais para você aprender e se inspirar.",
+    image:
+      "https://images.unsplash.com/photo-1615883962708-708904fe162e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTM2fHx5b3V0dWJlfGVufDB8fDB8fHww",
+    imageAlt: "Tela de vídeos no YouTube",
+    href: "https://youtube.com/seucanal",
+    cta: "Ir para YouTube",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    gradient: "from-red-800 via-red-600 to-orange-500",
+  },
+  {
+    eyebrow: "Novidades rápidas",
+    title: "Acompanhe no",
+    highlight: " Twitter",
+    description:
+      "Fique por dentro das últimas atualizações e interaja em tempo real.",
+    image:
+      "https://images.unsplash.com/photo-1631856955350-77f4023dff2b?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    imageAlt: "Timeline do Twitter com posts recentes",
+    href: "https://twitter.com/seuperfil",
+    cta: "Seguir no Twitter",
+    imageClassName: "inset-0 h-full w-full object-cover",
+    gradient: "from-sky-900 via-blue-700 to-cyan-500",
+  },
+];
+
+export function SocialBanner() {
+  return (
+    <section
+      aria-label="Redes sociais WorldMix360"
+      className="w-full overflow-hidden bg-navy mt-10"
+    >
+      <Swiper
+        modules={[Autoplay, Navigation, Pagination]}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        navigation
+        pagination={{ clickable: true }}
+        loop
+        className="social-banner h-[400px] md:h-[500px]"
+      >
+        {socialBanners.map((banner) => (
+          <SwiperSlide key={banner.title}>
+            <div
+              className={`relative h-full overflow-hidden ${banner.gradient}`}
+            >
+              <img
+                src={banner.image}
+                alt={banner.imageAlt}
+                className={`absolute z-0 h-auto ${banner.imageClassName}`}
+              />
+              {/* Overlay mais escuro para contraste */}
+              <div className="absolute inset-0 z-10 bg-black/50" />
+              <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
+                <div className="max-w-2xl bg-navy/70 p-6 rounded-lg">
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-light">
+                    {banner.eyebrow}
+                  </p>
+                  <h2 className="text-3xl font-bold text-white md:text-4xl lg:text-5xl drop-shadow">
+                    {banner.title}
+                    <span className="font-bold text-green">
+                      {banner.highlight}
+                    </span>
+                  </h2>
+                  <p className="mb-6 mt-6 max-w-xl text-base leading-7 text-gray-50 md:text-lg">
+                    {banner.description}
+                  </p>
+                  <a
+                    href={banner.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue px-5 py-3 font-bold text-white transition hover:bg-navy"
+                  >
+                    {banner.cta}
+                    <Icon svg={ArrowRight} className="h-5 w-5 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+  );
+}
+
+```
+
+## src\contexts\AuthContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: "customer" | "admin" | "sale";
+};
+
+export type AuthContextValue = {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => void;
+};
+
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined,
+);
+
+```
+
+## src\contexts\AuthProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import { AuthContext, type User } from "./AuthContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+const TOKEN_KEY = "@worldmix360:token";
+const USER_KEY = "@worldmix360:user";
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem(TOKEN_KEY);
+  });
+
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem(USER_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Não foi possível realizar o login.");
+      }
+
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+
+      setToken(data.token);
+      setUser(data.user);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const signOut = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      signIn,
+      signOut,
+    }),
+    [user, token, isLoading, signIn, signOut],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+```
+
+## src\contexts\MercadoLivreContext.ts
+
+```ts
+import { createContext } from "react";
 
 import type { AffiliateProduct } from "../types/AffiliateProduct";
 
 export type MercadoLivreProduct = AffiliateProduct;
 
-type MercadoLivreContextValue = {
+export type MercadoLivreContextValue = {
   products: MercadoLivreProduct[];
   loading: boolean;
   error: string | null;
   search: (term: string) => Promise<void>;
 };
 
+export const MercadoLivreContext = createContext<
+  MercadoLivreContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\MercadoLivreProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import {
+  MercadoLivreContext,
+  type MercadoLivreProduct,
+} from "./MercadoLivreContext";
+
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
-const MercadoLivreContext = createContext<MercadoLivreContextValue | undefined>(
-  undefined,
-);
+type ApiProduct = {
+  id: string;
+  title: string;
+  price?: number | string;
+  imageUrl?: string | null;
+  thumbnail?: string | null;
+  pictures?: Array<{
+    url: string;
+  }>;
+  affiliateUrl?: string | null;
+  permalink?: string | null;
+};
 
-function normalizeProduct(item: any): MercadoLivreProduct {
+function normalizeProduct(item: ApiProduct): MercadoLivreProduct {
   return {
     id: item.id,
     title: item.title,
@@ -4265,9 +5794,11 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
+
       const mappedProducts = (data.products ?? [])
         .slice(0, 8)
         .map(normalizeProduct);
+
       setProducts(mappedProducts);
     } catch (requestError) {
       console.error(requestError);
@@ -4279,7 +5810,12 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ products, loading, error, search }),
+    () => ({
+      products,
+      loading,
+      error,
+      search,
+    }),
     [products, loading, error, search],
   );
 
@@ -4290,6 +5826,185 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
   );
 }
 
+```
+
+## src\contexts\ProductsContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type Product = {
+  id: string;
+  title: string;
+  slug: string;
+
+  description?: string | null;
+  shortDescription?: string | null;
+
+  imageUrl: string;
+
+  price: number;
+  originalPrice?: number | null;
+
+  currency: string;
+
+  rating?: number | null;
+  reviewsCount: number;
+
+  affiliateUrl: string;
+
+  category?: string | null;
+
+  available: boolean;
+  featured: boolean;
+  active: boolean;
+};
+
+export type ProductsContextValue = {
+  products: Product[];
+  loading: boolean;
+  error: string | null;
+
+  fetchProducts: (category?: string) => Promise<void>;
+
+  getProductBySlug: (slug: string) => Promise<Product | null>;
+};
+
+export const ProductsContext = createContext<ProductsContextValue | undefined>(
+  undefined,
+);
+
+```
+
+## src\contexts\ProductsProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import { type Product, ProductsContext } from "./ProductsContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+type ProductsResponse = {
+  products?: Product[];
+};
+
+export function ProductsProvider({ children }: { children: ReactNode }) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = useCallback(async (category?: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (category) {
+        params.set("category", category);
+      }
+
+      const queryString = params.toString();
+
+      const response = await fetch(
+        `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
+      );
+
+      const data = (await response.json()) as ProductsResponse;
+
+      if (!response.ok) {
+        throw new Error("Não foi possível carregar os produtos.");
+      }
+
+      setProducts(data.products ?? []);
+    } catch (requestError) {
+      console.error(requestError);
+
+      setProducts([]);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível carregar os produtos.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getProductBySlug = useCallback(
+    async (slug: string): Promise<Product | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/products/${encodeURIComponent(slug)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = (await response.json()) as { product: Product };
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar o produto.");
+        }
+
+        return data.product;
+      } catch (requestError) {
+        console.error(requestError);
+
+        return null;
+      }
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      products,
+      loading,
+      error,
+      fetchProducts,
+      getProductBySlug,
+    }),
+    [products, loading, error, fetchProducts, getProductBySlug],
+  );
+
+  return (
+    <ProductsContext.Provider value={value}>
+      {children}
+    </ProductsContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\useAuth.ts
+
+```ts
+import { useContext } from "react";
+
+import { AuthContext } from "./AuthContext";
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de AuthProvider");
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useMercadoLivre.ts
+
+```ts
+import { useContext } from "react";
+
+import { MercadoLivreContext } from "./MercadoLivreContext";
+
 export function useMercadoLivre() {
   const context = useContext(MercadoLivreContext);
 
@@ -4297,6 +6012,25 @@ export function useMercadoLivre() {
     throw new Error(
       "useMercadoLivre deve ser usado dentro de MercadoLivreProvider",
     );
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useProducts.ts
+
+```ts
+import { useContext } from "react";
+
+import { ProductsContext } from "./ProductsContext";
+
+export function useProducts() {
+  const context = useContext(ProductsContext);
+
+  if (!context) {
+    throw new Error("useProducts deve ser usado dentro de ProductsProvider");
   }
 
   return context;
@@ -5083,63 +6817,22 @@ import {
   FiStar,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 
 import { Banner } from "../components/Banner";
+import { BlogBanner } from "../components/BlogBanner";
 import { menuItems } from "../components/Menu/items";
+
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-
-const fallbackProducts = [
-  {
-    id: uuidv4(),
-    image: "/produtos/D_NQ_NP_2X_913023-MLA110131689717_042026-F.webp",
-    rating: 4.5,
-    title: "Fone de Ouvido JBL Quantum 100M2 Gamer Over-ear com Microfone",
-    price: 229.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-  {
-    id: uuidv4(),
-    image: "/produtos/s-l960.webp",
-    rating: 4,
-    title: "Sony WH-CH510",
-    price: 1199.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-  {
-    id: uuidv4(),
-    image:
-      "/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp",
-    rating: 5,
-    title: "Anker Soundcore Q30",
-    price: 500.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-  {
-    id: uuidv4(),
-    image:
-      "/produtos/D_NQ_NP_2X_966790-CBT91219370952_092025-F-fones-de-ouvido-atualizados-de-alta-resolucao-qcy-h3-pro-anc.webp",
-    rating: 5,
-    title: "Anker Soundcore Q30",
-    price: 500.9,
-    marketplace: "mercado-livre" as const,
-    affiliateUrl: "https://www.mercadolivre.com.br",
-  },
-];
+import { SocialBanner } from "../components/SocialBanner";
+import { useProducts } from "../contexts/useProducts";
 
 export function HomePage() {
-  const { products, loading, error, search } = useMercadoLivre();
+  const { products, loading, error, fetchProducts } = useProducts();
 
   useEffect(() => {
-    void search("fone bluetooth");
-  }, [search]);
-
-  const visibleProducts = products.length > 0 ? products : fallbackProducts;
+    void fetchProducts();
+  }, [fetchProducts]);
 
   return (
     <>
@@ -5157,10 +6850,12 @@ export function HomePage() {
             <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
               Explore por interesse
             </p>
+
             <h2 className="text-2xl font-bold text-[#071a2f] md:text-3xl">
               Encontre o que combina com você
             </h2>
           </div>
+
           <Link
             to="/ofertas"
             className="hidden items-center gap-1 text-sm font-semibold text-[#0b3d66] transition hover:text-[#1769e0] sm:flex"
@@ -5189,6 +6884,7 @@ export function HomePage() {
               >
                 <Icon />
               </span>
+
               <span
                 className={`text-sm font-semibold leading-5 ${
                   label === "Blog" ? "text-white" : "text-[#071a2f]"
@@ -5196,6 +6892,7 @@ export function HomePage() {
               >
                 {label}
               </span>
+
               {label === "Blog" && (
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
                   Conteúdos
@@ -5207,20 +6904,28 @@ export function HomePage() {
       </section>
 
       <Session title="Ofertas em destaque">
-        {loading && visibleProducts.length === 0 ? (
+        {loading ? (
           <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
+        ) : products.length === 0 ? (
+          <p className="px-6 text-sm text-[#52657c]">
+            Nenhum produto disponível no momento.
+          </p>
         ) : (
-          visibleProducts.map((product) => (
+          products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
       </Session>
 
+      <BlogBanner />
+
       <Session title="Produtos mais vendidos">
-        {visibleProducts.map((product) => (
+        {products.map((product) => (
           <ProductCard key={`${product.id}-secondary`} product={product} />
         ))}
       </Session>
+
+      <SocialBanner />
 
       <section className="mx-auto grid max-w-[1200px] gap-4 px-6 py-10 md:grid-cols-4 md:py-14">
         {[
@@ -5252,10 +6957,12 @@ export function HomePage() {
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dff5e8] text-[#159447]">
               <Icon />
             </span>
+
             <div>
               <h3 className="font-semibold text-[#071a2f]">
                 {title as string}
               </h3>
+
               <p className="mt-1 text-sm leading-5 text-[#52657c]">
                 {description as string}
               </p>
@@ -5355,6 +7062,120 @@ export function HowItWorksPage() {
         },
       ]}
     />
+  );
+}
+
+```
+
+## src\pages\LoginPage.tsx
+
+```tsx
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+
+export function LoginPage() {
+  const navigate = useNavigate();
+  const { signIn, isLoading } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    try {
+      await signIn(email, password);
+      navigate("/", { replace: true });
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível realizar o login.",
+      );
+    }
+  }
+
+  return (
+    <section className="mx-auto flex min-h-[70vh] w-full max-w-[1200px] items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-navy">Entrar</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Acesse sua conta WorldMix360
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              E-mail
+            </label>
+
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seu@email.com"
+              autoComplete="email"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Senha
+            </label>
+
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Sua senha"
+              autoComplete="current-password"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-lg bg-[#1769e0] px-5 py-3 font-bold text-white transition hover:bg-[#0f56bd] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Ainda não possui uma conta?{" "}
+          <Link
+            to="/register"
+            className="font-semibold text-[#1769e0] hover:underline"
+          >
+            Criar conta
+          </Link>
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -5500,25 +7321,54 @@ export function PrivacyPolicyPage() {
 ## src\pages\ProductPage.tsx
 
 ```tsx
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-import type { AffiliateProduct } from "../types/AffiliateProduct";
-
-const marketplaceLabels: Record<AffiliateProduct["marketplace"], string> = {
-  "mercado-livre": "Mercado Livre",
-  amazon: "Amazon",
-  shopee: "Shopee",
-  outro: "Marketplace parceiro",
-};
+import type { Product } from "../contexts/ProductsContext";
+import { useProducts } from "../contexts/useProducts";
 
 export function ProductPage() {
-  const { id } = useParams();
-  const location = useLocation();
-  const { products } = useMercadoLivre();
-  const stateProduct = (location.state as { product?: AffiliateProduct } | null)
-    ?.product;
-  const product = products.find((item) => item.id === id) ?? stateProduct;
+  const { slug } = useParams();
+
+  const { getProductBySlug } = useProducts();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProduct() {
+      if (!slug) {
+        setProduct(null);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      const data = await getProductBySlug(slug);
+
+      if (!cancelled) {
+        setProduct(data);
+        setLoading(false);
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, getProductBySlug]);
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <p className="text-sm text-[#52657c]">Carregando produto...</p>
+      </section>
+    );
+  }
 
   if (!product) {
     return (
@@ -5526,9 +7376,11 @@ export function ProductPage() {
         <h1 className="text-3xl font-bold text-[#071a2f]">
           Produto não encontrado
         </h1>
+
         <p className="mt-3 text-[#52657c]">
-          Esse produto pode ter sido atualizado ou removido pelo marketplace.
+          Esse produto pode ter sido atualizado ou removido do catálogo.
         </p>
+
         <Link
           to="/"
           className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white"
@@ -5541,7 +7393,12 @@ export function ProductPage() {
 
   const price = product.price.toLocaleString("pt-BR", {
     style: "currency",
-    currency: "BRL",
+    currency: product.currency || "BRL",
+  });
+
+  const originalPrice = product.originalPrice?.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: product.currency || "BRL",
   });
 
   return (
@@ -5550,48 +7407,228 @@ export function ProductPage() {
         <Link to="/" className="hover:text-[#1769e0]">
           Início
         </Link>
+
         <span className="px-2">/</span>
+
         <span>Detalhes do produto</span>
       </nav>
 
       <div className="grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.07)] md:grid-cols-[0.9fr_1.1fr]">
         <div className="flex min-h-[340px] items-center justify-center bg-[#f7f9fc] p-8 md:min-h-[520px] md:p-12">
           <img
-            src={product.image}
+            src={product.imageUrl}
             alt={product.title}
             className="max-h-[420px] w-full object-contain"
           />
         </div>
+
         <div className="flex flex-col justify-center p-8 md:p-12">
-          <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
-            {marketplaceLabels[product.marketplace]}
-          </span>
+          {product.category && (
+            <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
+              {product.category}
+            </span>
+          )}
+
           <h1 className="text-3xl font-black leading-tight text-[#071a2f] md:text-4xl">
             {product.title}
           </h1>
+
+          {product.shortDescription && (
+            <p className="mt-5 text-sm leading-6 text-[#52657c]">
+              {product.shortDescription}
+            </p>
+          )}
+
           <div className="mt-8 border-y border-[#edf2f7] py-6">
             <p className="text-sm text-[#667085]">
               Preço apresentado no momento da consulta
             </p>
-            <p className="mt-2 text-3xl font-black text-[#071a2f]">{price}</p>
+
+            {originalPrice && (
+              <p className="mt-2 text-sm text-gray-500 line-through">
+                {originalPrice}
+              </p>
+            )}
+
+            <p className="mt-1 text-3xl font-black text-[#071a2f]">{price}</p>
           </div>
+
           <p className="mt-6 text-sm leading-6 text-[#52657c]">
-            Você será direcionado ao site do marketplace parceiro para conferir
+            Você será direcionado ao site do parceiro para conferir
             disponibilidade, frete, avaliações e finalizar a compra.
           </p>
+
           <a
             href={product.affiliateUrl}
             target="_blank"
             rel="sponsored noopener noreferrer"
             className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-[#20b35b] px-6 font-bold text-white transition hover:bg-[#159447]"
           >
-            Ver oferta no {marketplaceLabels[product.marketplace]}
+            Ver oferta
           </a>
+
           <p className="mt-4 text-xs text-[#667085]">
-            Este é um link de afiliado. A compra é realizada diretamente no
-            marketplace.
+            Este é um link de afiliado. A compra é realizada diretamente no site
+            do parceiro.
           </p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+```
+
+## src\pages\RegisterPage.tsx
+
+```tsx
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function RegisterPage() {
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Não foi possível criar sua conta.");
+      }
+
+      navigate("/login", { replace: true });
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível criar sua conta.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <section className="mx-auto flex min-h-[70vh] w-full max-w-[1200px] items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-navy">Criar conta</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Faça seu cadastro no WorldMix360
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="name"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Nome
+            </label>
+
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Seu nome"
+              autoComplete="name"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="register-email"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              E-mail
+            </label>
+
+            <input
+              id="register-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seu@email.com"
+              autoComplete="email"
+              required
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="register-password"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Senha
+            </label>
+
+            <input
+              id="register-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Crie uma senha"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
+            />
+          </div>
+
+          {error && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-lg bg-[#1769e0] px-5 py-3 font-bold text-white transition hover:bg-[#0f56bd] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? "Criando conta..." : "Criar conta"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Já possui uma conta?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-[#1769e0] hover:underline"
+          >
+            Entrar
+          </Link>
+        </p>
       </div>
     </section>
   );
@@ -5606,8 +7643,7 @@ import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
-import { useMercadoLivre } from "../contexts/MercadoLivreContext";
-import type { AffiliateProduct } from "../types/AffiliateProduct";
+import { useProducts } from "../contexts/useProducts";
 
 type SubcategoryData = {
   title: string;
@@ -5816,44 +7852,22 @@ function normalizeSlug(value: string) {
   return value.replace(/-e-/g, "-");
 }
 
-function createFallbackProducts(data: SubcategoryData, slug: string) {
-  const productTypes = [
-    "Seleção essencial",
-    "Opção mais procurada",
-    "Escolha premium",
-    "Alternativa para sua rotina",
-  ];
-
-  return productTypes.map<AffiliateProduct>((productType, index) => ({
-    id: `fallback-${slug}-${index}`,
-    title: `${data.title} - ${productType}`,
-    image: data.image,
-    price: [89.9, 149.9, 249.9, 399.9][index],
-    rating: 4.5,
-    marketplace: "mercado-livre",
-    affiliateUrl: `https://lista.mercadolivre.com.br/${encodeURIComponent(data.query)}`,
-    category: data.category,
-  }));
-}
-
 export function SubcategoryPage() {
   const { subcategory } = useParams();
-  const { products, loading, error, search } = useMercadoLivre();
+
+  const { products, loading, error, fetchProducts } = useProducts();
+
   const data = subcategory
     ? (subcategories[subcategory] ?? subcategories[normalizeSlug(subcategory)])
     : undefined;
-  const fallbackProducts = data
-    ? createFallbackProducts(data, subcategory ?? "subcategoria")
-    : [];
 
   useEffect(() => {
-    if (data) void search(data.query);
-  }, [data, search]);
+    if (data) {
+      void fetchProducts(data.category);
+    }
+  }, [data, fetchProducts]);
 
-  const visibleProducts =
-    products.length >= 4
-      ? products
-      : [...products, ...fallbackProducts].slice(0, 4);
+  const visibleProducts = products.slice(0, 4);
 
   if (!data) {
     return (
@@ -5861,6 +7875,7 @@ export function SubcategoryPage() {
         <h1 className="text-3xl font-bold text-[#071a2f]">
           Subcategoria não encontrada
         </h1>
+
         <Link to="/" className="mt-4 inline-block font-semibold text-[#1769e0]">
           Voltar para a página inicial
         </Link>
@@ -5874,7 +7889,9 @@ export function SubcategoryPage() {
         <Link to="/" className="hover:text-[#1769e0]">
           Início
         </Link>
+
         <span className="px-2">/</span>
+
         <span>{data.category}</span>
       </nav>
 
@@ -5883,23 +7900,28 @@ export function SubcategoryPage() {
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#0b3d66]">
             Seleção de produtos
           </p>
+
           <h1 className="text-3xl font-black text-[#071a2f] md:text-5xl">
             {data.title}
           </h1>
+
           <p className="mt-4 max-w-xl text-base leading-7 text-[#52657c]">
             {data.description}
           </p>
+
           <p className="mt-5 text-xs text-[#667085]">
             Produtos apresentados por marketplaces parceiros. A compra acontece
             no site do anunciante.
           </p>
         </div>
+
         <div className="relative min-h-[240px] overflow-hidden md:min-h-[320px]">
           <img
             src={data.image}
             alt={data.imageAlt}
             className="absolute inset-0 h-full w-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-r from-[#071a2f]/20 to-transparent" />
         </div>
       </div>
@@ -5909,10 +7931,12 @@ export function SubcategoryPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
             Ofertas encontradas
           </p>
+
           <h2 className="mt-2 text-2xl font-bold text-[#071a2f]">
             Escolha o que combina com você
           </h2>
         </div>
+
         <span className="hidden text-sm text-[#52657c] sm:inline">
           Links patrocinados identificados
         </span>
@@ -5921,12 +7945,15 @@ export function SubcategoryPage() {
       {loading && (
         <p className="py-10 text-sm text-[#52657c]">Buscando produtos...</p>
       )}
+
       {error && <p className="py-4 text-sm text-red-600">{error}</p>}
-      {error && (
-        <p className="mb-4 text-xs text-[#667085]">
-          Exibindo sugestões da categoria enquanto a busca é atualizada.
+
+      {!loading && !error && visibleProducts.length === 0 && (
+        <p className="py-10 text-sm text-[#52657c]">
+          Nenhum produto encontrado nesta categoria.
         </p>
       )}
+
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {visibleProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
@@ -6029,6 +8056,27 @@ export function TermsOfUsePage() {
 
 ```
 
+## src\routes\authRoutes.tsx
+
+```tsx
+import type { RouteObject } from "react-router-dom";
+
+import { LoginPage } from "../pages/LoginPage";
+import { RegisterPage } from "../pages/RegisterPage";
+
+export const authRoutes: RouteObject[] = [
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+];
+
+```
+
 ## src\routes\homeRoutes.tsx
 
 ```tsx
@@ -6051,6 +8099,7 @@ export const homeRoutes: RouteObject[] = [
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
+import { authRoutes } from "./authRoutes";
 import { homeRoutes } from "./homeRoutes";
 import { institutionalRoutes } from "./institutionalRoutes";
 import { productRoutes } from "./productRoutes";
@@ -6062,6 +8111,7 @@ const routes: RouteObject[] = [
       ...homeRoutes,
       ...institutionalRoutes,
       ...productRoutes,
+      ...authRoutes,
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },
@@ -6113,7 +8163,7 @@ import { SubcategoryPage } from "../pages/SubcategoryPage";
 import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
-  { path: "produto/:id", element: <ProductPage /> },
+  { path: "produto/:slug", element: <ProductPage /> },
   { path: "tecnologia", element: <TechnologyPage /> },
   { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
   { path: "moda", element: <FashionPage /> },

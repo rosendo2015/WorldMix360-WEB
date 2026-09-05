@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link, useParams } from "react-router-dom";
 
 import type { Product } from "../contexts/ProductsContext";
@@ -112,7 +113,7 @@ export function ProductPage() {
 
           {product.shortDescription && (
             <p className="mt-5 text-sm leading-6 text-[#52657c]">
-              {product.shortDescription}
+              {product.description}
             </p>
           )}
 

@@ -16,8 +16,8 @@ export function Logo({ location = "header" }: LogoProps) {
         className="h-14 w-14 md:h-16 md:w-16"
       />
       <div className="flex flex-col justify-center">
-        <div className={`flex flex-col ${mix360}`}>
-          <span className={`${worldColor} text-2xl font-bold md:text-3xl`}>
+        <div className={`flex flex-col ${mix360}`} translate="no">
+          <span className={`${worldColor} text-2xl font-bold md:text-3xl `}>
             WORLD
           </span>
           <div className="flex gap-1">
