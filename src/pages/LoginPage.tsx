@@ -1,11 +1,11 @@
+// src/pages/LoginPage.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../contexts/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading } = useAuth(); // agora pegamos também o user
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,8 +16,13 @@ export function LoginPage() {
     setError("");
 
     try {
-      await signIn(email, password);
-      navigate("/", { replace: true });
+      const loggedUser = await signIn(email, password);
+
+      if (loggedUser?.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (requestError) {
       setError(
         requestError instanceof Error

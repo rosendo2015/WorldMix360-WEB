@@ -104,6 +104,26 @@ export function App() {
 
 ```
 
+## src\components\AdminLayout\index.tsx
+
+```tsx
+// src/components/AdminLayout.tsx
+import { Outlet } from "react-router-dom";
+import { HeaderAdmin } from "../HeaderAdmin";
+
+export function AdminLayout() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <HeaderAdmin />
+      <main className="flex-1 p-6 bg-gray-50">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+```
+
 ## src\components\AppLayout\index.tsx
 
 ```tsx
@@ -783,6 +803,43 @@ export function Header() {
 
 ```
 
+## src\components\HeaderAdmin\index.tsx
+
+```tsx
+// src/components/HeaderAdmin.tsx
+import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
+
+export function HeaderAdmin() {
+  const { user, signOut } = useAuth();
+
+  return (
+    <header className="w-full bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
+      <h1 className="text-lg font-bold">Painel Administrativo</h1>
+
+      <nav className="flex gap-4">
+        <Link to="/admin/products" className="hover:text-blue-300">
+          Produtos
+        </Link>
+        {/* outros links administrativos */}
+      </nav>
+
+      <div className="flex items-center gap-3">
+        <span className="text-sm">Olá, {user?.name}</span>
+        <button
+          type="button"
+          onClick={signOut}
+          className="bg-red-600 px-3 py-1 rounded text-sm hover:bg-red-500"
+        >
+          Sair
+        </button>
+      </div>
+    </header>
+  );
+}
+
+```
+
 ## src\components\Icon\iconVariants.ts
 
 ```ts
@@ -915,8 +972,8 @@ export function Logo({ location = "header" }: LogoProps) {
         className="h-14 w-14 md:h-16 md:w-16"
       />
       <div className="flex flex-col justify-center">
-        <div className={`flex flex-col ${mix360}`}>
-          <span className={`${worldColor} text-2xl font-bold md:text-3xl`}>
+        <div className={`flex flex-col ${mix360}`} translate="no">
+          <span className={`${worldColor} text-2xl font-bold md:text-3xl `}>
             WORLD
           </span>
           <div className="flex gap-1">
@@ -1375,114 +1432,55 @@ export function SocialBanner() {
 ## src\contexts\AuthContext.ts
 
 ```ts
+// src/contexts/AuthContext.ts
 import { createContext } from "react";
+import type { User } from "../types/User";
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: "customer" | "admin" | "sale";
-};
-
-export type AuthContextValue = {
+export type AuthContextType = {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User>;
   signOut: () => void;
 };
 
-export const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 ```
 
 ## src\contexts\AuthProvider.tsx
 
 ```tsx
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+// src/contexts/AuthProvider.tsx
+import { useState } from "react";
+import type { User } from "../types/User";
+import { AuthContext } from "./AuthContext";
 
-import { AuthContext, type User } from "./AuthContext";
-
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-
-const TOKEN_KEY = "@worldmix360:token";
-const USER_KEY = "@worldmix360:user";
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem(TOKEN_KEY);
-  });
-
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem(USER_KEY);
-
-    if (!storedUser) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(storedUser);
-    } catch {
-      localStorage.removeItem(USER_KEY);
-      return null;
-    }
-  });
-
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  async function signIn(email: string, password: string): Promise<User> {
     setIsLoading(true);
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    setUser(data.user);
+    setIsLoading(false);
+    return data.user;
+  }
 
-    try {
-      const response = await fetch(`${apiUrl}/session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message ?? "Não foi possível realizar o login.");
-      }
-
-      localStorage.setItem(TOKEN_KEY, data.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-
-      setToken(data.token);
-      setUser(data.user);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const signOut = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-
-    setToken(null);
+  function signOut() {
     setUser(null);
-  }, []);
+  }
 
-  const value = useMemo(
-    () => ({
-      user,
-      token,
-      isLoading,
-      signIn,
-      signOut,
-    }),
-    [user, token, isLoading, signIn, signOut],
+  return (
+    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 ```
@@ -1657,81 +1655,117 @@ export const ProductsContext = createContext<ProductsContextValue | undefined>(
 
 ```tsx
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-
 import { type Product, ProductsContext } from "./ProductsContext";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-
-type ProductsResponse = {
-  products?: Product[];
-};
 
 export function ProductsProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Listagem
   const fetchProducts = useCallback(async (category?: string) => {
     setLoading(true);
     setError(null);
-
     try {
       const params = new URLSearchParams();
+      if (category) params.set("category", category);
 
-      if (category) {
-        params.set("category", category);
-      }
-
-      const queryString = params.toString();
-
-      const response = await fetch(
-        `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
-      );
-
-      const data = (await response.json()) as ProductsResponse;
-
-      if (!response.ok) {
+      const response = await fetch(`${apiUrl}/products?${params.toString()}`);
+      const data = await response.json();
+      if (!response.ok)
         throw new Error("Não foi possível carregar os produtos.");
-      }
-
       setProducts(data.products ?? []);
-    } catch (requestError) {
-      console.error(requestError);
-
-      setProducts([]);
+    } catch (err) {
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Não foi possível carregar os produtos.",
+        err instanceof Error ? err.message : "Erro ao carregar produtos.",
       );
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Detalhe
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
       try {
         const response = await fetch(
           `${apiUrl}/products/${encodeURIComponent(slug)}`,
         );
-
-        if (response.status === 404) {
-          return null;
-        }
-
-        const data = (await response.json()) as { product: Product };
-
-        if (!response.ok) {
+        if (response.status === 404) return null;
+        const data = await response.json();
+        if (!response.ok)
           throw new Error("Não foi possível carregar o produto.");
-        }
-
         return data.product;
-      } catch (requestError) {
-        console.error(requestError);
-
+      } catch {
         return null;
       }
+    },
+    [],
+  );
+
+  // Criar
+  const createProduct = useCallback(
+    async (productData: Partial<Product>, token: string) => {
+      const response = await fetch(`${apiUrl}/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // exige autenticação admin
+        },
+        body: JSON.stringify(productData),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Erro ao criar produto");
+      setProducts((prev) => [...prev, data.product]);
+      return data.product;
+    },
+    [],
+  );
+
+  // Atualizar
+  const updateProduct = useCallback(
+    async (id: string, productData: Partial<Product>, token: string) => {
+      const response = await fetch(`${apiUrl}/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(productData),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Erro ao atualizar produto");
+      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      return data.product;
+    },
+    [],
+  );
+
+  // Atualizar status
+  const updateProductStatus = useCallback(
+    async (
+      id: string,
+      statusData: { active?: boolean; available?: boolean; featured?: boolean },
+      token: string,
+    ) => {
+      const response = await fetch(`${apiUrl}/products/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(statusData),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Erro ao atualizar status");
+      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      return data.product;
     },
     [],
   );
@@ -1743,8 +1777,20 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       error,
       fetchProducts,
       getProductBySlug,
+      createProduct,
+      updateProduct,
+      updateProductStatus,
     }),
-    [products, loading, error, fetchProducts, getProductBySlug],
+    [
+      products,
+      loading,
+      error,
+      fetchProducts,
+      getProductBySlug,
+      createProduct,
+      updateProduct,
+      updateProductStatus,
+    ],
   );
 
   return (
@@ -2061,6 +2107,130 @@ export function AboutPage() {
           ))}
         </div>
       </div>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminDashboarPage.tsx
+
+```tsx
+// src/pages/admin/AdminDashboardPage.tsx
+import { useProducts } from "../contexts/useProducts";
+
+export default function AdminDashboardPage() {
+  const { products } = useProducts();
+
+  const totalProducts = products.length;
+  const activeProducts = products.filter((p) => p.active).length;
+  const featuredProducts = products.filter((p) => p.featured).length;
+
+  return (
+    <section className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Dashboard Administrativo</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="rounded-lg bg-white shadow p-6">
+          <h2 className="text-lg font-semibold">Total de Produtos</h2>
+          <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+        </div>
+
+        <div className="rounded-lg bg-white shadow p-6">
+          <h2 className="text-lg font-semibold">Produtos Ativos</h2>
+          <p className="text-3xl font-bold mt-2">{activeProducts}</p>
+        </div>
+
+        <div className="rounded-lg bg-white shadow p-6">
+          <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
+          <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <p className="text-gray-600">
+          Bem-vindo ao painel administrativo. Aqui você pode gerenciar produtos,
+          categorias, usuários e acompanhar estatísticas do sistema.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminProductsPage.tsx
+
+```tsx
+// src/pages/admin/AdminProductsPage.tsx
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useProducts } from "../contexts/useProducts";
+
+export function AdminProductsPage() {
+  const { products, fetchProducts, loading, error } = useProducts();
+
+  useEffect(() => {
+    void fetchProducts();
+  }, [fetchProducts]);
+
+  if (loading) return <p>Carregando produtos...</p>;
+  if (error) return <p>Erro: {error}</p>;
+
+  return (
+    <section className="p-6">
+      <header className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
+        <Link
+          to="/admin/products/new"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          + Cadastrar Produto
+        </Link>
+      </header>
+
+      <table className="w-full border-collapse border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border px-3 py-2">Título</th>
+            <th className="border px-3 py-2">Preço</th>
+            <th className="border px-3 py-2">Disponível</th>
+            <th className="border px-3 py-2">Ativo</th>
+            <th className="border px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((p) => (
+            <tr key={p.id}>
+              <td className="border px-3 py-2">{p.title}</td>
+              <td className="border px-3 py-2">
+                {p.price.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: p.currency,
+                })}
+              </td>
+              <td className="border px-3 py-2">
+                {p.available ? "Sim" : "Não"}
+              </td>
+              <td className="border px-3 py-2">{p.active ? "Sim" : "Não"}</td>
+              <td className="border px-3 py-2">
+                <Link
+                  to={`/admin/products/${p.id}/edit`}
+                  className="text-blue-600 hover:underline mr-3"
+                >
+                  Editar
+                </Link>
+                <Link
+                  to={`/admin/products/${p.id}/status`}
+                  className="text-green-600 hover:underline"
+                >
+                  Status
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   );
 }
@@ -2847,14 +3017,14 @@ export function HowItWorksPage() {
 ## src\pages\LoginPage.tsx
 
 ```tsx
+// src/pages/LoginPage.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../contexts/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading } = useAuth(); // agora pegamos também o user
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -2865,8 +3035,13 @@ export function LoginPage() {
     setError("");
 
     try {
-      await signIn(email, password);
-      navigate("/", { replace: true });
+      const loggedUser = await signIn(email, password);
+
+      if (loggedUser?.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -3099,6 +3274,7 @@ export function PrivacyPolicyPage() {
 
 ```tsx
 import { useEffect, useState } from "react";
+
 import { Link, useParams } from "react-router-dom";
 
 import type { Product } from "../contexts/ProductsContext";
@@ -3212,7 +3388,7 @@ export function ProductPage() {
 
           {product.shortDescription && (
             <p className="mt-5 text-sm leading-6 text-[#52657c]">
-              {product.shortDescription}
+              {product.description}
             </p>
           )}
 
@@ -3833,6 +4009,32 @@ export function TermsOfUsePage() {
 
 ```
 
+## src\routes\adminRoutes.tsx
+
+```tsx
+import type { RouteObject } from "react-router-dom";
+import { AdminLayout } from "../components/AdminLayout";
+import AdminDashboardPage from "../pages/AdminDashboarPage";
+import { AdminProductsPage } from "../pages/AdminProductsPage";
+import PrivateRoute from "./PrivateRoute";
+
+export const adminRoutes: RouteObject[] = [
+  {
+    path: "admin",
+    element: (
+      <PrivateRoute>
+        <AdminLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      { path: "dashboard", element: <AdminDashboardPage /> },
+      { path: "products", element: <AdminProductsPage /> },
+    ],
+  },
+];
+
+```
+
 ## src\routes\authRoutes.tsx
 
 ```tsx
@@ -3876,12 +4078,14 @@ export const homeRoutes: RouteObject[] = [
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
+import { adminRoutes } from "./adminRoutes";
 import { authRoutes } from "./authRoutes";
 import { homeRoutes } from "./homeRoutes";
 import { institutionalRoutes } from "./institutionalRoutes";
 import { productRoutes } from "./productRoutes";
 
 const routes: RouteObject[] = [
+  // Rotas públicas
   {
     element: <AppLayout />,
     children: [
@@ -3892,6 +4096,9 @@ const routes: RouteObject[] = [
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },
+
+  // Rotas administrativas (layout separado)
+  ...adminRoutes,
 ];
 
 export function AppRoutes() {
@@ -3921,6 +4128,35 @@ export const institutionalRoutes: RouteObject[] = [
   },
   { path: "termos-de-uso", element: <TermsOfUsePage /> },
 ];
+
+```
+
+## src\routes\PrivateRoute.tsx
+
+```tsx
+// src/routes/PrivateRoute.tsx
+
+import type { JSX } from "react/jsx-runtime";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth"; // supondo que você já tenha AuthContext
+
+export default function PrivateRoute({ children }: { children: JSX.Element }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <p>Verificando credenciais...</p>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
 
 ```
 
@@ -3971,6 +4207,18 @@ export type AffiliateProduct = {
   marketplace: Marketplace;
   affiliateUrl: string;
   category?: string;
+};
+
+```
+
+## src\types\User.ts
+
+```ts
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "customer";
 };
 
 ```
@@ -4327,6 +4575,26 @@ export function App() {
 
 ```
 
+## src\components\AdminLayout\index.tsx
+
+```tsx
+// src/components/AdminLayout.tsx
+import { Outlet } from "react-router-dom";
+import { HeaderAdmin } from "../HeaderAdmin";
+
+export function AdminLayout() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <HeaderAdmin />
+      <main className="flex-1 p-6 bg-gray-50">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+```
+
 ## src\components\AppLayout\index.tsx
 
 ```tsx
@@ -5006,6 +5274,43 @@ export function Header() {
 
 ```
 
+## src\components\HeaderAdmin\index.tsx
+
+```tsx
+// src/components/HeaderAdmin.tsx
+import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
+
+export function HeaderAdmin() {
+  const { user, signOut } = useAuth();
+
+  return (
+    <header className="w-full bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
+      <h1 className="text-lg font-bold">Painel Administrativo</h1>
+
+      <nav className="flex gap-4">
+        <Link to="/admin/products" className="hover:text-blue-300">
+          Produtos
+        </Link>
+        {/* outros links administrativos */}
+      </nav>
+
+      <div className="flex items-center gap-3">
+        <span className="text-sm">Olá, {user?.name}</span>
+        <button
+          type="button"
+          onClick={signOut}
+          className="bg-red-600 px-3 py-1 rounded text-sm hover:bg-red-500"
+        >
+          Sair
+        </button>
+      </div>
+    </header>
+  );
+}
+
+```
+
 ## src\components\Icon\iconVariants.ts
 
 ```ts
@@ -5138,8 +5443,8 @@ export function Logo({ location = "header" }: LogoProps) {
         className="h-14 w-14 md:h-16 md:w-16"
       />
       <div className="flex flex-col justify-center">
-        <div className={`flex flex-col ${mix360}`}>
-          <span className={`${worldColor} text-2xl font-bold md:text-3xl`}>
+        <div className={`flex flex-col ${mix360}`} translate="no">
+          <span className={`${worldColor} text-2xl font-bold md:text-3xl `}>
             WORLD
           </span>
           <div className="flex gap-1">
@@ -5598,114 +5903,55 @@ export function SocialBanner() {
 ## src\contexts\AuthContext.ts
 
 ```ts
+// src/contexts/AuthContext.ts
 import { createContext } from "react";
+import type { User } from "../types/User";
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: "customer" | "admin" | "sale";
-};
-
-export type AuthContextValue = {
+export type AuthContextType = {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User>;
   signOut: () => void;
 };
 
-export const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined,
-);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 ```
 
 ## src\contexts\AuthProvider.tsx
 
 ```tsx
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+// src/contexts/AuthProvider.tsx
+import { useState } from "react";
+import type { User } from "../types/User";
+import { AuthContext } from "./AuthContext";
 
-import { AuthContext, type User } from "./AuthContext";
-
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-
-const TOKEN_KEY = "@worldmix360:token";
-const USER_KEY = "@worldmix360:user";
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem(TOKEN_KEY);
-  });
-
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem(USER_KEY);
-
-    if (!storedUser) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(storedUser);
-    } catch {
-      localStorage.removeItem(USER_KEY);
-      return null;
-    }
-  });
-
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  async function signIn(email: string, password: string): Promise<User> {
     setIsLoading(true);
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    setUser(data.user);
+    setIsLoading(false);
+    return data.user;
+  }
 
-    try {
-      const response = await fetch(`${apiUrl}/session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message ?? "Não foi possível realizar o login.");
-      }
-
-      localStorage.setItem(TOKEN_KEY, data.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-
-      setToken(data.token);
-      setUser(data.user);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const signOut = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-
-    setToken(null);
+  function signOut() {
     setUser(null);
-  }, []);
+  }
 
-  const value = useMemo(
-    () => ({
-      user,
-      token,
-      isLoading,
-      signIn,
-      signOut,
-    }),
-    [user, token, isLoading, signIn, signOut],
+  return (
+    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 ```
@@ -5880,81 +6126,117 @@ export const ProductsContext = createContext<ProductsContextValue | undefined>(
 
 ```tsx
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-
 import { type Product, ProductsContext } from "./ProductsContext";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-
-type ProductsResponse = {
-  products?: Product[];
-};
 
 export function ProductsProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Listagem
   const fetchProducts = useCallback(async (category?: string) => {
     setLoading(true);
     setError(null);
-
     try {
       const params = new URLSearchParams();
+      if (category) params.set("category", category);
 
-      if (category) {
-        params.set("category", category);
-      }
-
-      const queryString = params.toString();
-
-      const response = await fetch(
-        `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
-      );
-
-      const data = (await response.json()) as ProductsResponse;
-
-      if (!response.ok) {
+      const response = await fetch(`${apiUrl}/products?${params.toString()}`);
+      const data = await response.json();
+      if (!response.ok)
         throw new Error("Não foi possível carregar os produtos.");
-      }
-
       setProducts(data.products ?? []);
-    } catch (requestError) {
-      console.error(requestError);
-
-      setProducts([]);
+    } catch (err) {
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Não foi possível carregar os produtos.",
+        err instanceof Error ? err.message : "Erro ao carregar produtos.",
       );
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Detalhe
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
       try {
         const response = await fetch(
           `${apiUrl}/products/${encodeURIComponent(slug)}`,
         );
-
-        if (response.status === 404) {
-          return null;
-        }
-
-        const data = (await response.json()) as { product: Product };
-
-        if (!response.ok) {
+        if (response.status === 404) return null;
+        const data = await response.json();
+        if (!response.ok)
           throw new Error("Não foi possível carregar o produto.");
-        }
-
         return data.product;
-      } catch (requestError) {
-        console.error(requestError);
-
+      } catch {
         return null;
       }
+    },
+    [],
+  );
+
+  // Criar
+  const createProduct = useCallback(
+    async (productData: Partial<Product>, token: string) => {
+      const response = await fetch(`${apiUrl}/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // exige autenticação admin
+        },
+        body: JSON.stringify(productData),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Erro ao criar produto");
+      setProducts((prev) => [...prev, data.product]);
+      return data.product;
+    },
+    [],
+  );
+
+  // Atualizar
+  const updateProduct = useCallback(
+    async (id: string, productData: Partial<Product>, token: string) => {
+      const response = await fetch(`${apiUrl}/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(productData),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Erro ao atualizar produto");
+      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      return data.product;
+    },
+    [],
+  );
+
+  // Atualizar status
+  const updateProductStatus = useCallback(
+    async (
+      id: string,
+      statusData: { active?: boolean; available?: boolean; featured?: boolean },
+      token: string,
+    ) => {
+      const response = await fetch(`${apiUrl}/products/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(statusData),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.message || "Erro ao atualizar status");
+      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      return data.product;
     },
     [],
   );
@@ -5966,8 +6248,20 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       error,
       fetchProducts,
       getProductBySlug,
+      createProduct,
+      updateProduct,
+      updateProductStatus,
     }),
-    [products, loading, error, fetchProducts, getProductBySlug],
+    [
+      products,
+      loading,
+      error,
+      fetchProducts,
+      getProductBySlug,
+      createProduct,
+      updateProduct,
+      updateProductStatus,
+    ],
   );
 
   return (
@@ -6284,6 +6578,130 @@ export function AboutPage() {
           ))}
         </div>
       </div>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminDashboarPage.tsx
+
+```tsx
+// src/pages/admin/AdminDashboardPage.tsx
+import { useProducts } from "../contexts/useProducts";
+
+export default function AdminDashboardPage() {
+  const { products } = useProducts();
+
+  const totalProducts = products.length;
+  const activeProducts = products.filter((p) => p.active).length;
+  const featuredProducts = products.filter((p) => p.featured).length;
+
+  return (
+    <section className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Dashboard Administrativo</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="rounded-lg bg-white shadow p-6">
+          <h2 className="text-lg font-semibold">Total de Produtos</h2>
+          <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+        </div>
+
+        <div className="rounded-lg bg-white shadow p-6">
+          <h2 className="text-lg font-semibold">Produtos Ativos</h2>
+          <p className="text-3xl font-bold mt-2">{activeProducts}</p>
+        </div>
+
+        <div className="rounded-lg bg-white shadow p-6">
+          <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
+          <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <p className="text-gray-600">
+          Bem-vindo ao painel administrativo. Aqui você pode gerenciar produtos,
+          categorias, usuários e acompanhar estatísticas do sistema.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminProductsPage.tsx
+
+```tsx
+// src/pages/admin/AdminProductsPage.tsx
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useProducts } from "../contexts/useProducts";
+
+export function AdminProductsPage() {
+  const { products, fetchProducts, loading, error } = useProducts();
+
+  useEffect(() => {
+    void fetchProducts();
+  }, [fetchProducts]);
+
+  if (loading) return <p>Carregando produtos...</p>;
+  if (error) return <p>Erro: {error}</p>;
+
+  return (
+    <section className="p-6">
+      <header className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
+        <Link
+          to="/admin/products/new"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          + Cadastrar Produto
+        </Link>
+      </header>
+
+      <table className="w-full border-collapse border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border px-3 py-2">Título</th>
+            <th className="border px-3 py-2">Preço</th>
+            <th className="border px-3 py-2">Disponível</th>
+            <th className="border px-3 py-2">Ativo</th>
+            <th className="border px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((p) => (
+            <tr key={p.id}>
+              <td className="border px-3 py-2">{p.title}</td>
+              <td className="border px-3 py-2">
+                {p.price.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: p.currency,
+                })}
+              </td>
+              <td className="border px-3 py-2">
+                {p.available ? "Sim" : "Não"}
+              </td>
+              <td className="border px-3 py-2">{p.active ? "Sim" : "Não"}</td>
+              <td className="border px-3 py-2">
+                <Link
+                  to={`/admin/products/${p.id}/edit`}
+                  className="text-blue-600 hover:underline mr-3"
+                >
+                  Editar
+                </Link>
+                <Link
+                  to={`/admin/products/${p.id}/status`}
+                  className="text-green-600 hover:underline"
+                >
+                  Status
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   );
 }
@@ -7070,14 +7488,14 @@ export function HowItWorksPage() {
 ## src\pages\LoginPage.tsx
 
 ```tsx
+// src/pages/LoginPage.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../contexts/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading } = useAuth(); // agora pegamos também o user
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -7088,8 +7506,13 @@ export function LoginPage() {
     setError("");
 
     try {
-      await signIn(email, password);
-      navigate("/", { replace: true });
+      const loggedUser = await signIn(email, password);
+
+      if (loggedUser?.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -7322,6 +7745,7 @@ export function PrivacyPolicyPage() {
 
 ```tsx
 import { useEffect, useState } from "react";
+
 import { Link, useParams } from "react-router-dom";
 
 import type { Product } from "../contexts/ProductsContext";
@@ -7435,7 +7859,7 @@ export function ProductPage() {
 
           {product.shortDescription && (
             <p className="mt-5 text-sm leading-6 text-[#52657c]">
-              {product.shortDescription}
+              {product.description}
             </p>
           )}
 
@@ -8056,6 +8480,32 @@ export function TermsOfUsePage() {
 
 ```
 
+## src\routes\adminRoutes.tsx
+
+```tsx
+import type { RouteObject } from "react-router-dom";
+import { AdminLayout } from "../components/AdminLayout";
+import AdminDashboardPage from "../pages/AdminDashboarPage";
+import { AdminProductsPage } from "../pages/AdminProductsPage";
+import PrivateRoute from "./PrivateRoute";
+
+export const adminRoutes: RouteObject[] = [
+  {
+    path: "admin",
+    element: (
+      <PrivateRoute>
+        <AdminLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      { path: "dashboard", element: <AdminDashboardPage /> },
+      { path: "products", element: <AdminProductsPage /> },
+    ],
+  },
+];
+
+```
+
 ## src\routes\authRoutes.tsx
 
 ```tsx
@@ -8099,12 +8549,14 @@ export const homeRoutes: RouteObject[] = [
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
+import { adminRoutes } from "./adminRoutes";
 import { authRoutes } from "./authRoutes";
 import { homeRoutes } from "./homeRoutes";
 import { institutionalRoutes } from "./institutionalRoutes";
 import { productRoutes } from "./productRoutes";
 
 const routes: RouteObject[] = [
+  // Rotas públicas
   {
     element: <AppLayout />,
     children: [
@@ -8115,6 +8567,9 @@ const routes: RouteObject[] = [
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },
+
+  // Rotas administrativas (layout separado)
+  ...adminRoutes,
 ];
 
 export function AppRoutes() {
@@ -8144,6 +8599,35 @@ export const institutionalRoutes: RouteObject[] = [
   },
   { path: "termos-de-uso", element: <TermsOfUsePage /> },
 ];
+
+```
+
+## src\routes\PrivateRoute.tsx
+
+```tsx
+// src/routes/PrivateRoute.tsx
+
+import type { JSX } from "react/jsx-runtime";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth"; // supondo que você já tenha AuthContext
+
+export default function PrivateRoute({ children }: { children: JSX.Element }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <p>Verificando credenciais...</p>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
 
 ```
 
@@ -8194,6 +8678,18 @@ export type AffiliateProduct = {
   marketplace: Marketplace;
   affiliateUrl: string;
   category?: string;
+};
+
+```
+
+## src\types\User.ts
+
+```ts
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "customer";
 };
 
 ```
