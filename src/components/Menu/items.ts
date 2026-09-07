@@ -9,18 +9,60 @@ import {
   FiTool,
 } from "react-icons/fi";
 
-export type MenuItem = {
+export type MenuCategory = {
   label: string;
   icon: IconType;
   href: string;
+  slug: string;
 };
 
-export const menuItems: MenuItem[] = [
-  { label: "Tecnologia", icon: FiMonitor, href: "/tecnologia" },
-  { label: "Casa & Utilidades", icon: FiTool, href: "/casa-utilidades" },
-  { label: "Moda", icon: FiShoppingBag, href: "/moda" },
-  { label: "Pets", icon: FiHeart, href: "/pets" },
-  { label: "Produtos Digitais", icon: FiGrid, href: "/produtos-digitais" },
-  { label: "Ofertas", icon: FiTag, href: "/ofertas" },
-  { label: "Blog", icon: FiBookOpen, href: "/blog" },
-];
+export type MenuItem = MenuCategory & {
+  subcategories: Array<{
+    id: string;
+    label: string;
+    href: string;
+  }>;
+};
+
+/**
+ * Ícone padrão para categorias.
+ *
+ * O slug é usado para manter os ícones atuais
+ * mesmo com as categorias vindo da API.
+ */
+export function getCategoryIcon(slug: string): IconType {
+  const normalizedSlug = slug.toLowerCase();
+
+  if (normalizedSlug.includes("tecnologia")) {
+    return FiMonitor;
+  }
+
+  if (normalizedSlug.includes("casa") || normalizedSlug.includes("utilidade")) {
+    return FiTool;
+  }
+
+  if (normalizedSlug.includes("moda")) {
+    return FiShoppingBag;
+  }
+
+  if (normalizedSlug.includes("pet")) {
+    return FiHeart;
+  }
+
+  if (
+    normalizedSlug.includes("digital") ||
+    normalizedSlug.includes("produto-digital")
+  ) {
+    return FiGrid;
+  }
+
+  if (normalizedSlug.includes("oferta")) {
+    return FiTag;
+  }
+
+  if (normalizedSlug.includes("blog")) {
+    return FiBookOpen;
+  }
+
+  return FiGrid;
+}

@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+
 import { useAuth } from "../../contexts/useAuth";
+
 import { Icon } from "../Icon";
 import { InputText } from "../InputText";
 import { Logo } from "../Logo";
 import { Menu } from "../Menu";
-import { menuItems } from "../Menu/items";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -18,6 +20,11 @@ export function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  /*
+   * ============================================================
+   * FECHAR PESQUISA AO CLICAR FORA
+   * ============================================================
+   */
   useEffect(() => {
     if (!isSearchOpen) return;
 
@@ -37,6 +44,11 @@ export function Header() {
     };
   }, [isSearchOpen]);
 
+  /*
+   * ============================================================
+   * FECHAR MENU MOBILE AO CLICAR FORA
+   * ============================================================
+   */
   useEffect(() => {
     if (!isMenuOpen) return;
 
@@ -56,7 +68,15 @@ export function Header() {
   return (
     <div className="w-full border-b-2 border-blue/20">
       <header className="relative mx-auto w-full px-6 py-10 md:max-w-[1200px] md:py-5">
+        {/* ======================================================
+            HEADER PRINCIPAL
+        ====================================================== */}
+
         <div className="flex items-center justify-between md:min-h-[60px] md:gap-6">
+          {/* ====================================================
+              BOTÃO MENU MOBILE
+          ==================================================== */}
+
           <button
             type="button"
             aria-label="Abrir menu"
@@ -70,6 +90,10 @@ export function Header() {
             <Icon svg={MenuIcon} size="md" />
           </button>
 
+          {/* ====================================================
+              LOGO
+          ==================================================== */}
+
           <Link
             to="/"
             className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:flex md:items-center"
@@ -78,6 +102,10 @@ export function Header() {
           >
             <Logo />
           </Link>
+
+          {/* ====================================================
+              BOTÃO PESQUISA MOBILE
+          ==================================================== */}
 
           {!isSearchOpen && (
             <button
@@ -94,7 +122,13 @@ export function Header() {
             </button>
           )}
 
+          {/* ====================================================
+              ÁREA DESKTOP
+          ==================================================== */}
+
           <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
+            {/* Pesquisa */}
+
             <div className="w-full">
               <InputText
                 className="h-12 w-full min-w-0"
@@ -103,6 +137,10 @@ export function Header() {
                 icon={<Icon svg={SearchIcon} />}
               />
             </div>
+
+            {/* ==================================================
+                AUTENTICAÇÃO
+            ================================================== */}
 
             {user ? (
               <div className="flex shrink-0 items-center gap-3">
@@ -117,7 +155,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={signOut}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-navy transition bg-gray-100 hover:bg-gray-50"
+                  className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-navy transition hover:bg-gray-50"
                 >
                   Sair
                 </button>
@@ -133,9 +171,17 @@ export function Header() {
           </div>
         </div>
 
+        {/* ======================================================
+            MENU DESKTOP
+        ====================================================== */}
+
         <div className="mt-3 hidden md:block">
           <Menu variant="header" />
         </div>
+
+        {/* ======================================================
+            PESQUISA MOBILE
+        ====================================================== */}
 
         {isSearchOpen && (
           <div
@@ -162,12 +208,20 @@ export function Header() {
           </div>
         )}
 
+        {/* ======================================================
+            MENU MOBILE
+        ====================================================== */}
+
         {isMenuOpen && (
           <div className="fixed inset-0 z-40 bg-[#071a2f]/60 md:hidden">
             <div
               ref={menuRef}
-              className="h-full w-[85%] max-w-[360px] bg-[#071a2f] px-5 py-6 text-white"
+              className="h-full w-[85%] max-w-[360px] overflow-y-auto bg-[#071a2f] px-5 py-6 text-white"
             >
+              {/* ==================================================
+                  CABEÇALHO DO MENU MOBILE
+              ================================================== */}
+
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
@@ -176,6 +230,7 @@ export function Header() {
 
                   <div>
                     <p className="text-xl font-bold leading-none">WORLD</p>
+
                     <p className="text-lg font-bold leading-none">MIX 360</p>
                   </div>
                 </div>
@@ -190,15 +245,23 @@ export function Header() {
                 </button>
               </div>
 
+              {/* ==================================================
+                  PESQUISA MOBILE
+              ================================================== */}
+
               <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
                 <span className="text-lg">⌕</span>
 
                 <input
                   type="text"
                   placeholder="Buscar"
-                  className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
+                  className="w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/60"
                 />
               </div>
+
+              {/* ==================================================
+                  AUTENTICAÇÃO MOBILE
+              ================================================== */}
 
               <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
                 {user ? (
@@ -231,26 +294,17 @@ export function Header() {
                 )}
               </div>
 
-              <nav className="flex flex-col gap-2">
-                {menuItems.map(({ label, icon: Icon, href }) => (
-                  <Link
-                    key={label}
-                    to={href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-between rounded-lg px-3 py-3 text-left text-base font-medium text-white/90 transition hover:bg-white/5"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
-                        <Icon className="text-base" />
-                      </span>
+              {/* ==================================================
+                  MENU DINÂMICO
+                  
+                  Agora categorias e subcategorias vêm da API.
+              ================================================== */}
 
-                      {label}
-                    </span>
+              <Menu variant="mobile" onNavigate={() => setIsMenuOpen(false)} />
 
-                    {label !== "Blog" && <span className="text-lg">›</span>}
-                  </Link>
-                ))}
-              </nav>
+              {/* ==================================================
+                  LINKS INSTITUCIONAIS
+              ================================================== */}
 
               <div className="mt-8 border-t border-white/10 pt-5 text-sm text-white/70">
                 <Link

@@ -1,3 +1,4 @@
+/* src/routes/index.tsx */
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";

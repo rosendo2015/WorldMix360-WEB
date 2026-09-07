@@ -1,36 +1,64 @@
 import { useEffect } from "react";
 import {
   FiArrowUpRight,
+  FiBookOpen,
   FiCheckCircle,
+  FiGrid,
+  FiHeart,
   FiSearch,
   FiShield,
+  FiShoppingBag,
   FiStar,
+  FiTool,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Banner } from "../components/Banner";
 import { BlogBanner } from "../components/BlogBanner";
-import { menuItems } from "../components/Menu/items";
 
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
 import { SocialBanner } from "../components/SocialBanner";
+import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 
 export function HomePage() {
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
+
   const { products, loading, error, fetchProducts } = useProducts();
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
 
   useEffect(() => {
     void fetchProducts();
   }, [fetchProducts]);
 
+  const activeCategories = categories
+    .filter((category) => category.active)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const categoryIcons = {
+    tecnologia: FiGrid,
+    "casa-utilidades": FiTool,
+    moda: FiShoppingBag,
+    pets: FiHeart,
+    "produtos-digitais": FiGrid,
+  };
+
   return (
     <>
       <Banner />
 
-      {error && (
+      {(error || categoriesError) && (
         <div className="mx-auto max-w-[1200px] px-6 pb-2 pt-4 text-sm text-red-600">
-          {error}
+          {error ?? categoriesError}
         </div>
       )}
 
@@ -54,43 +82,77 @@ export function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
-          {menuItems.map(({ label, icon: Icon, href }) => (
+        {categoriesLoading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+            {[
+              "category-skeleton-1",
+              "category-skeleton-2",
+              "category-skeleton-3",
+              "category-skeleton-4",
+              "category-skeleton-5",
+              "category-skeleton-6",
+              "category-skeleton-7",
+            ].map((skeletonKey) => (
+              <div
+                key={skeletonKey}
+                className="aspect-square animate-pulse rounded-2xl border border-[#e7edf5] bg-[#f7f9fc]"
+              />
+            ))}
+          </div>
+        ) : activeCategories.length === 0 ? (
+          <div className="rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
+            Nenhuma categoria disponível no momento.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+            {activeCategories.map((category) => {
+              const Icon =
+                categoryIcons[category.slug as keyof typeof categoryIcons] ??
+                FiGrid;
+
+              return (
+                <Link
+                  key={category.id}
+                  to={`/categoria/${category.slug}`}
+                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
+                >
+                  <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-20 md:w-20">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Icon className="text-3xl md:text-4xl" />
+                    )}
+                  </span>
+
+                  <span className="text-sm font-semibold leading-5 text-[#071a2f]">
+                    {category.name}
+                  </span>
+                </Link>
+              );
+            })}
+
             <Link
-              key={label}
-              to={href}
-              className={`group flex aspect-square flex-col items-center justify-between rounded-2xl border p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] ${
-                label === "Blog"
-                  ? "border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)]"
-                  : "border-[#e7edf5] bg-white text-[#071a2f] hover:border-[#b9d6f4]"
-              }`}
+              to="/blog"
+              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-4 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1"
             >
-              <span
-                className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl ${
-                  label === "Blog"
-                    ? "bg-white/15 text-[#9ad7ff]"
-                    : "bg-[#edf5ff] text-[#1769e0] group-hover:bg-[#1769e0] group-hover:text-white"
-                }`}
-              >
-                <Icon />
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl text-[#9ad7ff] transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl">
+                <FiBookOpen />
               </span>
 
-              <span
-                className={`text-sm font-semibold leading-5 ${
-                  label === "Blog" ? "text-white" : "text-[#071a2f]"
-                }`}
-              >
-                {label}
+              <span className="text-sm font-semibold leading-5 text-white">
+                Blog
               </span>
 
-              {label === "Blog" && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
-                  Conteúdos
-                </span>
-              )}
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
+                Conteúdos
+              </span>
             </Link>
-          ))}
-        </div>
+          </div>
+        )}
       </section>
 
       <Session title="Ofertas em destaque">

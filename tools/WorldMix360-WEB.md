@@ -86,17 +86,26 @@ export default defineConfig([
 
 ```tsx
 import { AuthProvider } from "./contexts/AuthProvider";
+import { CategoriesProvider } from "./contexts/CategoriesProvider";
+import { MarketplacesProvider } from "./contexts/MarketplacesProvider";
 import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
 import { ProductsProvider } from "./contexts/ProductsProvider";
+import { SubcategoriesProvider } from "./contexts/SubcategoriesProvider";
 import { AppRoutes } from "./routes";
 
 export function App() {
   return (
     <AuthProvider>
       <MercadoLivreProvider>
-        <ProductsProvider>
-          <AppRoutes />
-        </ProductsProvider>
+        <CategoriesProvider>
+          <SubcategoriesProvider>
+            <MarketplacesProvider>
+              <ProductsProvider>
+                <AppRoutes />
+              </ProductsProvider>
+            </MarketplacesProvider>
+          </SubcategoriesProvider>
+        </CategoriesProvider>
       </MercadoLivreProvider>
     </AuthProvider>
   );
@@ -107,17 +116,76 @@ export function App() {
 ## src\components\AdminLayout\index.tsx
 
 ```tsx
-// src/components/AdminLayout.tsx
-import { Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
+
 import { HeaderAdmin } from "../HeaderAdmin";
+
+const menuItems = [
+  {
+    label: "Dashboard",
+    href: "/admin/dashboard",
+  },
+  {
+    label: "Produtos",
+    href: "/admin/products",
+  },
+  {
+    label: "Categorias",
+    href: "/admin/categories",
+  },
+  {
+    label: "Subcategorias",
+    href: "/admin/subcategories",
+  },
+  {
+    label: "Marketplaces",
+    href: "/admin/marketplaces",
+  },
+];
 
 export function AdminLayout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[#f7f9fc] text-[#071a2f]">
       <HeaderAdmin />
-      <main className="flex-1 p-6 bg-gray-50">
-        <Outlet />
-      </main>
+
+      <div className="flex min-h-[calc(100vh-72px)]">
+        <aside className="hidden w-64 shrink-0 border-r border-[#e7edf5] bg-white lg:block">
+          <div className="sticky top-0 p-4">
+            <div className="mb-5 px-3">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a9bb0]">
+                Administração
+              </p>
+
+              <p className="mt-1 text-sm text-[#52657c]">Gerencie o catálogo</p>
+            </div>
+
+            <nav className="space-y-1">
+              {menuItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    [
+                      "flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition",
+                      isActive
+                        ? "bg-[#edf5ff] text-[#1769e0]"
+                        : "text-[#52657c] hover:bg-[#f5f8fc] hover:text-[#071a2f]",
+                    ].join(" ")
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-[1400px]">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
@@ -806,35 +874,250 @@ export function Header() {
 ## src\components\HeaderAdmin\index.tsx
 
 ```tsx
-// src/components/HeaderAdmin.tsx
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 
 export function HeaderAdmin() {
   const { user, signOut } = useAuth();
+  const location = useLocation();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
+
+  const handleSignOut = () => {
+    closeMenu();
+    signOut();
+  };
 
   return (
-    <header className="w-full bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
-      <h1 className="text-lg font-bold">Painel Administrativo</h1>
-
-      <nav className="flex gap-4">
-        <Link to="/admin/products" className="hover:text-blue-300">
-          Produtos
+    <>
+      <header className="w-full bg-gray-900 text-white px-4 md:px-6 py-4 flex justify-between items-center">
+        {/* Logo / título */}
+        <Link
+          to="/admin/dashboard"
+          className="text-lg font-bold hover:text-blue-300 transition-colors"
+          onClick={closeMenu}
+        >
+          Painel Administrativo
         </Link>
-        {/* outros links administrativos */}
-      </nav>
 
-      <div className="flex items-center gap-3">
-        <span className="text-sm">Olá, {user?.name}</span>
+        {/* Menu desktop */}
+        <nav className="hidden md:flex items-center gap-5">
+          <Link
+            to="/admin/dashboard"
+            className={`transition-colors ${
+              isActive("/admin/dashboard")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            }  md:hidden`}
+          >
+            Dashboard
+          </Link>
+
+          <Link
+            to="/admin/products"
+            className={`transition-colors ${
+              isActive("/admin/products")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Produtos
+          </Link>
+
+          <Link
+            to="/admin/categories"
+            className={`transition-colors ${
+              isActive("/admin/categories")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Categorias
+          </Link>
+
+          <Link
+            to="/admin/subcategories"
+            className={`transition-colors ${
+              isActive("/admin/subcategories")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Subcategorias
+          </Link>
+
+          <Link
+            to="/admin/marketplaces"
+            className={`transition-colors ${
+              isActive("/admin/marketplaces")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Marketplaces
+          </Link>
+
+          <span className="text-sm text-gray-300">Olá, {user?.name}</span>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="bg-danger px-3 py-1.5 rounded text-sm hover:bg-red-500 transition-colors"
+          >
+            Sair
+          </button>
+        </nav>
+
+        {/* Área mobile */}
+        <div className="flex md:hidden items-center gap-3">
+          <span className="text-sm text-gray-300 max-w-24 truncate">
+            {user?.name}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((current) => !current)}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            className="w-10 h-10 flex flex-col justify-center items-center gap-1.5 rounded hover:bg-gray-800 transition-colors"
+          >
+            <span
+              className={`block w-6 h-0.5 bg-white transition-transform ${
+                menuOpen ? "translate-y-2 rotate-45" : ""
+              }`}
+            />
+
+            <span
+              className={`block w-6 h-0.5 bg-white transition-opacity ${
+                menuOpen ? "opacity-0" : "opacity-100"
+              }`}
+            />
+
+            <span
+              className={`block w-6 h-0.5 bg-white transition-transform ${
+                menuOpen ? "-translate-y-2 -rotate-45" : ""
+              }`}
+            />
+          </button>
+        </div>
+      </header>
+
+      {/* Overlay mobile */}
+      {menuOpen && (
         <button
           type="button"
-          onClick={signOut}
-          className="bg-red-600 px-3 py-1 rounded text-sm hover:bg-red-500"
-        >
-          Sair
-        </button>
-      </div>
-    </header>
+          aria-label="Fechar menu"
+          onClick={closeMenu}
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+        />
+      )}
+
+      {/* Menu lateral mobile */}
+      <aside
+        className={`fixed top-0 right-0 z-50 h-full w-72 max-w-[85vw] bg-gray-900 text-white shadow-2xl transform transition-transform duration-300 md:hidden ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-5 py-5 border-b border-gray-700">
+          <div>
+            <p className="font-bold">WorldMix360</p>
+            <p className="text-sm text-gray-400">Painel Administrativo</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={closeMenu}
+            aria-label="Fechar menu"
+            className="text-gray-300 hover:text-white text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-4 py-5">
+          <p className="text-sm text-gray-400 mb-4">Olá, {user?.name}</p>
+
+          <nav className="flex flex-col gap-2">
+            <Link
+              to="/admin/dashboard"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/dashboard")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              to="/admin/products"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/products")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Produtos
+            </Link>
+
+            <Link
+              to="/admin/categories"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/categories")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Categorias
+            </Link>
+
+            <Link
+              to="/admin/subcategories"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/subcategories")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Subcategorias
+            </Link>
+
+            <Link
+              to="/admin/marketplaces"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/marketplaces")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Marketplaces
+            </Link>
+          </nav>
+
+          <div className="border-t border-gray-700 mt-6 pt-6">
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="w-full bg-red-600 px-4 py-3 rounded-lg text-sm font-medium hover:bg-red-500 transition-colors"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -1432,12 +1715,12 @@ export function SocialBanner() {
 ## src\contexts\AuthContext.ts
 
 ```ts
-// src/contexts/AuthContext.ts
 import { createContext } from "react";
 import type { User } from "../types/User";
 
 export type AuthContextType = {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<User>;
   signOut: () => void;
@@ -1450,36 +1733,644 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 ## src\contexts\AuthProvider.tsx
 
 ```tsx
-// src/contexts/AuthProvider.tsx
-import { useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import type { User } from "../types/User";
 import { AuthContext } from "./AuthContext";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+const USER_STORAGE_KEY = "@worldmix360:user";
+const TOKEN_STORAGE_KEY = "@worldmix360:token";
+
+type LoginResponse = {
+  token: string;
+  user: User;
+};
+
+/**
+ * Recupera o usuário salvo no navegador.
+ */
+function getStoredUser(): User | null {
+  try {
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    return JSON.parse(storedUser) as User;
+  } catch {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+}
+
+/**
+ * Recupera o token salvo no navegador.
+ */
+function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  /**
+   * O estado inicial já é carregado do localStorage.
+   *
+   * Dessa forma não precisamos de um useEffect para executar
+   * setUser() e setToken() depois da montagem do componente.
+   */
+  const [user, setUser] = useState<User | null>(() => getStoredUser());
+
+  const [token, setToken] = useState<string | null>(() => getStoredToken());
+
   const [isLoading, setIsLoading] = useState(false);
 
-  async function signIn(email: string, password: string): Promise<User> {
-    setIsLoading(true);
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    setUser(data.user);
-    setIsLoading(false);
-    return data.user;
-  }
+  /**
+   * Realiza o login.
+   */
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<User> => {
+      setIsLoading(true);
 
-  function signOut() {
+      try {
+        const response = await fetch(`${apiUrl}/session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        let data: Partial<LoginResponse> & {
+          message?: string;
+          error?: string;
+        };
+
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Resposta inválida do servidor.");
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || data.error || "Email ou senha inválidos.",
+          );
+        }
+
+        if (!data.token || !data.user) {
+          throw new Error("Resposta de autenticação inválida.");
+        }
+
+        /**
+         * Persiste a sessão.
+         */
+        localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+
+        /**
+         * Atualiza o estado da aplicação.
+         */
+        setToken(data.token);
+        setUser(data.user);
+
+        return data.user;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  /**
+   * Encerra a sessão.
+   */
+  const signOut = useCallback(() => {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+
     setUser(null);
-  }
+    setToken(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      signIn,
+      signOut,
+    }),
+    [user, token, isLoading, signIn, signOut],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+```
+
+## src\contexts\CategoriesContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+  subcategories?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+};
+
+export type CategoryFormData = {
+  name: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type CategoriesContextValue = {
+  categories: Category[];
+  loading: boolean;
+  error: string | null;
+
+  fetchCategories: () => Promise<void>;
+  getCategoryById: (id: string) => Promise<Category | null>;
+
+  createCategory: (data: CategoryFormData, token: string) => Promise<Category>;
+
+  updateCategory: (
+    id: string,
+    data: Partial<CategoryFormData>,
+    token: string,
+  ) => Promise<Category>;
+
+  deleteCategory: (id: string, token: string) => Promise<void>;
+};
+
+export const CategoriesContext = createContext<
+  CategoriesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\CategoriesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type { Category, CategoryFormData } from "./CategoriesContext";
+
+import { CategoriesContext } from "./CategoriesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function CategoriesProvider({ children }: { children: ReactNode }) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/categories`);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar as categorias.",
+        );
+      }
+
+      setCategories(Array.isArray(data) ? data : (data.categories ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar categorias.",
+      );
+
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getCategoryById = useCallback(
+    async (id: string): Promise<Category | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/categories/${encodeURIComponent(id)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a categoria.",
+          );
+        }
+
+        return data.category ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const createCategory = useCallback(
+    async (
+      categoryData: CategoryFormData,
+      token: string,
+    ): Promise<Category> => {
+      const response = await fetch(`${apiUrl}/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar categoria.");
+      }
+
+      const category = data.category ?? data;
+
+      setCategories((previous) => [...previous, category]);
+
+      return category;
+    },
+    [],
+  );
+
+  const updateCategory = useCallback(
+    async (
+      id: string,
+      categoryData: Partial<CategoryFormData>,
+      token: string,
+    ): Promise<Category> => {
+      const response = await fetch(`${apiUrl}/categories/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar categoria.");
+      }
+
+      const category = data.category ?? data;
+
+      setCategories((previous) =>
+        previous.map((item) => (item.id === id ? category : item)),
+      );
+
+      return category;
+    },
+    [],
+  );
+
+  const deleteCategory = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/categories/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir categoria.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setCategories((previous) =>
+        previous.filter((category) => category.id !== id),
+      );
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    }),
+    [
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    ],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+    <CategoriesContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </CategoriesContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\MarketplacesContext.tsx
+
+```tsx
+import { createContext } from "react";
+export type Marketplace = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  websiteUrl?: string | null;
+  logoUrl?: string | null;
+  active: boolean;
+  sortOrder: number;
+  products?: Array<{ id: string; name: string; slug: string }>;
+};
+export type MarketplaceFormData = {
+  name: string;
+  description?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+export type MarketplaceUpdateData = {
+  name?: string;
+  description?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+export type MarketplacesContextValue = {
+  marketplaces: Marketplace[];
+  loading: boolean;
+  error: string | null;
+  fetchMarketplaces: () => Promise<void>;
+  getMarketplaceById: (id: string) => Promise<Marketplace | null>;
+  createMarketplace: (
+    data: MarketplaceFormData,
+    token: string,
+  ) => Promise<Marketplace>;
+  updateMarketplace: (
+    id: string,
+    data: MarketplaceUpdateData,
+    token: string,
+  ) => Promise<Marketplace>;
+  deleteMarketplace: (id: string, token: string) => Promise<void>;
+};
+export const MarketplacesContext = createContext<
+  MarketplacesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\MarketplacesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import {
+  type Marketplace,
+  type MarketplaceFormData,
+  MarketplacesContext,
+  type MarketplaceUpdateData,
+} from "./MarketplacesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function MarketplacesProvider({ children }: { children: ReactNode }) {
+  const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMarketplaces = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/marketplaces`);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar os marketplaces.",
+        );
+      }
+
+      setMarketplaces(Array.isArray(data) ? data : (data.marketplaces ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar marketplaces.",
+      );
+
+      setMarketplaces([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getMarketplaceById = useCallback(
+    async (id: string): Promise<Marketplace | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/marketplaces/${encodeURIComponent(id)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar o marketplace.",
+          );
+        }
+
+        return data.marketplace ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const createMarketplace = useCallback(
+    async (
+      marketplaceData: MarketplaceFormData,
+      token: string,
+    ): Promise<Marketplace> => {
+      const response = await fetch(`${apiUrl}/marketplaces`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(marketplaceData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar marketplace.");
+      }
+
+      const marketplace = data.marketplace ?? data;
+
+      setMarketplaces((previous) => [...previous, marketplace]);
+
+      return marketplace;
+    },
+    [],
+  );
+
+  const updateMarketplace = useCallback(
+    async (
+      id: string,
+      marketplaceData: MarketplaceUpdateData,
+      token: string,
+    ): Promise<Marketplace> => {
+      const response = await fetch(`${apiUrl}/marketplaces/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(marketplaceData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar marketplace.");
+      }
+
+      const marketplace = data.marketplace ?? data;
+
+      setMarketplaces((previous) =>
+        previous.map((item) => (item.id === id ? marketplace : item)),
+      );
+
+      return marketplace;
+    },
+    [],
+  );
+
+  const deleteMarketplace = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/marketplaces/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir marketplace.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setMarketplaces((previous) => previous.filter((item) => item.id !== id));
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      marketplaces,
+      loading,
+      error,
+      fetchMarketplaces,
+      getMarketplaceById,
+      createMarketplace,
+      updateMarketplace,
+      deleteMarketplace,
+    }),
+    [
+      marketplaces,
+      loading,
+      error,
+      fetchMarketplaces,
+      getMarketplaceById,
+      createMarketplace,
+      updateMarketplace,
+      deleteMarketplace,
+    ],
+  );
+
+  return (
+    <MarketplacesContext.Provider value={value}>
+      {children}
+    </MarketplacesContext.Provider>
   );
 }
 
@@ -1628,11 +2519,79 @@ export type Product = {
 
   affiliateUrl: string;
 
+  subcategoryId?: string;
+  marketplaceId?: string;
+
   category?: string | null;
 
   available: boolean;
   featured: boolean;
   active: boolean;
+
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
+
+export type ProductFormData = {
+  title: string;
+  description?: string;
+  shortDescription?: string;
+
+  imageUrl: string;
+
+  price: number;
+  originalPrice?: number;
+
+  currency?: string;
+
+  rating?: number;
+  reviewsCount?: number;
+
+  affiliateUrl: string;
+
+  subcategoryId: string;
+  marketplaceId: string;
+
+  featured?: boolean;
+  available?: boolean;
+  active?: boolean;
+
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+export type ProductUpdateData = {
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+
+  imageUrl?: string;
+
+  price?: number;
+  originalPrice?: number;
+
+  currency?: string;
+
+  rating?: number;
+  reviewsCount?: number;
+
+  affiliateUrl?: string;
+
+  subcategoryId?: string;
+  marketplaceId?: string;
+
+  featured?: boolean;
+  available?: boolean;
+  active?: boolean;
+
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+export type ProductStatusData = {
+  active?: boolean;
+  available?: boolean;
+  featured?: boolean;
 };
 
 export type ProductsContextValue = {
@@ -1642,7 +2601,35 @@ export type ProductsContextValue = {
 
   fetchProducts: (category?: string) => Promise<void>;
 
+  fetchAdminProducts: (
+    token: string,
+    filters?: {
+      search?: string;
+      subcategoryId?: string;
+      marketplaceId?: string;
+      featured?: boolean;
+      active?: boolean;
+      available?: boolean;
+    },
+  ) => Promise<void>;
+
   getProductBySlug: (slug: string) => Promise<Product | null>;
+
+  getProductById: (id: string, token: string) => Promise<Product | null>;
+
+  createProduct: (data: ProductFormData, token: string) => Promise<Product>;
+
+  updateProduct: (
+    id: string,
+    data: ProductUpdateData,
+    token: string,
+  ) => Promise<Product>;
+
+  updateProductStatus: (
+    id: string,
+    data: ProductStatusData,
+    token: string,
+  ) => Promise<Product>;
 };
 
 export const ProductsContext = createContext<ProductsContextValue | undefined>(
@@ -1655,7 +2642,13 @@ export const ProductsContext = createContext<ProductsContextValue | undefined>(
 
 ```tsx
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { type Product, ProductsContext } from "./ProductsContext";
+import {
+  type Product,
+  type ProductFormData,
+  type ProductStatusData,
+  ProductsContext,
+  type ProductUpdateData,
+} from "./ProductsContext";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
@@ -1687,6 +2680,81 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const fetchAdminProducts = useCallback(
+    async (
+      token: string,
+      filters?: {
+        search?: string;
+        subcategoryId?: string;
+        marketplaceId?: string;
+        featured?: boolean;
+        active?: boolean;
+        available?: boolean;
+      },
+    ) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams();
+
+        if (filters?.search) {
+          params.set("search", filters.search);
+        }
+
+        if (filters?.subcategoryId) {
+          params.set("subcategoryId", filters.subcategoryId);
+        }
+
+        if (filters?.marketplaceId) {
+          params.set("marketplaceId", filters.marketplaceId);
+        }
+
+        if (filters?.featured !== undefined) {
+          params.set("featured", String(filters.featured));
+        }
+
+        if (filters?.active !== undefined) {
+          params.set("active", String(filters.active));
+        }
+
+        if (filters?.available !== undefined) {
+          params.set("available", String(filters.available));
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/products/admin${queryString ? `?${queryString}` : ""}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar os produtos.",
+          );
+        }
+
+        setProducts(data.products ?? []);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível carregar os produtos.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   // Detalhe
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
@@ -1706,21 +2774,58 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const getProductById = useCallback(
+    async (id: string, token: string): Promise<Product | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/products/id/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar o produto.",
+          );
+        }
+
+        return data.product ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
   // Criar
   const createProduct = useCallback(
-    async (productData: Partial<Product>, token: string) => {
+    async (productData: ProductFormData, token: string): Promise<Product> => {
       const response = await fetch(`${apiUrl}/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // exige autenticação admin
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(productData),
       });
+
       const data = await response.json();
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(data.message || "Erro ao criar produto");
+      }
+
       setProducts((prev) => [...prev, data.product]);
+
       return data.product;
     },
     [],
@@ -1728,7 +2833,11 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
   // Atualizar
   const updateProduct = useCallback(
-    async (id: string, productData: Partial<Product>, token: string) => {
+    async (
+      id: string,
+      productData: ProductUpdateData,
+      token: string,
+    ): Promise<Product> => {
       const response = await fetch(`${apiUrl}/products/${id}`, {
         method: "PUT",
         headers: {
@@ -1737,10 +2846,17 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify(productData),
       });
+
       const data = await response.json();
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(data.message || "Erro ao atualizar produto");
-      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      }
+
+      setProducts((prev) =>
+        prev.map((product) => (product.id === id ? data.product : product)),
+      );
+
       return data.product;
     },
     [],
@@ -1750,9 +2866,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const updateProductStatus = useCallback(
     async (
       id: string,
-      statusData: { active?: boolean; available?: boolean; featured?: boolean },
+      statusData: ProductStatusData,
       token: string,
-    ) => {
+    ): Promise<Product> => {
       const response = await fetch(`${apiUrl}/products/${id}/status`, {
         method: "PATCH",
         headers: {
@@ -1761,10 +2877,17 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify(statusData),
       });
+
       const data = await response.json();
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(data.message || "Erro ao atualizar status");
-      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      }
+
+      setProducts((prev) =>
+        prev.map((product) => (product.id === id ? data.product : product)),
+      );
+
       return data.product;
     },
     [],
@@ -1776,7 +2899,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       fetchProducts,
+      fetchAdminProducts,
       getProductBySlug,
+      getProductById,
       createProduct,
       updateProduct,
       updateProductStatus,
@@ -1786,7 +2911,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       fetchProducts,
+      fetchAdminProducts,
       getProductBySlug,
+      getProductById,
       createProduct,
       updateProduct,
       updateProductStatus,
@@ -1797,6 +2924,275 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     <ProductsContext.Provider value={value}>
       {children}
     </ProductsContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\SubcategoriesContext.tsx
+
+```tsx
+import { createContext } from "react";
+
+export type Subcategory = {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+
+  products?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+};
+
+export type SubcategoryFormData = {
+  categoryId: string;
+  name: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type SubcategoryUpdateData = {
+  name?: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type SubcategoriesContextValue = {
+  subcategories: Subcategory[];
+  loading: boolean;
+  error: string | null;
+
+  fetchSubcategories: () => Promise<void>;
+  getSubcategoryById: (id: string) => Promise<Subcategory | null>;
+
+  createSubcategory: (
+    data: SubcategoryFormData,
+    token: string,
+  ) => Promise<Subcategory>;
+
+  updateSubcategory: (
+    id: string,
+    data: SubcategoryUpdateData,
+    token: string,
+  ) => Promise<Subcategory>;
+
+  deleteSubcategory: (id: string, token: string) => Promise<void>;
+};
+
+export const SubcategoriesContext = createContext<
+  SubcategoriesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\SubcategoriesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type {
+  Subcategory,
+  SubcategoryFormData,
+  SubcategoryUpdateData,
+} from "./SubcategoriesContext";
+
+import { SubcategoriesContext } from "./SubcategoriesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function SubcategoriesProvider({ children }: { children: ReactNode }) {
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSubcategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/subcategories`);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar as subcategorias.",
+        );
+      }
+
+      setSubcategories(Array.isArray(data) ? data : (data.subcategories ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar subcategorias.",
+      );
+
+      setSubcategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getSubcategoryById = useCallback(
+    async (id: string): Promise<Subcategory | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/subcategories/${encodeURIComponent(id)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a subcategoria.",
+          );
+        }
+
+        return data.subcategory ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const createSubcategory = useCallback(
+    async (
+      subcategoryData: SubcategoryFormData,
+      token: string,
+    ): Promise<Subcategory> => {
+      const response = await fetch(`${apiUrl}/subcategories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(subcategoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar subcategoria.");
+      }
+
+      const subcategory = data.subcategory ?? data;
+
+      setSubcategories((previous) => [...previous, subcategory]);
+
+      return subcategory;
+    },
+    [],
+  );
+
+  const updateSubcategory = useCallback(
+    async (
+      id: string,
+      subcategoryData: SubcategoryUpdateData,
+      token: string,
+    ): Promise<Subcategory> => {
+      const response = await fetch(`${apiUrl}/subcategories/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(subcategoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar subcategoria.");
+      }
+
+      const subcategory = data.subcategory ?? data;
+
+      setSubcategories((previous) =>
+        previous.map((item) => (item.id === id ? subcategory : item)),
+      );
+
+      return subcategory;
+    },
+    [],
+  );
+
+  const deleteSubcategory = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/subcategories/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir subcategoria.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setSubcategories((previous) => previous.filter((item) => item.id !== id));
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      subcategories,
+      loading,
+      error,
+      fetchSubcategories,
+      getSubcategoryById,
+      createSubcategory,
+      updateSubcategory,
+      deleteSubcategory,
+    }),
+    [
+      subcategories,
+      loading,
+      error,
+      fetchSubcategories,
+      getSubcategoryById,
+      createSubcategory,
+      updateSubcategory,
+      deleteSubcategory,
+    ],
+  );
+
+  return (
+    <SubcategoriesContext.Provider value={value}>
+      {children}
+    </SubcategoriesContext.Provider>
   );
 }
 
@@ -1816,6 +3212,44 @@ export function useAuth() {
     throw new Error("useAuth deve ser usado dentro de AuthProvider");
   }
 
+  return context;
+}
+
+```
+
+## src\contexts\useCategories.ts
+
+```ts
+import { useContext } from "react";
+
+import { CategoriesContext } from "./CategoriesContext";
+
+export function useCategories() {
+  const context = useContext(CategoriesContext);
+
+  if (!context) {
+    throw new Error(
+      "useCategories deve ser utilizado dentro de CategoriesProvider.",
+    );
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useMarketplaces.ts
+
+```ts
+import { useContext } from "react";
+import { MarketplacesContext } from "./MarketplacesContext";
+export function useMarketplaces() {
+  const context = useContext(MarketplacesContext);
+  if (!context) {
+    throw new Error(
+      "useMarketplaces deve ser utilizado dentro de MarketplacesProvider.",
+    );
+  }
   return context;
 }
 
@@ -1861,6 +3295,27 @@ export function useProducts() {
 
 ```
 
+## src\contexts\useSubcategories.ts
+
+```ts
+import { useContext } from "react";
+
+import { SubcategoriesContext } from "./SubcategoriesContext";
+
+export function useSubcategories() {
+  const context = useContext(SubcategoriesContext);
+
+  if (!context) {
+    throw new Error(
+      "useSubcategories deve ser utilizado dentro de SubcategoriesProvider.",
+    );
+  }
+
+  return context;
+}
+
+```
+
 ## src\custon.d.ts
 
 ```ts
@@ -1893,7 +3348,9 @@ declare module "*.svg?react" {
   --color-gray-700: #344054;
   --color-gray-900: #101828;
   --color-yellow: #f5b700;
+
   --color-danger: #d92d20;
+  --color-danger-light: #d8756d;
 }
 
 .home-banner .swiper-button-prev,
@@ -2113,39 +3570,662 @@ export function AboutPage() {
 
 ```
 
+## src\pages\AdminCategoriesFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import type { CategoryFormData } from "../contexts/CategoriesContext";
+import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+
+export function AdminCategoryFormPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getCategoryById, createCategory, updateCategory } = useCategories();
+
+  const isEditing = Boolean(id);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [active, setActive] = useState(true);
+  const [sortOrder, setSortOrder] = useState("0");
+
+  const [loading, setLoading] = useState(isEditing);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    const categoryId = id;
+
+    async function loadCategory() {
+      setLoading(true);
+      setError(null);
+
+      const category = await getCategoryById(categoryId);
+
+      if (!category) {
+        setError("Categoria não encontrada.");
+        setLoading(false);
+        return;
+      }
+
+      setName(category.name);
+      setDescription(category.description ?? "");
+      setImage(category.image ?? "");
+      setActive(category.active);
+      setSortOrder(String(category.sortOrder ?? 0));
+
+      setLoading(false);
+    }
+
+    void loadCategory();
+  }, [id, getCategoryById]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      setError("O nome da categoria deve ter pelo menos 2 caracteres.");
+      return;
+    }
+
+    const parsedSortOrder = Number(sortOrder);
+
+    if (!Number.isInteger(parsedSortOrder)) {
+      setError("A ordem deve ser um número inteiro.");
+      return;
+    }
+
+    const data: CategoryFormData = {
+      name: name.trim(),
+      description: description.trim() || undefined,
+      image: image.trim() || undefined,
+      active,
+      sortOrder: parsedSortOrder,
+    };
+
+    setSaving(true);
+
+    try {
+      if (isEditing && id) {
+        await updateCategory(id, data, token);
+      } else {
+        await createCategory(data, token);
+      }
+
+      navigate("/admin/categories", {
+        replace: true,
+      });
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível salvar a categoria.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="mx-auto w-full max-w-3xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando categoria...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-3xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/categories"
+          className="text-sm font-semibold text-blue-600 hover:underline"
+        >
+          ← Voltar para categorias
+        </Link>
+
+        <h1 className="mt-3 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar categoria" : "Nova categoria"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize as informações da categoria."
+            : "Cadastre uma nova categoria no WorldMix360."}
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-xl bg-white p-5 shadow-sm md:p-8"
+      >
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          <div>
+            <label
+              htmlFor="category-name"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Nome
+            </label>
+
+            <input
+              id="category-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Ex.: Tecnologia"
+              required
+              minLength={2}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="category-description"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Descrição
+            </label>
+
+            <textarea
+              id="category-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Descreva brevemente esta categoria."
+              rows={4}
+              className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="category-image"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              URL da imagem
+            </label>
+
+            <input
+              id="category-image"
+              type="url"
+              value={image}
+              onChange={(event) => setImage(event.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+
+            {image && (
+              <div className="mt-3">
+                <img
+                  src={image}
+                  alt="Pré-visualização da categoria"
+                  className="h-32 w-32 rounded-xl object-cover"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="category-sort-order"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Ordem de exibição
+              </label>
+
+              <input
+                id="category-sort-order"
+                type="number"
+                step="1"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="flex items-center">
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={(event) => setActive(event.target.checked)}
+                  className="h-5 w-5 rounded border-gray-300"
+                />
+
+                <span>
+                  <span className="block text-sm font-semibold text-gray-700">
+                    Categoria ativa
+                  </span>
+
+                  <span className="block text-xs text-gray-500">
+                    Permitir que a categoria seja exibida.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/categories"
+            className="rounded-lg border border-gray-500 px-5 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving
+              ? "Salvando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar categoria"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminCategoriesPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+
+export function AdminCategoriesPage() {
+  const { token } = useAuth();
+
+  const { categories, loading, error, fetchCategories, deleteCategory } =
+    useCategories();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir a categoria "${name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteCategory(id, token);
+    } catch (requestError) {
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível excluir a categoria.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie as categorias do WorldMix360.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/categories/new"
+          className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
+        >
+          + Nova categoria
+        </Link>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-danger-light px-4 py-3 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando categorias...</p>
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Nenhuma categoria encontrada
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Comece cadastrando a primeira categoria.
+          </p>
+
+          <Link
+            to="/admin/categories/new"
+            className="mt-5 inline-flex rounded-lg bg-blue/40 px-5 py-3 text-sm font-semibold text-white hover:bg-navy"
+          >
+            Cadastrar categoria
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* Desktop */}
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
+                    <th className="px-5 py-4 font-semibold">Categoria</th>
+
+                    <th className="px-5 py-4 font-semibold">Slug</th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Subcategorias
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Ordem
+                    </th>
+
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {categories.map((category) => (
+                    <tr
+                      key={category.id}
+                      className="border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {category.image ? (
+                            <img
+                              src={category.image}
+                              alt={category.name}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                              WM
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {category.name}
+                            </p>
+
+                            {category.description && (
+                              <p className="max-w-xs truncate text-xs text-gray-500">
+                                {category.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-sm text-gray-500">
+                        {category.slug}
+                      </td>
+
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {category.subcategories?.length ?? 0}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            category.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {category.active ? "Ativa" : "Inativa"}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {category.sortOrder ?? 0}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            to={`/admin/categories/${category.id}/edit`}
+                            className="text-sm font-semibold text-blue hover:underline"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={deletingId === category.id}
+                            onClick={() =>
+                              void handleDelete(category.id, category.name)
+                            }
+                            className="text-sm font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === category.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile */}
+          <div className="space-y-4 md:hidden">
+            {categories.map((category) => (
+              <article
+                key={category.id}
+                className="rounded-xl bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  {category.image ? (
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                      WM
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {category.name}
+                      </h2>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          category.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {category.active ? "Ativa" : "Inativa"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      /{category.slug}
+                    </p>
+                  </div>
+                </div>
+
+                {category.description && (
+                  <p className="mt-3 text-sm text-gray-600">
+                    {category.description}
+                  </p>
+                )}
+
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Subcategorias</p>
+                    <p className="font-semibold text-gray-800">
+                      {category.subcategories?.length ?? 0}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Ordem</p>
+                    <p className="font-semibold text-gray-800">
+                      {category.sortOrder ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-3 border-t pt-4">
+                  <Link
+                    to={`/admin/categories/${category.id}/edit`}
+                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === category.id}
+                    onClick={() =>
+                      void handleDelete(category.id, category.name)
+                    }
+                    className="flex-1 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deletingId === category.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+```
+
 ## src\pages\AdminDashboarPage.tsx
 
 ```tsx
 // src/pages/admin/AdminDashboardPage.tsx
+
+import { useEffect } from "react";
+import { useAuth } from "../contexts/useAuth";
 import { useProducts } from "../contexts/useProducts";
 
 export default function AdminDashboardPage() {
-  const { products } = useProducts();
+  const { products, fetchAdminProducts, loading, error } = useProducts();
+  const { token } = useAuth();
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    void fetchAdminProducts(token);
+  }, [token, fetchAdminProducts]);
 
   const totalProducts = products.length;
+
   const activeProducts = products.filter((p) => p.active).length;
+
   const featuredProducts = products.filter((p) => p.featured).length;
 
   return (
     <section className="p-6">
       <h1 className="text-2xl font-bold mb-6">Dashboard Administrativo</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-lg bg-white shadow p-6">
-          <h2 className="text-lg font-semibold">Total de Produtos</h2>
-          <p className="text-3xl font-bold mt-2">{totalProducts}</p>
-        </div>
+      {loading ? (
+        <p className="text-gray-600 mb-6">Carregando estatísticas...</p>
+      ) : error ? (
+        <p className="text-red-600 mb-6">Erro ao carregar produtos: {error}</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="rounded-lg bg-white shadow p-6">
+            <h2 className="text-lg font-semibold">Total de Produtos</h2>
 
-        <div className="rounded-lg bg-white shadow p-6">
-          <h2 className="text-lg font-semibold">Produtos Ativos</h2>
-          <p className="text-3xl font-bold mt-2">{activeProducts}</p>
-        </div>
+            <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+          </div>
 
-        <div className="rounded-lg bg-white shadow p-6">
-          <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
-          <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
+          <div className="rounded-lg bg-white shadow p-6">
+            <h2 className="text-lg font-semibold">Produtos Ativos</h2>
+
+            <p className="text-3xl font-bold mt-2">{activeProducts}</p>
+          </div>
+
+          <div className="rounded-lg bg-white shadow p-6">
+            <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
+
+            <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-8">
         <p className="text-gray-600">
@@ -2159,78 +4239,2511 @@ export default function AdminDashboardPage() {
 
 ```
 
+## src\pages\AdminMarketplaceFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useMarketplaces } from "../contexts/useMarketplaces";
+
+export function AdminMarketplaceFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getMarketplaceById, createMarketplace, updateMarketplace } =
+    useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [active, setActive] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    const marketplaceId = id;
+    let isMounted = true;
+
+    async function loadMarketplace() {
+      if (isMounted) {
+        setLoadingData(true);
+        setError(null);
+      }
+
+      try {
+        const marketplace = await getMarketplaceById(marketplaceId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!marketplace) {
+          setError("Marketplace não encontrado.");
+          return;
+        }
+
+        setName(marketplace.name);
+        setDescription(marketplace.description ?? "");
+        setWebsiteUrl(marketplace.websiteUrl ?? "");
+        setLogoUrl(marketplace.logoUrl ?? "");
+        setSortOrder(String(marketplace.sortOrder ?? 0));
+        setActive(marketplace.active);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setError("Não foi possível carregar o marketplace.");
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadMarketplace();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, getMarketplaceById]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!name.trim()) {
+      setError("Informe o nome do marketplace.");
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      setError("O nome do marketplace deve ter pelo menos 2 caracteres.");
+      return;
+    }
+
+    const parsedSortOrder = Number(sortOrder);
+
+    if (!Number.isInteger(parsedSortOrder)) {
+      setError("A ordem deve ser um número inteiro.");
+      return;
+    }
+
+    if (websiteUrl.trim()) {
+      try {
+        new URL(websiteUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o website.");
+        return;
+      }
+    }
+
+    if (logoUrl.trim()) {
+      try {
+        new URL(logoUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o logo.");
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateMarketplace(
+          id,
+          {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            websiteUrl: websiteUrl.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      } else {
+        await createMarketplace(
+          {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            websiteUrl: websiteUrl.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      }
+
+      navigate("/admin/marketplaces");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o marketplace."
+            : "Não foi possível criar o marketplace.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-4xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando marketplace...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-4xl">
+      {/* Cabeçalho */}
+      <div className="mb-6">
+        <Link
+          to="/admin/marketplaces"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para marketplaces
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar marketplace" : "Novo marketplace"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do marketplace."
+            : "Cadastre um novo marketplace para o WorldMix360."}
+        </p>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Formulário */}
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Nome */}
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Nome *
+              </label>
+
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ex.: Mercado Livre"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                O slug será gerado automaticamente pela API.
+              </p>
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Descreva brevemente o marketplace..."
+                rows={4}
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            {/* Website */}
+            <div>
+              <label
+                htmlFor="websiteUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Website
+              </label>
+
+              <input
+                id="websiteUrl"
+                type="url"
+                value={websiteUrl}
+                onChange={(event) => setWebsiteUrl(event.target.value)}
+                placeholder="https://www.exemplo.com.br"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe a URL oficial do marketplace.
+              </p>
+            </div>
+
+            {/* Logo */}
+            <div>
+              <label
+                htmlFor="logoUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Logo
+              </label>
+
+              <input
+                id="logoUrl"
+                type="url"
+                value={logoUrl}
+                onChange={(event) => setLogoUrl(event.target.value)}
+                placeholder="https://exemplo.com/logo.png"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe uma URL válida para o logo.
+              </p>
+
+              {logoUrl.trim() && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Pré-visualização
+                  </p>
+
+                  <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <img
+                      src={logoUrl}
+                      alt="Pré-visualização do logo"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ordem */}
+            <div>
+              <label
+                htmlFor="sortOrder"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Ordem
+              </label>
+
+              <input
+                id="sortOrder"
+                type="number"
+                step="1"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Use números menores para exibir primeiro.
+              </p>
+            </div>
+
+            {/* Ativo */}
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Marketplace ativo
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Marketplaces inativos não devem aparecer em áreas públicas do
+                  catálogo.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={active}
+                disabled={loading}
+                onClick={() => setActive((value) => !value)}
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition ${
+                  active ? "bg-blue-600" : "bg-gray-300"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition ${
+                    active ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/marketplaces"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading
+              ? isEditing
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar marketplace"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminMarketplacesPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useMarketplaces } from "../contexts/useMarketplaces";
+
+export function AdminMarketplacesPage() {
+  const { token } = useAuth();
+
+  const { marketplaces, loading, error, fetchMarketplaces, deleteMarketplace } =
+    useMarketplaces();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchMarketplaces();
+  }, [fetchMarketplaces]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir o marketplace "${name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteMarketplace(id, token);
+    } catch (requestError) {
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível excluir o marketplace.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl">
+      {/* Cabeçalho */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Marketplaces</h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie os marketplaces utilizados pelo WorldMix360.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/marketplaces/new"
+          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
+        >
+          + Novo marketplace
+        </Link>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando marketplaces...</p>
+        </div>
+      ) : marketplaces.length === 0 ? (
+        /* Estado vazio */
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Nenhum marketplace encontrado
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Comece cadastrando o primeiro marketplace.
+          </p>
+
+          <Link
+            to="/admin/marketplaces/new"
+            className="mt-5 inline-flex rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Cadastrar marketplace
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* ========================= */}
+          {/* DESKTOP */}
+          {/* ========================= */}
+
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[850px] border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
+                    <th className="px-5 py-4 font-semibold">Marketplace</th>
+
+                    <th className="px-5 py-4 font-semibold">Slug</th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Produtos
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Ordem
+                    </th>
+
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {marketplaces.map((marketplace) => (
+                    <tr
+                      key={marketplace.id}
+                      className="border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      {/* Marketplace */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {marketplace.logoUrl ? (
+                            <img
+                              src={marketplace.logoUrl}
+                              alt={marketplace.name}
+                              className="h-10 w-10 rounded-lg object-contain"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                              WM
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {marketplace.name}
+                            </p>
+
+                            {marketplace.description && (
+                              <p className="max-w-xs truncate text-xs text-gray-500">
+                                {marketplace.description}
+                              </p>
+                            )}
+
+                            {marketplace.websiteUrl && (
+                              <a
+                                href={marketplace.websiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-1 inline-block text-xs font-medium text-blue-600 hover:underline"
+                              >
+                                Visitar site
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Slug */}
+                      <td className="px-5 py-4 text-sm text-gray-500">
+                        {marketplace.slug}
+                      </td>
+
+                      {/* Produtos */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {marketplace.products?.length ?? 0}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            marketplace.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {marketplace.active ? "Ativo" : "Inativo"}
+                        </span>
+                      </td>
+
+                      {/* Ordem */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {marketplace.sortOrder ?? 0}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            to={`/admin/marketplaces/${marketplace.id}/edit`}
+                            className="text-sm font-semibold text-blue hover:underline"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={deletingId === marketplace.id}
+                            onClick={() =>
+                              void handleDelete(
+                                marketplace.id,
+                                marketplace.name,
+                              )
+                            }
+                            className="text-sm font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === marketplace.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ========================= */}
+          {/* MOBILE */}
+          {/* ========================= */}
+
+          <div className="space-y-4 md:hidden">
+            {marketplaces.map((marketplace) => (
+              <article
+                key={marketplace.id}
+                className="rounded-xl bg-white p-4 shadow-sm"
+              >
+                {/* Cabeçalho */}
+                <div className="flex items-start gap-3">
+                  {marketplace.logoUrl ? (
+                    <img
+                      src={marketplace.logoUrl}
+                      alt={marketplace.name}
+                      className="h-14 w-14 shrink-0 rounded-lg object-contain"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                      WM
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {marketplace.name}
+                      </h2>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          marketplace.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {marketplace.active ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      /{marketplace.slug}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Descrição */}
+                {marketplace.description && (
+                  <p className="mt-4 text-sm text-gray-600">
+                    {marketplace.description}
+                  </p>
+                )}
+
+                {/* Site */}
+                {marketplace.websiteUrl && (
+                  <a
+                    href={marketplace.websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline"
+                  >
+                    Visitar site →
+                  </a>
+                )}
+
+                {/* Informações */}
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Produtos</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {marketplace.products?.length ?? 0}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Ordem</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {marketplace.sortOrder ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ações */}
+                <div className="mt-4 flex gap-3 border-t pt-4">
+                  <Link
+                    to={`/admin/marketplaces/${marketplace.id}/edit`}
+                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === marketplace.id}
+                    onClick={() =>
+                      void handleDelete(marketplace.id, marketplace.name)
+                    }
+                    className="flex-1 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deletingId === marketplace.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminProductsFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useProducts } from "../contexts/useProducts";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function AdminProductsFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getProductById, createProduct, updateProduct } = useProducts();
+
+  const { subcategories, fetchSubcategories } = useSubcategories();
+
+  const { marketplaces, fetchMarketplaces } = useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+
+  const [currency, setCurrency] = useState("BRL");
+
+  const [rating, setRating] = useState("");
+  const [reviewsCount, setReviewsCount] = useState("0");
+
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [marketplaceId, setMarketplaceId] = useState("");
+
+  const [featured, setFeatured] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [active, setActive] = useState(true);
+
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchSubcategories();
+    void fetchMarketplaces();
+  }, [fetchSubcategories, fetchMarketplaces]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const productId = id;
+    const authToken = token;
+
+    let isMounted = true;
+
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId, authToken);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!product) {
+          setError("Produto não encontrado.");
+          return;
+        }
+
+        setTitle(product.title ?? "");
+
+        setDescription(product.description ?? "");
+
+        setShortDescription(product.shortDescription ?? "");
+
+        setImageUrl(product.imageUrl ?? "");
+
+        setPrice(String(product.price ?? ""));
+
+        setOriginalPrice(
+          product.originalPrice !== null && product.originalPrice !== undefined
+            ? String(product.originalPrice)
+            : "",
+        );
+
+        setCurrency(product.currency ?? "BRL");
+
+        setRating(
+          product.rating !== null && product.rating !== undefined
+            ? String(product.rating)
+            : "",
+        );
+
+        setReviewsCount(String(product.reviewsCount ?? 0));
+
+        setAffiliateUrl(product.affiliateUrl ?? "");
+
+        setSubcategoryId(product.subcategoryId ?? "");
+
+        setMarketplaceId(product.marketplaceId ?? "");
+
+        setFeatured(Boolean(product.featured));
+
+        setAvailable(Boolean(product.available));
+
+        setActive(Boolean(product.active));
+
+        setSeoTitle(product.seoTitle ?? "");
+
+        setSeoDescription(product.seoDescription ?? "");
+      } catch {
+        if (isMounted) {
+          setError("Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, token, getProductById]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria.");
+      return;
+    }
+
+    if (!marketplaceId) {
+      setError("Selecione um marketplace.");
+      return;
+    }
+
+    const parsedPrice = Number(price);
+
+    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (originalPrice.trim()) {
+      parsedOriginalPrice = Number(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        setError("Informe um preço original válido.");
+        return;
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        setError("A avaliação deve estar entre 0 e 5.");
+        return;
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      setError("A quantidade de avaliações deve ser um número inteiro.");
+      return;
+    }
+
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para a imagem.");
+      return;
+    }
+
+    try {
+      new URL(affiliateUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para o link de afiliado.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const productData = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        shortDescription: shortDescription.trim() || undefined,
+
+        imageUrl: imageUrl.trim(),
+
+        price: parsedPrice,
+        originalPrice: parsedOriginalPrice,
+
+        currency: currency.trim() || "BRL",
+
+        rating: parsedRating,
+        reviewsCount: parsedReviewsCount,
+
+        affiliateUrl: affiliateUrl.trim(),
+
+        subcategoryId,
+        marketplaceId,
+
+        featured,
+        available,
+        active,
+
+        seoTitle: seoTitle.trim() || undefined,
+        seoDescription: seoDescription.trim() || undefined,
+      };
+
+      if (isEditing && id) {
+        await updateProduct(id, productData, token);
+      } else {
+        await createProduct(productData, token);
+      }
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o produto."
+            : "Não foi possível criar o produto.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando produto...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/products"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para produtos
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar produto" : "Novo produto"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do produto."
+            : "Cadastre um novo produto no catálogo do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        {/* Informações principais */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Informações do produto
+          </h2>
+
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label
+                htmlFor="title"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Título *
+              </label>
+
+              <input
+                id="title"
+                type="text"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Ex.: Smartphone Samsung Galaxy"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                O slug será gerado automaticamente pela API.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="shortDescription"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição curta
+              </label>
+
+              <input
+                id="shortDescription"
+                type="text"
+                value={shortDescription}
+                onChange={(event) => setShortDescription(event.target.value)}
+                placeholder="Resumo rápido do produto"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={5}
+                placeholder="Descrição completa do produto..."
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="imageUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                URL da imagem *
+              </label>
+
+              <input
+                id="imageUrl"
+                type="url"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="https://exemplo.com/produto.jpg"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              {imageUrl.trim() && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Pré-visualização
+                  </p>
+
+                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <img
+                      src={imageUrl}
+                      alt="Pré-visualização do produto"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Preço e avaliações */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Preço e avaliações
+          </h2>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="price"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Preço *
+              </label>
+
+              <input
+                id="price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                placeholder="0,00"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="originalPrice"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Preço original
+              </label>
+
+              <input
+                id="originalPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={originalPrice}
+                onChange={(event) => setOriginalPrice(event.target.value)}
+                placeholder="0,00"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="currency"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Moeda
+              </label>
+
+              <input
+                id="currency"
+                type="text"
+                value={currency}
+                onChange={(event) => setCurrency(event.target.value)}
+                maxLength={3}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="rating"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Avaliação
+              </label>
+
+              <input
+                id="rating"
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                value={rating}
+                onChange={(event) => setRating(event.target.value)}
+                placeholder="Ex.: 4.8"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="reviewsCount"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Quantidade de avaliações
+              </label>
+
+              <input
+                id="reviewsCount"
+                type="number"
+                min="0"
+                step="1"
+                value={reviewsCount}
+                onChange={(event) => setReviewsCount(event.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Relacionamentos */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Classificação e marketplace
+          </h2>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="subcategoryId"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Subcategoria *
+              </label>
+
+              <select
+                id="subcategoryId"
+                value={subcategoryId}
+                onChange={(event) => setSubcategoryId(event.target.value)}
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              >
+                <option value="">Selecione uma subcategoria</option>
+
+                {subcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    {subcategory.category?.name
+                      ? `${subcategory.category.name} → ${subcategory.name}`
+                      : subcategory.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="marketplaceId"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Marketplace *
+              </label>
+
+              <select
+                id="marketplaceId"
+                value={marketplaceId}
+                onChange={(event) => setMarketplaceId(event.target.value)}
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              >
+                <option value="">Selecione um marketplace</option>
+
+                {marketplaces.map((marketplace) => (
+                  <option key={marketplace.id} value={marketplace.id}>
+                    {marketplace.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="affiliateUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Link de afiliado *
+              </label>
+
+              <input
+                id="affiliateUrl"
+                type="url"
+                value={affiliateUrl}
+                onChange={(event) => setAffiliateUrl(event.target.value)}
+                placeholder="https://..."
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Este será o link utilizado pelo botão de compra/afiliado.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Status do produto
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(event) => setFeatured(event.target.checked)}
+                disabled={loading}
+                className="h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-700">
+                  Destaque
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Exibir como produto destacado.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+              <input
+                type="checkbox"
+                checked={available}
+                onChange={(event) => setAvailable(event.target.checked)}
+                disabled={loading}
+                className="h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-700">
+                  Disponível
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Produto disponível no catálogo.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={(event) => setActive(event.target.checked)}
+                disabled={loading}
+                className="h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-700">
+                  Ativo
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Produto ativo no sistema.
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* SEO */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
+
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label
+                htmlFor="seoTitle"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                SEO Title
+              </label>
+
+              <input
+                id="seoTitle"
+                type="text"
+                value={seoTitle}
+                onChange={(event) => setSeoTitle(event.target.value)}
+                placeholder="Título otimizado para buscadores"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="seoDescription"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                SEO Description
+              </label>
+
+              <textarea
+                id="seoDescription"
+                value={seoDescription}
+                onChange={(event) => setSeoDescription(event.target.value)}
+                rows={4}
+                placeholder="Descrição otimizada para mecanismos de busca"
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/products"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
+          >
+            {loading
+              ? isEditing
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar produto"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+```
+
 ## src\pages\AdminProductsPage.tsx
 
 ```tsx
 // src/pages/admin/AdminProductsPage.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth";
 import { useProducts } from "../contexts/useProducts";
 
 export function AdminProductsPage() {
-  const { products, fetchProducts, loading, error } = useProducts();
+  const { products, fetchAdminProducts, updateProductStatus, loading, error } =
+    useProducts();
+
+  const { token } = useAuth();
+
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchProducts();
-  }, [fetchProducts]);
+    if (!token) {
+      return;
+    }
 
-  if (loading) return <p>Carregando produtos...</p>;
-  if (error) return <p>Erro: {error}</p>;
+    void fetchAdminProducts(token);
+  }, [token, fetchAdminProducts]);
+
+  async function handleStatusChange(
+    id: string,
+    status: {
+      active?: boolean;
+      available?: boolean;
+      featured?: boolean;
+    },
+  ) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setUpdatingId(id);
+
+      await updateProductStatus(id, status, token);
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível atualizar o status do produto.",
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  if (loading) {
+    return <p className="p-6">Carregando produtos...</p>;
+  }
+
+  if (error) {
+    return <p className="p-6">Erro: {error}</p>;
+  }
 
   return (
     <section className="p-6">
-      <header className="flex justify-between items-center mb-6">
+      <header className="flex justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
+
         <Link
           to="/admin/products/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
         >
           + Cadastrar Produto
         </Link>
       </header>
 
-      <table className="w-full border-collapse border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-3 py-2">Título</th>
-            <th className="border px-3 py-2">Preço</th>
-            <th className="border px-3 py-2">Disponível</th>
-            <th className="border px-3 py-2">Ativo</th>
-            <th className="border px-3 py-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.id}>
-              <td className="border px-3 py-2">{p.title}</td>
-              <td className="border px-3 py-2">
-                {p.price.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: p.currency,
-                })}
-              </td>
-              <td className="border px-3 py-2">
-                {p.available ? "Sim" : "Não"}
-              </td>
-              <td className="border px-3 py-2">{p.active ? "Sim" : "Não"}</td>
-              <td className="border px-3 py-2">
-                <Link
-                  to={`/admin/products/${p.id}/edit`}
-                  className="text-blue-600 hover:underline mr-3"
-                >
-                  Editar
-                </Link>
-                <Link
-                  to={`/admin/products/${p.id}/status`}
-                  className="text-green-600 hover:underline"
-                >
-                  Status
-                </Link>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1000px] border-collapse">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border-b px-3 py-2 text-left">Produto</th>
+
+              <th className="border-b px-3 py-2 text-left">Preço</th>
+
+              <th className="border-b px-3 py-2 text-center">Disponível</th>
+
+              <th className="border-b px-3 py-2 text-center">Ativo</th>
+
+              <th className="border-b px-3 py-2 text-center">Destaque</th>
+
+              <th className="border-b px-3 py-2 text-center">Ações</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {products.map((p) => {
+              const isUpdating = updatingId === p.id;
+
+              return (
+                <tr
+                  key={p.id}
+                  className="border-b last:border-b-0 hover:bg-gray-50"
+                >
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-3">
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.title}
+                          className="w-12 h-12 object-cover rounded-lg border"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg border bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                          Sem imagem
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="font-semibold">{p.title}</p>
+
+                        <p className="text-xs text-gray-500">/{p.slug}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-3 py-3">
+                    {p.price.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: p.currency,
+                    })}
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.available}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          available: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar disponibilidade de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.active}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          active: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar status ativo de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.featured}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          featured: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar destaque de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <Link
+                      to={`/admin/products/${p.id}/edit`}
+                      className="text-sm font-semibold text-blue hover:underline"
+                    >
+                      Editar
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {products.length === 0 && (
+        <div className="text-center py-10 text-gray-500">
+          Nenhum produto encontrado.
+        </div>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminSubcategoriesPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function AdminSubcategoriesPage() {
+  const { token } = useAuth();
+
+  const {
+    subcategories,
+    loading,
+    error,
+    fetchSubcategories,
+    deleteSubcategory,
+  } = useSubcategories();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchSubcategories();
+  }, [fetchSubcategories]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir a subcategoria "${name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteSubcategory(id, token);
+    } catch (requestError) {
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível excluir a subcategoria.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl">
+      {/* Cabeçalho */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Subcategorias</h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie as subcategorias do WorldMix360.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/subcategories/new"
+          className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
+        >
+          + Nova subcategoria
+        </Link>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando subcategorias...</p>
+        </div>
+      ) : subcategories.length === 0 ? (
+        /* Estado vazio */
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Nenhuma subcategoria encontrada
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Comece cadastrando a primeira subcategoria.
+          </p>
+
+          <Link to="/admin/subcategories/new" className="bg-navy">
+            Cadastrar subcategoria
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* ========================= */}
+          {/* DESKTOP */}
+          {/* ========================= */}
+
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
+                    <th className="px-5 py-4 font-semibold">Subcategoria</th>
+
+                    <th className="px-5 py-4 font-semibold">Categoria</th>
+
+                    <th className="px-5 py-4 font-semibold">Slug</th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Produtos
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Ordem
+                    </th>
+
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {subcategories.map((subcategory) => (
+                    <tr
+                      key={subcategory.id}
+                      className="border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      {/* Subcategoria */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {subcategory.image ? (
+                            <img
+                              src={subcategory.image}
+                              alt={subcategory.name}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                              WM
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {subcategory.name}
+                            </p>
+
+                            {subcategory.description && (
+                              <p className="max-w-xs truncate text-xs text-gray-500">
+                                {subcategory.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Categoria */}
+                      <td className="px-5 py-4">
+                        {subcategory.category ? (
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">
+                              {subcategory.category.name}
+                            </p>
+
+                            <p className="text-xs text-gray-500">
+                              /{subcategory.category.slug}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
+                      </td>
+
+                      {/* Slug */}
+                      <td className="px-5 py-4 text-sm text-gray-500">
+                        {subcategory.slug}
+                      </td>
+
+                      {/* Produtos */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {subcategory.products?.length ?? 0}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            subcategory.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {subcategory.active ? "Ativa" : "Inativa"}
+                        </span>
+                      </td>
+
+                      {/* Ordem */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {subcategory.sortOrder ?? 0}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            to={`/admin/subcategories/${subcategory.id}/edit`}
+                            className="text-sm font-semibold text-blue hover:underline"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={deletingId === subcategory.id}
+                            onClick={() =>
+                              void handleDelete(
+                                subcategory.id,
+                                subcategory.name,
+                              )
+                            }
+                            className="text-sm font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === subcategory.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ========================= */}
+          {/* MOBILE */}
+          {/* ========================= */}
+
+          <div className="space-y-4 md:hidden">
+            {subcategories.map((subcategory) => (
+              <article
+                key={subcategory.id}
+                className="rounded-xl bg-white p-4 shadow-sm"
+              >
+                {/* Cabeçalho do card */}
+                <div className="flex items-start gap-3">
+                  {subcategory.image ? (
+                    <img
+                      src={subcategory.image}
+                      alt={subcategory.name}
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                      WM
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {subcategory.name}
+                      </h2>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          subcategory.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {subcategory.active ? "Ativa" : "Inativa"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      /{subcategory.slug}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Categoria */}
+                <div className="mt-4 rounded-lg bg-blue-50 p-3">
+                  <p className="text-xs text-blue-600">Categoria</p>
+
+                  <p className="mt-1 font-semibold text-blue-800">
+                    {subcategory.category?.name ?? "Sem categoria"}
+                  </p>
+                </div>
+
+                {/* Descrição */}
+                {subcategory.description && (
+                  <p className="mt-3 text-sm text-gray-600">
+                    {subcategory.description}
+                  </p>
+                )}
+
+                {/* Informações */}
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Produtos</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {subcategory.products?.length ?? 0}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Ordem</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {subcategory.sortOrder ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ações */}
+                <div className="mt-4 flex gap-3 border-t pt-4">
+                  <Link
+                    to={`/admin/subcategories/${subcategory.id}/edit`}
+                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === subcategory.id}
+                    onClick={() =>
+                      void handleDelete(subcategory.id, subcategory.name)
+                    }
+                    className="flex-1 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deletingId === subcategory.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminSubcategoryFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function AdminSubcategoryFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { categories, fetchCategories } = useCategories();
+
+  const { getSubcategoryById, createSubcategory, updateSubcategory } =
+    useSubcategories();
+
+  const isEditing = Boolean(id);
+
+  const [categoryId, setCategoryId] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [active, setActive] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    const subcategoryId = id;
+    let isMounted = true;
+    async function loadSubcategory() {
+      if (isMounted) {
+        setLoadingData(true);
+        setError(null);
+      }
+      try {
+        const subcategory = await getSubcategoryById(subcategoryId);
+        if (!isMounted) {
+          return;
+        }
+        if (!subcategory) {
+          setError("Subcategoria não encontrada.");
+          return;
+        }
+        setCategoryId(subcategory.categoryId);
+        setName(subcategory.name);
+        setDescription(subcategory.description ?? "");
+        setImage(subcategory.image ?? "");
+        setSortOrder(String(subcategory.sortOrder ?? 0));
+        setActive(subcategory.active);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+        setError("Não foi possível carregar a subcategoria.");
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+    void loadSubcategory();
+    return () => {
+      isMounted = false;
+    };
+  }, [id, getSubcategoryById]);
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!isEditing && !categoryId) {
+      setError("Selecione uma categoria.");
+      return;
+    }
+
+    if (!name.trim()) {
+      setError("Informe o nome da subcategoria.");
+      return;
+    }
+
+    const parsedSortOrder = Number(sortOrder);
+
+    if (!Number.isInteger(parsedSortOrder)) {
+      setError("A ordem deve ser um número inteiro.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateSubcategory(
+          id,
+          {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            image: image.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      } else {
+        await createSubcategory(
+          {
+            categoryId,
+            name: name.trim(),
+            description: description.trim() || undefined,
+            image: image.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      }
+
+      navigate("/admin/subcategories");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar a subcategoria."
+            : "Não foi possível criar a subcategoria.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-4xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando subcategoria...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-4xl">
+      {/* Cabeçalho */}
+      <div className="mb-6">
+        <Link
+          to="/admin/subcategories"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para subcategorias
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar subcategoria" : "Nova subcategoria"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados da subcategoria."
+            : "Cadastre uma nova subcategoria para o WorldMix360."}
+        </p>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Formulário */}
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Categoria */}
+            <div>
+              <label
+                htmlFor="categoryId"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Categoria *
+              </label>
+
+              <select
+                id="categoryId"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                disabled={isEditing || loading}
+                required={!isEditing}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
+              >
+                <option value="">Selecione uma categoria</option>
+
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+
+              {isEditing && (
+                <p className="mt-2 text-xs text-gray-500">
+                  A categoria não pode ser alterada durante a edição.
+                </p>
+              )}
+            </div>
+
+            {/* Nome */}
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Nome *
+              </label>
+
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ex.: Smartphones"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                O slug será gerado automaticamente pela API.
+              </p>
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Descreva brevemente esta subcategoria..."
+                rows={4}
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            {/* Imagem */}
+            <div>
+              <label
+                htmlFor="image"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Imagem
+              </label>
+
+              <input
+                id="image"
+                type="url"
+                value={image}
+                onChange={(event) => setImage(event.target.value)}
+                placeholder="https://exemplo.com/imagem.jpg"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe uma URL válida para a imagem.
+              </p>
+
+              {image.trim() && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Pré-visualização
+                  </p>
+
+                  <img
+                    src={image}
+                    alt="Pré-visualização"
+                    className="h-24 w-24 rounded-lg object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Ordem */}
+            <div>
+              <label
+                htmlFor="sortOrder"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Ordem
+              </label>
+
+              <input
+                id="sortOrder"
+                type="number"
+                step="1"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Use números menores para exibir primeiro.
+              </p>
+            </div>
+
+            {/* Ativa */}
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Subcategoria ativa
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Subcategorias inativas não devem aparecer no catálogo público.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={active}
+                disabled={loading}
+                onClick={() => setActive((value) => !value)}
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition ${
+                  active ? "bg-blue-600" : "bg-gray-300"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition ${
+                    active ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/subcategories"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading
+              ? isEditing
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar subcategoria"}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }
@@ -4013,9 +8526,17 @@ export function TermsOfUsePage() {
 
 ```tsx
 import type { RouteObject } from "react-router-dom";
+
 import { AdminLayout } from "../components/AdminLayout";
+import { AdminCategoryFormPage } from "../pages/AdminCategoriesFormPage";
+import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
 import AdminDashboardPage from "../pages/AdminDashboarPage";
+import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
+import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
+import { AdminProductsFormPage } from "../pages/AdminProductsFormPage";
 import { AdminProductsPage } from "../pages/AdminProductsPage";
+import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
+import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -4027,8 +8548,63 @@ export const adminRoutes: RouteObject[] = [
       </PrivateRoute>
     ),
     children: [
-      { path: "dashboard", element: <AdminDashboardPage /> },
-      { path: "products", element: <AdminProductsPage /> },
+      {
+        path: "dashboard",
+        element: <AdminDashboardPage />,
+      },
+      {
+        path: "products",
+        element: <AdminProductsPage />,
+      },
+      {
+        path: "products/new",
+        element: <AdminProductsFormPage />,
+      },
+      {
+        path: "products/:id/edit",
+        element: <AdminProductsFormPage />,
+      },
+
+      {
+        path: "categories",
+        element: <AdminCategoriesPage />,
+      },
+
+      {
+        path: "categories/new",
+        element: <AdminCategoryFormPage />,
+      },
+
+      {
+        path: "categories/:id/edit",
+        element: <AdminCategoryFormPage />,
+      },
+      {
+        path: "subcategories",
+        element: <AdminSubcategoriesPage />,
+      },
+
+      {
+        path: "subcategories/new",
+        element: <AdminSubcategoryFormPage />,
+      },
+
+      {
+        path: "subcategories/:id/edit",
+        element: <AdminSubcategoryFormPage />,
+      },
+      {
+        path: "marketplaces",
+        element: <AdminMarketplacesPage />,
+      },
+      {
+        path: "marketplaces/new",
+        element: <AdminMarketplaceFormPage />,
+      },
+      {
+        path: "marketplaces/:id/edit",
+        element: <AdminMarketplaceFormPage />,
+      },
     ],
   },
 ];
@@ -4134,28 +8710,51 @@ export const institutionalRoutes: RouteObject[] = [
 ## src\routes\PrivateRoute.tsx
 
 ```tsx
-// src/routes/PrivateRoute.tsx
-
-import type { JSX } from "react/jsx-runtime";
+import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth"; // supondo que você já tenha AuthContext
 
-export default function PrivateRoute({ children }: { children: JSX.Element }) {
+import { useAuth } from "../contexts/useAuth";
+
+type PrivateRouteProps = {
+  children: ReactNode;
+};
+
+export default function PrivateRoute({ children }: PrivateRouteProps) {
   const { user, isLoading } = useAuth();
 
+  /**
+   * Enquanto o AuthProvider verifica o localStorage,
+   * não devemos redirecionar o usuário para o login.
+   */
   if (isLoading) {
-    return <p>Verificando credenciais...</p>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f9fc]">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#dbe7f5] border-t-[#1769e0]" />
+
+          <p className="mt-4 text-sm font-medium text-[#52657c]">
+            Verificando sessão...
+          </p>
+        </div>
+      </div>
+    );
   }
 
+  /**
+   * Usuário não autenticado.
+   */
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  /**
+   * Usuário autenticado, mas sem permissão de administrador.
+   */
   if (user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
 
 ```
@@ -4557,17 +9156,26 @@ export default defineConfig([
 
 ```tsx
 import { AuthProvider } from "./contexts/AuthProvider";
+import { CategoriesProvider } from "./contexts/CategoriesProvider";
+import { MarketplacesProvider } from "./contexts/MarketplacesProvider";
 import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
 import { ProductsProvider } from "./contexts/ProductsProvider";
+import { SubcategoriesProvider } from "./contexts/SubcategoriesProvider";
 import { AppRoutes } from "./routes";
 
 export function App() {
   return (
     <AuthProvider>
       <MercadoLivreProvider>
-        <ProductsProvider>
-          <AppRoutes />
-        </ProductsProvider>
+        <CategoriesProvider>
+          <SubcategoriesProvider>
+            <MarketplacesProvider>
+              <ProductsProvider>
+                <AppRoutes />
+              </ProductsProvider>
+            </MarketplacesProvider>
+          </SubcategoriesProvider>
+        </CategoriesProvider>
       </MercadoLivreProvider>
     </AuthProvider>
   );
@@ -4578,17 +9186,76 @@ export function App() {
 ## src\components\AdminLayout\index.tsx
 
 ```tsx
-// src/components/AdminLayout.tsx
-import { Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
+
 import { HeaderAdmin } from "../HeaderAdmin";
+
+const menuItems = [
+  {
+    label: "Dashboard",
+    href: "/admin/dashboard",
+  },
+  {
+    label: "Produtos",
+    href: "/admin/products",
+  },
+  {
+    label: "Categorias",
+    href: "/admin/categories",
+  },
+  {
+    label: "Subcategorias",
+    href: "/admin/subcategories",
+  },
+  {
+    label: "Marketplaces",
+    href: "/admin/marketplaces",
+  },
+];
 
 export function AdminLayout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[#f7f9fc] text-[#071a2f]">
       <HeaderAdmin />
-      <main className="flex-1 p-6 bg-gray-50">
-        <Outlet />
-      </main>
+
+      <div className="flex min-h-[calc(100vh-72px)]">
+        <aside className="hidden w-64 shrink-0 border-r border-[#e7edf5] bg-white lg:block">
+          <div className="sticky top-0 p-4">
+            <div className="mb-5 px-3">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a9bb0]">
+                Administração
+              </p>
+
+              <p className="mt-1 text-sm text-[#52657c]">Gerencie o catálogo</p>
+            </div>
+
+            <nav className="space-y-1">
+              {menuItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    [
+                      "flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition",
+                      isActive
+                        ? "bg-[#edf5ff] text-[#1769e0]"
+                        : "text-[#52657c] hover:bg-[#f5f8fc] hover:text-[#071a2f]",
+                    ].join(" ")
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-[1400px]">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
@@ -5277,35 +9944,250 @@ export function Header() {
 ## src\components\HeaderAdmin\index.tsx
 
 ```tsx
-// src/components/HeaderAdmin.tsx
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 
 export function HeaderAdmin() {
   const { user, signOut } = useAuth();
+  const location = useLocation();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
+
+  const handleSignOut = () => {
+    closeMenu();
+    signOut();
+  };
 
   return (
-    <header className="w-full bg-gray-900 text-white px-6 py-4 flex justify-between items-center">
-      <h1 className="text-lg font-bold">Painel Administrativo</h1>
-
-      <nav className="flex gap-4">
-        <Link to="/admin/products" className="hover:text-blue-300">
-          Produtos
+    <>
+      <header className="w-full bg-gray-900 text-white px-4 md:px-6 py-4 flex justify-between items-center">
+        {/* Logo / título */}
+        <Link
+          to="/admin/dashboard"
+          className="text-lg font-bold hover:text-blue-300 transition-colors"
+          onClick={closeMenu}
+        >
+          Painel Administrativo
         </Link>
-        {/* outros links administrativos */}
-      </nav>
 
-      <div className="flex items-center gap-3">
-        <span className="text-sm">Olá, {user?.name}</span>
+        {/* Menu desktop */}
+        <nav className="hidden md:flex items-center gap-5">
+          <Link
+            to="/admin/dashboard"
+            className={`transition-colors ${
+              isActive("/admin/dashboard")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            }  md:hidden`}
+          >
+            Dashboard
+          </Link>
+
+          <Link
+            to="/admin/products"
+            className={`transition-colors ${
+              isActive("/admin/products")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Produtos
+          </Link>
+
+          <Link
+            to="/admin/categories"
+            className={`transition-colors ${
+              isActive("/admin/categories")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Categorias
+          </Link>
+
+          <Link
+            to="/admin/subcategories"
+            className={`transition-colors ${
+              isActive("/admin/subcategories")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Subcategorias
+          </Link>
+
+          <Link
+            to="/admin/marketplaces"
+            className={`transition-colors ${
+              isActive("/admin/marketplaces")
+                ? "text-blue-300"
+                : "hover:text-blue-300"
+            } md:hidden`}
+          >
+            Marketplaces
+          </Link>
+
+          <span className="text-sm text-gray-300">Olá, {user?.name}</span>
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="bg-danger px-3 py-1.5 rounded text-sm hover:bg-red-500 transition-colors"
+          >
+            Sair
+          </button>
+        </nav>
+
+        {/* Área mobile */}
+        <div className="flex md:hidden items-center gap-3">
+          <span className="text-sm text-gray-300 max-w-24 truncate">
+            {user?.name}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((current) => !current)}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            className="w-10 h-10 flex flex-col justify-center items-center gap-1.5 rounded hover:bg-gray-800 transition-colors"
+          >
+            <span
+              className={`block w-6 h-0.5 bg-white transition-transform ${
+                menuOpen ? "translate-y-2 rotate-45" : ""
+              }`}
+            />
+
+            <span
+              className={`block w-6 h-0.5 bg-white transition-opacity ${
+                menuOpen ? "opacity-0" : "opacity-100"
+              }`}
+            />
+
+            <span
+              className={`block w-6 h-0.5 bg-white transition-transform ${
+                menuOpen ? "-translate-y-2 -rotate-45" : ""
+              }`}
+            />
+          </button>
+        </div>
+      </header>
+
+      {/* Overlay mobile */}
+      {menuOpen && (
         <button
           type="button"
-          onClick={signOut}
-          className="bg-red-600 px-3 py-1 rounded text-sm hover:bg-red-500"
-        >
-          Sair
-        </button>
-      </div>
-    </header>
+          aria-label="Fechar menu"
+          onClick={closeMenu}
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+        />
+      )}
+
+      {/* Menu lateral mobile */}
+      <aside
+        className={`fixed top-0 right-0 z-50 h-full w-72 max-w-[85vw] bg-gray-900 text-white shadow-2xl transform transition-transform duration-300 md:hidden ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-5 py-5 border-b border-gray-700">
+          <div>
+            <p className="font-bold">WorldMix360</p>
+            <p className="text-sm text-gray-400">Painel Administrativo</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={closeMenu}
+            aria-label="Fechar menu"
+            className="text-gray-300 hover:text-white text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-4 py-5">
+          <p className="text-sm text-gray-400 mb-4">Olá, {user?.name}</p>
+
+          <nav className="flex flex-col gap-2">
+            <Link
+              to="/admin/dashboard"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/dashboard")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              to="/admin/products"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/products")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Produtos
+            </Link>
+
+            <Link
+              to="/admin/categories"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/categories")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Categorias
+            </Link>
+
+            <Link
+              to="/admin/subcategories"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/subcategories")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Subcategorias
+            </Link>
+
+            <Link
+              to="/admin/marketplaces"
+              onClick={closeMenu}
+              className={`px-4 py-3 rounded-lg transition-colors ${
+                isActive("/admin/marketplaces")
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-800"
+              }`}
+            >
+              Marketplaces
+            </Link>
+          </nav>
+
+          <div className="border-t border-gray-700 mt-6 pt-6">
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="w-full bg-red-600 px-4 py-3 rounded-lg text-sm font-medium hover:bg-red-500 transition-colors"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -5903,12 +10785,12 @@ export function SocialBanner() {
 ## src\contexts\AuthContext.ts
 
 ```ts
-// src/contexts/AuthContext.ts
 import { createContext } from "react";
 import type { User } from "../types/User";
 
 export type AuthContextType = {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<User>;
   signOut: () => void;
@@ -5921,36 +10803,644 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 ## src\contexts\AuthProvider.tsx
 
 ```tsx
-// src/contexts/AuthProvider.tsx
-import { useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import type { User } from "../types/User";
 import { AuthContext } from "./AuthContext";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+const USER_STORAGE_KEY = "@worldmix360:user";
+const TOKEN_STORAGE_KEY = "@worldmix360:token";
+
+type LoginResponse = {
+  token: string;
+  user: User;
+};
+
+/**
+ * Recupera o usuário salvo no navegador.
+ */
+function getStoredUser(): User | null {
+  try {
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    return JSON.parse(storedUser) as User;
+  } catch {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+}
+
+/**
+ * Recupera o token salvo no navegador.
+ */
+function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  /**
+   * O estado inicial já é carregado do localStorage.
+   *
+   * Dessa forma não precisamos de um useEffect para executar
+   * setUser() e setToken() depois da montagem do componente.
+   */
+  const [user, setUser] = useState<User | null>(() => getStoredUser());
+
+  const [token, setToken] = useState<string | null>(() => getStoredToken());
+
   const [isLoading, setIsLoading] = useState(false);
 
-  async function signIn(email: string, password: string): Promise<User> {
-    setIsLoading(true);
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    setUser(data.user);
-    setIsLoading(false);
-    return data.user;
-  }
+  /**
+   * Realiza o login.
+   */
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<User> => {
+      setIsLoading(true);
 
-  function signOut() {
+      try {
+        const response = await fetch(`${apiUrl}/session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        });
+
+        let data: Partial<LoginResponse> & {
+          message?: string;
+          error?: string;
+        };
+
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Resposta inválida do servidor.");
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || data.error || "Email ou senha inválidos.",
+          );
+        }
+
+        if (!data.token || !data.user) {
+          throw new Error("Resposta de autenticação inválida.");
+        }
+
+        /**
+         * Persiste a sessão.
+         */
+        localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+
+        /**
+         * Atualiza o estado da aplicação.
+         */
+        setToken(data.token);
+        setUser(data.user);
+
+        return data.user;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  /**
+   * Encerra a sessão.
+   */
+  const signOut = useCallback(() => {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+
     setUser(null);
-  }
+    setToken(null);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      signIn,
+      signOut,
+    }),
+    [user, token, isLoading, signIn, signOut],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+```
+
+## src\contexts\CategoriesContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+  subcategories?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+};
+
+export type CategoryFormData = {
+  name: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type CategoriesContextValue = {
+  categories: Category[];
+  loading: boolean;
+  error: string | null;
+
+  fetchCategories: () => Promise<void>;
+  getCategoryById: (id: string) => Promise<Category | null>;
+
+  createCategory: (data: CategoryFormData, token: string) => Promise<Category>;
+
+  updateCategory: (
+    id: string,
+    data: Partial<CategoryFormData>,
+    token: string,
+  ) => Promise<Category>;
+
+  deleteCategory: (id: string, token: string) => Promise<void>;
+};
+
+export const CategoriesContext = createContext<
+  CategoriesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\CategoriesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type { Category, CategoryFormData } from "./CategoriesContext";
+
+import { CategoriesContext } from "./CategoriesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function CategoriesProvider({ children }: { children: ReactNode }) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/categories`);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar as categorias.",
+        );
+      }
+
+      setCategories(Array.isArray(data) ? data : (data.categories ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar categorias.",
+      );
+
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getCategoryById = useCallback(
+    async (id: string): Promise<Category | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/categories/${encodeURIComponent(id)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a categoria.",
+          );
+        }
+
+        return data.category ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const createCategory = useCallback(
+    async (
+      categoryData: CategoryFormData,
+      token: string,
+    ): Promise<Category> => {
+      const response = await fetch(`${apiUrl}/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar categoria.");
+      }
+
+      const category = data.category ?? data;
+
+      setCategories((previous) => [...previous, category]);
+
+      return category;
+    },
+    [],
+  );
+
+  const updateCategory = useCallback(
+    async (
+      id: string,
+      categoryData: Partial<CategoryFormData>,
+      token: string,
+    ): Promise<Category> => {
+      const response = await fetch(`${apiUrl}/categories/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar categoria.");
+      }
+
+      const category = data.category ?? data;
+
+      setCategories((previous) =>
+        previous.map((item) => (item.id === id ? category : item)),
+      );
+
+      return category;
+    },
+    [],
+  );
+
+  const deleteCategory = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/categories/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir categoria.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setCategories((previous) =>
+        previous.filter((category) => category.id !== id),
+      );
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    }),
+    [
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    ],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+    <CategoriesContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </CategoriesContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\MarketplacesContext.tsx
+
+```tsx
+import { createContext } from "react";
+export type Marketplace = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  websiteUrl?: string | null;
+  logoUrl?: string | null;
+  active: boolean;
+  sortOrder: number;
+  products?: Array<{ id: string; name: string; slug: string }>;
+};
+export type MarketplaceFormData = {
+  name: string;
+  description?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+export type MarketplaceUpdateData = {
+  name?: string;
+  description?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+export type MarketplacesContextValue = {
+  marketplaces: Marketplace[];
+  loading: boolean;
+  error: string | null;
+  fetchMarketplaces: () => Promise<void>;
+  getMarketplaceById: (id: string) => Promise<Marketplace | null>;
+  createMarketplace: (
+    data: MarketplaceFormData,
+    token: string,
+  ) => Promise<Marketplace>;
+  updateMarketplace: (
+    id: string,
+    data: MarketplaceUpdateData,
+    token: string,
+  ) => Promise<Marketplace>;
+  deleteMarketplace: (id: string, token: string) => Promise<void>;
+};
+export const MarketplacesContext = createContext<
+  MarketplacesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\MarketplacesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import {
+  type Marketplace,
+  type MarketplaceFormData,
+  MarketplacesContext,
+  type MarketplaceUpdateData,
+} from "./MarketplacesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function MarketplacesProvider({ children }: { children: ReactNode }) {
+  const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMarketplaces = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/marketplaces`);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar os marketplaces.",
+        );
+      }
+
+      setMarketplaces(Array.isArray(data) ? data : (data.marketplaces ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar marketplaces.",
+      );
+
+      setMarketplaces([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getMarketplaceById = useCallback(
+    async (id: string): Promise<Marketplace | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/marketplaces/${encodeURIComponent(id)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar o marketplace.",
+          );
+        }
+
+        return data.marketplace ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const createMarketplace = useCallback(
+    async (
+      marketplaceData: MarketplaceFormData,
+      token: string,
+    ): Promise<Marketplace> => {
+      const response = await fetch(`${apiUrl}/marketplaces`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(marketplaceData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar marketplace.");
+      }
+
+      const marketplace = data.marketplace ?? data;
+
+      setMarketplaces((previous) => [...previous, marketplace]);
+
+      return marketplace;
+    },
+    [],
+  );
+
+  const updateMarketplace = useCallback(
+    async (
+      id: string,
+      marketplaceData: MarketplaceUpdateData,
+      token: string,
+    ): Promise<Marketplace> => {
+      const response = await fetch(`${apiUrl}/marketplaces/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(marketplaceData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar marketplace.");
+      }
+
+      const marketplace = data.marketplace ?? data;
+
+      setMarketplaces((previous) =>
+        previous.map((item) => (item.id === id ? marketplace : item)),
+      );
+
+      return marketplace;
+    },
+    [],
+  );
+
+  const deleteMarketplace = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/marketplaces/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir marketplace.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setMarketplaces((previous) => previous.filter((item) => item.id !== id));
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      marketplaces,
+      loading,
+      error,
+      fetchMarketplaces,
+      getMarketplaceById,
+      createMarketplace,
+      updateMarketplace,
+      deleteMarketplace,
+    }),
+    [
+      marketplaces,
+      loading,
+      error,
+      fetchMarketplaces,
+      getMarketplaceById,
+      createMarketplace,
+      updateMarketplace,
+      deleteMarketplace,
+    ],
+  );
+
+  return (
+    <MarketplacesContext.Provider value={value}>
+      {children}
+    </MarketplacesContext.Provider>
   );
 }
 
@@ -6099,11 +11589,79 @@ export type Product = {
 
   affiliateUrl: string;
 
+  subcategoryId?: string;
+  marketplaceId?: string;
+
   category?: string | null;
 
   available: boolean;
   featured: boolean;
   active: boolean;
+
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
+
+export type ProductFormData = {
+  title: string;
+  description?: string;
+  shortDescription?: string;
+
+  imageUrl: string;
+
+  price: number;
+  originalPrice?: number;
+
+  currency?: string;
+
+  rating?: number;
+  reviewsCount?: number;
+
+  affiliateUrl: string;
+
+  subcategoryId: string;
+  marketplaceId: string;
+
+  featured?: boolean;
+  available?: boolean;
+  active?: boolean;
+
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+export type ProductUpdateData = {
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+
+  imageUrl?: string;
+
+  price?: number;
+  originalPrice?: number;
+
+  currency?: string;
+
+  rating?: number;
+  reviewsCount?: number;
+
+  affiliateUrl?: string;
+
+  subcategoryId?: string;
+  marketplaceId?: string;
+
+  featured?: boolean;
+  available?: boolean;
+  active?: boolean;
+
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+export type ProductStatusData = {
+  active?: boolean;
+  available?: boolean;
+  featured?: boolean;
 };
 
 export type ProductsContextValue = {
@@ -6113,7 +11671,35 @@ export type ProductsContextValue = {
 
   fetchProducts: (category?: string) => Promise<void>;
 
+  fetchAdminProducts: (
+    token: string,
+    filters?: {
+      search?: string;
+      subcategoryId?: string;
+      marketplaceId?: string;
+      featured?: boolean;
+      active?: boolean;
+      available?: boolean;
+    },
+  ) => Promise<void>;
+
   getProductBySlug: (slug: string) => Promise<Product | null>;
+
+  getProductById: (id: string, token: string) => Promise<Product | null>;
+
+  createProduct: (data: ProductFormData, token: string) => Promise<Product>;
+
+  updateProduct: (
+    id: string,
+    data: ProductUpdateData,
+    token: string,
+  ) => Promise<Product>;
+
+  updateProductStatus: (
+    id: string,
+    data: ProductStatusData,
+    token: string,
+  ) => Promise<Product>;
 };
 
 export const ProductsContext = createContext<ProductsContextValue | undefined>(
@@ -6126,7 +11712,13 @@ export const ProductsContext = createContext<ProductsContextValue | undefined>(
 
 ```tsx
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { type Product, ProductsContext } from "./ProductsContext";
+import {
+  type Product,
+  type ProductFormData,
+  type ProductStatusData,
+  ProductsContext,
+  type ProductUpdateData,
+} from "./ProductsContext";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
@@ -6158,6 +11750,81 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const fetchAdminProducts = useCallback(
+    async (
+      token: string,
+      filters?: {
+        search?: string;
+        subcategoryId?: string;
+        marketplaceId?: string;
+        featured?: boolean;
+        active?: boolean;
+        available?: boolean;
+      },
+    ) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams();
+
+        if (filters?.search) {
+          params.set("search", filters.search);
+        }
+
+        if (filters?.subcategoryId) {
+          params.set("subcategoryId", filters.subcategoryId);
+        }
+
+        if (filters?.marketplaceId) {
+          params.set("marketplaceId", filters.marketplaceId);
+        }
+
+        if (filters?.featured !== undefined) {
+          params.set("featured", String(filters.featured));
+        }
+
+        if (filters?.active !== undefined) {
+          params.set("active", String(filters.active));
+        }
+
+        if (filters?.available !== undefined) {
+          params.set("available", String(filters.available));
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/products/admin${queryString ? `?${queryString}` : ""}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar os produtos.",
+          );
+        }
+
+        setProducts(data.products ?? []);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível carregar os produtos.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   // Detalhe
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
@@ -6177,21 +11844,58 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const getProductById = useCallback(
+    async (id: string, token: string): Promise<Product | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/products/id/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar o produto.",
+          );
+        }
+
+        return data.product ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
   // Criar
   const createProduct = useCallback(
-    async (productData: Partial<Product>, token: string) => {
+    async (productData: ProductFormData, token: string): Promise<Product> => {
       const response = await fetch(`${apiUrl}/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // exige autenticação admin
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(productData),
       });
+
       const data = await response.json();
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(data.message || "Erro ao criar produto");
+      }
+
       setProducts((prev) => [...prev, data.product]);
+
       return data.product;
     },
     [],
@@ -6199,7 +11903,11 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
   // Atualizar
   const updateProduct = useCallback(
-    async (id: string, productData: Partial<Product>, token: string) => {
+    async (
+      id: string,
+      productData: ProductUpdateData,
+      token: string,
+    ): Promise<Product> => {
       const response = await fetch(`${apiUrl}/products/${id}`, {
         method: "PUT",
         headers: {
@@ -6208,10 +11916,17 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify(productData),
       });
+
       const data = await response.json();
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(data.message || "Erro ao atualizar produto");
-      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      }
+
+      setProducts((prev) =>
+        prev.map((product) => (product.id === id ? data.product : product)),
+      );
+
       return data.product;
     },
     [],
@@ -6221,9 +11936,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const updateProductStatus = useCallback(
     async (
       id: string,
-      statusData: { active?: boolean; available?: boolean; featured?: boolean },
+      statusData: ProductStatusData,
       token: string,
-    ) => {
+    ): Promise<Product> => {
       const response = await fetch(`${apiUrl}/products/${id}/status`, {
         method: "PATCH",
         headers: {
@@ -6232,10 +11947,17 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         },
         body: JSON.stringify(statusData),
       });
+
       const data = await response.json();
-      if (!response.ok)
+
+      if (!response.ok) {
         throw new Error(data.message || "Erro ao atualizar status");
-      setProducts((prev) => prev.map((p) => (p.id === id ? data.product : p)));
+      }
+
+      setProducts((prev) =>
+        prev.map((product) => (product.id === id ? data.product : product)),
+      );
+
       return data.product;
     },
     [],
@@ -6247,7 +11969,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       fetchProducts,
+      fetchAdminProducts,
       getProductBySlug,
+      getProductById,
       createProduct,
       updateProduct,
       updateProductStatus,
@@ -6257,7 +11981,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       fetchProducts,
+      fetchAdminProducts,
       getProductBySlug,
+      getProductById,
       createProduct,
       updateProduct,
       updateProductStatus,
@@ -6268,6 +11994,275 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     <ProductsContext.Provider value={value}>
       {children}
     </ProductsContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\SubcategoriesContext.tsx
+
+```tsx
+import { createContext } from "react";
+
+export type Subcategory = {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+
+  products?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
+};
+
+export type SubcategoryFormData = {
+  categoryId: string;
+  name: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type SubcategoryUpdateData = {
+  name?: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type SubcategoriesContextValue = {
+  subcategories: Subcategory[];
+  loading: boolean;
+  error: string | null;
+
+  fetchSubcategories: () => Promise<void>;
+  getSubcategoryById: (id: string) => Promise<Subcategory | null>;
+
+  createSubcategory: (
+    data: SubcategoryFormData,
+    token: string,
+  ) => Promise<Subcategory>;
+
+  updateSubcategory: (
+    id: string,
+    data: SubcategoryUpdateData,
+    token: string,
+  ) => Promise<Subcategory>;
+
+  deleteSubcategory: (id: string, token: string) => Promise<void>;
+};
+
+export const SubcategoriesContext = createContext<
+  SubcategoriesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\SubcategoriesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type {
+  Subcategory,
+  SubcategoryFormData,
+  SubcategoryUpdateData,
+} from "./SubcategoriesContext";
+
+import { SubcategoriesContext } from "./SubcategoriesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function SubcategoriesProvider({ children }: { children: ReactNode }) {
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSubcategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${apiUrl}/subcategories`);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar as subcategorias.",
+        );
+      }
+
+      setSubcategories(Array.isArray(data) ? data : (data.subcategories ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar subcategorias.",
+      );
+
+      setSubcategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getSubcategoryById = useCallback(
+    async (id: string): Promise<Subcategory | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/subcategories/${encodeURIComponent(id)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a subcategoria.",
+          );
+        }
+
+        return data.subcategory ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const createSubcategory = useCallback(
+    async (
+      subcategoryData: SubcategoryFormData,
+      token: string,
+    ): Promise<Subcategory> => {
+      const response = await fetch(`${apiUrl}/subcategories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(subcategoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar subcategoria.");
+      }
+
+      const subcategory = data.subcategory ?? data;
+
+      setSubcategories((previous) => [...previous, subcategory]);
+
+      return subcategory;
+    },
+    [],
+  );
+
+  const updateSubcategory = useCallback(
+    async (
+      id: string,
+      subcategoryData: SubcategoryUpdateData,
+      token: string,
+    ): Promise<Subcategory> => {
+      const response = await fetch(`${apiUrl}/subcategories/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(subcategoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar subcategoria.");
+      }
+
+      const subcategory = data.subcategory ?? data;
+
+      setSubcategories((previous) =>
+        previous.map((item) => (item.id === id ? subcategory : item)),
+      );
+
+      return subcategory;
+    },
+    [],
+  );
+
+  const deleteSubcategory = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/subcategories/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir subcategoria.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setSubcategories((previous) => previous.filter((item) => item.id !== id));
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      subcategories,
+      loading,
+      error,
+      fetchSubcategories,
+      getSubcategoryById,
+      createSubcategory,
+      updateSubcategory,
+      deleteSubcategory,
+    }),
+    [
+      subcategories,
+      loading,
+      error,
+      fetchSubcategories,
+      getSubcategoryById,
+      createSubcategory,
+      updateSubcategory,
+      deleteSubcategory,
+    ],
+  );
+
+  return (
+    <SubcategoriesContext.Provider value={value}>
+      {children}
+    </SubcategoriesContext.Provider>
   );
 }
 
@@ -6287,6 +12282,44 @@ export function useAuth() {
     throw new Error("useAuth deve ser usado dentro de AuthProvider");
   }
 
+  return context;
+}
+
+```
+
+## src\contexts\useCategories.ts
+
+```ts
+import { useContext } from "react";
+
+import { CategoriesContext } from "./CategoriesContext";
+
+export function useCategories() {
+  const context = useContext(CategoriesContext);
+
+  if (!context) {
+    throw new Error(
+      "useCategories deve ser utilizado dentro de CategoriesProvider.",
+    );
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useMarketplaces.ts
+
+```ts
+import { useContext } from "react";
+import { MarketplacesContext } from "./MarketplacesContext";
+export function useMarketplaces() {
+  const context = useContext(MarketplacesContext);
+  if (!context) {
+    throw new Error(
+      "useMarketplaces deve ser utilizado dentro de MarketplacesProvider.",
+    );
+  }
   return context;
 }
 
@@ -6332,6 +12365,27 @@ export function useProducts() {
 
 ```
 
+## src\contexts\useSubcategories.ts
+
+```ts
+import { useContext } from "react";
+
+import { SubcategoriesContext } from "./SubcategoriesContext";
+
+export function useSubcategories() {
+  const context = useContext(SubcategoriesContext);
+
+  if (!context) {
+    throw new Error(
+      "useSubcategories deve ser utilizado dentro de SubcategoriesProvider.",
+    );
+  }
+
+  return context;
+}
+
+```
+
 ## src\custon.d.ts
 
 ```ts
@@ -6364,7 +12418,9 @@ declare module "*.svg?react" {
   --color-gray-700: #344054;
   --color-gray-900: #101828;
   --color-yellow: #f5b700;
+
   --color-danger: #d92d20;
+  --color-danger-light: #d8756d;
 }
 
 .home-banner .swiper-button-prev,
@@ -6584,39 +12640,662 @@ export function AboutPage() {
 
 ```
 
+## src\pages\AdminCategoriesFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import type { CategoryFormData } from "../contexts/CategoriesContext";
+import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+
+export function AdminCategoryFormPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getCategoryById, createCategory, updateCategory } = useCategories();
+
+  const isEditing = Boolean(id);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [active, setActive] = useState(true);
+  const [sortOrder, setSortOrder] = useState("0");
+
+  const [loading, setLoading] = useState(isEditing);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    const categoryId = id;
+
+    async function loadCategory() {
+      setLoading(true);
+      setError(null);
+
+      const category = await getCategoryById(categoryId);
+
+      if (!category) {
+        setError("Categoria não encontrada.");
+        setLoading(false);
+        return;
+      }
+
+      setName(category.name);
+      setDescription(category.description ?? "");
+      setImage(category.image ?? "");
+      setActive(category.active);
+      setSortOrder(String(category.sortOrder ?? 0));
+
+      setLoading(false);
+    }
+
+    void loadCategory();
+  }, [id, getCategoryById]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      setError("O nome da categoria deve ter pelo menos 2 caracteres.");
+      return;
+    }
+
+    const parsedSortOrder = Number(sortOrder);
+
+    if (!Number.isInteger(parsedSortOrder)) {
+      setError("A ordem deve ser um número inteiro.");
+      return;
+    }
+
+    const data: CategoryFormData = {
+      name: name.trim(),
+      description: description.trim() || undefined,
+      image: image.trim() || undefined,
+      active,
+      sortOrder: parsedSortOrder,
+    };
+
+    setSaving(true);
+
+    try {
+      if (isEditing && id) {
+        await updateCategory(id, data, token);
+      } else {
+        await createCategory(data, token);
+      }
+
+      navigate("/admin/categories", {
+        replace: true,
+      });
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível salvar a categoria.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="mx-auto w-full max-w-3xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando categoria...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-3xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/categories"
+          className="text-sm font-semibold text-blue-600 hover:underline"
+        >
+          ← Voltar para categorias
+        </Link>
+
+        <h1 className="mt-3 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar categoria" : "Nova categoria"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize as informações da categoria."
+            : "Cadastre uma nova categoria no WorldMix360."}
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-xl bg-white p-5 shadow-sm md:p-8"
+      >
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          <div>
+            <label
+              htmlFor="category-name"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Nome
+            </label>
+
+            <input
+              id="category-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Ex.: Tecnologia"
+              required
+              minLength={2}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="category-description"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Descrição
+            </label>
+
+            <textarea
+              id="category-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Descreva brevemente esta categoria."
+              rows={4}
+              className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="category-image"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              URL da imagem
+            </label>
+
+            <input
+              id="category-image"
+              type="url"
+              value={image}
+              onChange={(event) => setImage(event.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+
+            {image && (
+              <div className="mt-3">
+                <img
+                  src={image}
+                  alt="Pré-visualização da categoria"
+                  className="h-32 w-32 rounded-xl object-cover"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="category-sort-order"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Ordem de exibição
+              </label>
+
+              <input
+                id="category-sort-order"
+                type="number"
+                step="1"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="flex items-center">
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={(event) => setActive(event.target.checked)}
+                  className="h-5 w-5 rounded border-gray-300"
+                />
+
+                <span>
+                  <span className="block text-sm font-semibold text-gray-700">
+                    Categoria ativa
+                  </span>
+
+                  <span className="block text-xs text-gray-500">
+                    Permitir que a categoria seja exibida.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/categories"
+            className="rounded-lg border border-gray-500 px-5 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving
+              ? "Salvando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar categoria"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminCategoriesPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+
+export function AdminCategoriesPage() {
+  const { token } = useAuth();
+
+  const { categories, loading, error, fetchCategories, deleteCategory } =
+    useCategories();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir a categoria "${name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteCategory(id, token);
+    } catch (requestError) {
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível excluir a categoria.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie as categorias do WorldMix360.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/categories/new"
+          className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
+        >
+          + Nova categoria
+        </Link>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-danger-light px-4 py-3 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando categorias...</p>
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Nenhuma categoria encontrada
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Comece cadastrando a primeira categoria.
+          </p>
+
+          <Link
+            to="/admin/categories/new"
+            className="mt-5 inline-flex rounded-lg bg-blue/40 px-5 py-3 text-sm font-semibold text-white hover:bg-navy"
+          >
+            Cadastrar categoria
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* Desktop */}
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
+                    <th className="px-5 py-4 font-semibold">Categoria</th>
+
+                    <th className="px-5 py-4 font-semibold">Slug</th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Subcategorias
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Ordem
+                    </th>
+
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {categories.map((category) => (
+                    <tr
+                      key={category.id}
+                      className="border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {category.image ? (
+                            <img
+                              src={category.image}
+                              alt={category.name}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                              WM
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {category.name}
+                            </p>
+
+                            {category.description && (
+                              <p className="max-w-xs truncate text-xs text-gray-500">
+                                {category.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-sm text-gray-500">
+                        {category.slug}
+                      </td>
+
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {category.subcategories?.length ?? 0}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            category.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {category.active ? "Ativa" : "Inativa"}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {category.sortOrder ?? 0}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            to={`/admin/categories/${category.id}/edit`}
+                            className="text-sm font-semibold text-blue hover:underline"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={deletingId === category.id}
+                            onClick={() =>
+                              void handleDelete(category.id, category.name)
+                            }
+                            className="text-sm font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === category.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile */}
+          <div className="space-y-4 md:hidden">
+            {categories.map((category) => (
+              <article
+                key={category.id}
+                className="rounded-xl bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-start gap-3">
+                  {category.image ? (
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                      WM
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {category.name}
+                      </h2>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          category.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {category.active ? "Ativa" : "Inativa"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      /{category.slug}
+                    </p>
+                  </div>
+                </div>
+
+                {category.description && (
+                  <p className="mt-3 text-sm text-gray-600">
+                    {category.description}
+                  </p>
+                )}
+
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Subcategorias</p>
+                    <p className="font-semibold text-gray-800">
+                      {category.subcategories?.length ?? 0}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Ordem</p>
+                    <p className="font-semibold text-gray-800">
+                      {category.sortOrder ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-3 border-t pt-4">
+                  <Link
+                    to={`/admin/categories/${category.id}/edit`}
+                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === category.id}
+                    onClick={() =>
+                      void handleDelete(category.id, category.name)
+                    }
+                    className="flex-1 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deletingId === category.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+```
+
 ## src\pages\AdminDashboarPage.tsx
 
 ```tsx
 // src/pages/admin/AdminDashboardPage.tsx
+
+import { useEffect } from "react";
+import { useAuth } from "../contexts/useAuth";
 import { useProducts } from "../contexts/useProducts";
 
 export default function AdminDashboardPage() {
-  const { products } = useProducts();
+  const { products, fetchAdminProducts, loading, error } = useProducts();
+  const { token } = useAuth();
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    void fetchAdminProducts(token);
+  }, [token, fetchAdminProducts]);
 
   const totalProducts = products.length;
+
   const activeProducts = products.filter((p) => p.active).length;
+
   const featuredProducts = products.filter((p) => p.featured).length;
 
   return (
     <section className="p-6">
       <h1 className="text-2xl font-bold mb-6">Dashboard Administrativo</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-lg bg-white shadow p-6">
-          <h2 className="text-lg font-semibold">Total de Produtos</h2>
-          <p className="text-3xl font-bold mt-2">{totalProducts}</p>
-        </div>
+      {loading ? (
+        <p className="text-gray-600 mb-6">Carregando estatísticas...</p>
+      ) : error ? (
+        <p className="text-red-600 mb-6">Erro ao carregar produtos: {error}</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="rounded-lg bg-white shadow p-6">
+            <h2 className="text-lg font-semibold">Total de Produtos</h2>
 
-        <div className="rounded-lg bg-white shadow p-6">
-          <h2 className="text-lg font-semibold">Produtos Ativos</h2>
-          <p className="text-3xl font-bold mt-2">{activeProducts}</p>
-        </div>
+            <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+          </div>
 
-        <div className="rounded-lg bg-white shadow p-6">
-          <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
-          <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
+          <div className="rounded-lg bg-white shadow p-6">
+            <h2 className="text-lg font-semibold">Produtos Ativos</h2>
+
+            <p className="text-3xl font-bold mt-2">{activeProducts}</p>
+          </div>
+
+          <div className="rounded-lg bg-white shadow p-6">
+            <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
+
+            <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-8">
         <p className="text-gray-600">
@@ -6630,78 +13309,2511 @@ export default function AdminDashboardPage() {
 
 ```
 
+## src\pages\AdminMarketplaceFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useMarketplaces } from "../contexts/useMarketplaces";
+
+export function AdminMarketplaceFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getMarketplaceById, createMarketplace, updateMarketplace } =
+    useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [active, setActive] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    const marketplaceId = id;
+    let isMounted = true;
+
+    async function loadMarketplace() {
+      if (isMounted) {
+        setLoadingData(true);
+        setError(null);
+      }
+
+      try {
+        const marketplace = await getMarketplaceById(marketplaceId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!marketplace) {
+          setError("Marketplace não encontrado.");
+          return;
+        }
+
+        setName(marketplace.name);
+        setDescription(marketplace.description ?? "");
+        setWebsiteUrl(marketplace.websiteUrl ?? "");
+        setLogoUrl(marketplace.logoUrl ?? "");
+        setSortOrder(String(marketplace.sortOrder ?? 0));
+        setActive(marketplace.active);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setError("Não foi possível carregar o marketplace.");
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadMarketplace();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, getMarketplaceById]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!name.trim()) {
+      setError("Informe o nome do marketplace.");
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      setError("O nome do marketplace deve ter pelo menos 2 caracteres.");
+      return;
+    }
+
+    const parsedSortOrder = Number(sortOrder);
+
+    if (!Number.isInteger(parsedSortOrder)) {
+      setError("A ordem deve ser um número inteiro.");
+      return;
+    }
+
+    if (websiteUrl.trim()) {
+      try {
+        new URL(websiteUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o website.");
+        return;
+      }
+    }
+
+    if (logoUrl.trim()) {
+      try {
+        new URL(logoUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o logo.");
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateMarketplace(
+          id,
+          {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            websiteUrl: websiteUrl.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      } else {
+        await createMarketplace(
+          {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            websiteUrl: websiteUrl.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      }
+
+      navigate("/admin/marketplaces");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o marketplace."
+            : "Não foi possível criar o marketplace.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-4xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando marketplace...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-4xl">
+      {/* Cabeçalho */}
+      <div className="mb-6">
+        <Link
+          to="/admin/marketplaces"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para marketplaces
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar marketplace" : "Novo marketplace"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do marketplace."
+            : "Cadastre um novo marketplace para o WorldMix360."}
+        </p>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Formulário */}
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Nome */}
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Nome *
+              </label>
+
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ex.: Mercado Livre"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                O slug será gerado automaticamente pela API.
+              </p>
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Descreva brevemente o marketplace..."
+                rows={4}
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            {/* Website */}
+            <div>
+              <label
+                htmlFor="websiteUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Website
+              </label>
+
+              <input
+                id="websiteUrl"
+                type="url"
+                value={websiteUrl}
+                onChange={(event) => setWebsiteUrl(event.target.value)}
+                placeholder="https://www.exemplo.com.br"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe a URL oficial do marketplace.
+              </p>
+            </div>
+
+            {/* Logo */}
+            <div>
+              <label
+                htmlFor="logoUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Logo
+              </label>
+
+              <input
+                id="logoUrl"
+                type="url"
+                value={logoUrl}
+                onChange={(event) => setLogoUrl(event.target.value)}
+                placeholder="https://exemplo.com/logo.png"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe uma URL válida para o logo.
+              </p>
+
+              {logoUrl.trim() && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Pré-visualização
+                  </p>
+
+                  <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <img
+                      src={logoUrl}
+                      alt="Pré-visualização do logo"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ordem */}
+            <div>
+              <label
+                htmlFor="sortOrder"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Ordem
+              </label>
+
+              <input
+                id="sortOrder"
+                type="number"
+                step="1"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Use números menores para exibir primeiro.
+              </p>
+            </div>
+
+            {/* Ativo */}
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Marketplace ativo
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Marketplaces inativos não devem aparecer em áreas públicas do
+                  catálogo.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={active}
+                disabled={loading}
+                onClick={() => setActive((value) => !value)}
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition ${
+                  active ? "bg-blue-600" : "bg-gray-300"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition ${
+                    active ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/marketplaces"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading
+              ? isEditing
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar marketplace"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminMarketplacesPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useMarketplaces } from "../contexts/useMarketplaces";
+
+export function AdminMarketplacesPage() {
+  const { token } = useAuth();
+
+  const { marketplaces, loading, error, fetchMarketplaces, deleteMarketplace } =
+    useMarketplaces();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchMarketplaces();
+  }, [fetchMarketplaces]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir o marketplace "${name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteMarketplace(id, token);
+    } catch (requestError) {
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível excluir o marketplace.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl">
+      {/* Cabeçalho */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Marketplaces</h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie os marketplaces utilizados pelo WorldMix360.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/marketplaces/new"
+          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
+        >
+          + Novo marketplace
+        </Link>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando marketplaces...</p>
+        </div>
+      ) : marketplaces.length === 0 ? (
+        /* Estado vazio */
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Nenhum marketplace encontrado
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Comece cadastrando o primeiro marketplace.
+          </p>
+
+          <Link
+            to="/admin/marketplaces/new"
+            className="mt-5 inline-flex rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Cadastrar marketplace
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* ========================= */}
+          {/* DESKTOP */}
+          {/* ========================= */}
+
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[850px] border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
+                    <th className="px-5 py-4 font-semibold">Marketplace</th>
+
+                    <th className="px-5 py-4 font-semibold">Slug</th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Produtos
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Ordem
+                    </th>
+
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {marketplaces.map((marketplace) => (
+                    <tr
+                      key={marketplace.id}
+                      className="border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      {/* Marketplace */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {marketplace.logoUrl ? (
+                            <img
+                              src={marketplace.logoUrl}
+                              alt={marketplace.name}
+                              className="h-10 w-10 rounded-lg object-contain"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                              WM
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {marketplace.name}
+                            </p>
+
+                            {marketplace.description && (
+                              <p className="max-w-xs truncate text-xs text-gray-500">
+                                {marketplace.description}
+                              </p>
+                            )}
+
+                            {marketplace.websiteUrl && (
+                              <a
+                                href={marketplace.websiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-1 inline-block text-xs font-medium text-blue-600 hover:underline"
+                              >
+                                Visitar site
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Slug */}
+                      <td className="px-5 py-4 text-sm text-gray-500">
+                        {marketplace.slug}
+                      </td>
+
+                      {/* Produtos */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {marketplace.products?.length ?? 0}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            marketplace.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {marketplace.active ? "Ativo" : "Inativo"}
+                        </span>
+                      </td>
+
+                      {/* Ordem */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {marketplace.sortOrder ?? 0}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            to={`/admin/marketplaces/${marketplace.id}/edit`}
+                            className="text-sm font-semibold text-blue hover:underline"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={deletingId === marketplace.id}
+                            onClick={() =>
+                              void handleDelete(
+                                marketplace.id,
+                                marketplace.name,
+                              )
+                            }
+                            className="text-sm font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === marketplace.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ========================= */}
+          {/* MOBILE */}
+          {/* ========================= */}
+
+          <div className="space-y-4 md:hidden">
+            {marketplaces.map((marketplace) => (
+              <article
+                key={marketplace.id}
+                className="rounded-xl bg-white p-4 shadow-sm"
+              >
+                {/* Cabeçalho */}
+                <div className="flex items-start gap-3">
+                  {marketplace.logoUrl ? (
+                    <img
+                      src={marketplace.logoUrl}
+                      alt={marketplace.name}
+                      className="h-14 w-14 shrink-0 rounded-lg object-contain"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                      WM
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {marketplace.name}
+                      </h2>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          marketplace.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {marketplace.active ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      /{marketplace.slug}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Descrição */}
+                {marketplace.description && (
+                  <p className="mt-4 text-sm text-gray-600">
+                    {marketplace.description}
+                  </p>
+                )}
+
+                {/* Site */}
+                {marketplace.websiteUrl && (
+                  <a
+                    href={marketplace.websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline"
+                  >
+                    Visitar site →
+                  </a>
+                )}
+
+                {/* Informações */}
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Produtos</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {marketplace.products?.length ?? 0}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Ordem</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {marketplace.sortOrder ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ações */}
+                <div className="mt-4 flex gap-3 border-t pt-4">
+                  <Link
+                    to={`/admin/marketplaces/${marketplace.id}/edit`}
+                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === marketplace.id}
+                    onClick={() =>
+                      void handleDelete(marketplace.id, marketplace.name)
+                    }
+                    className="flex-1 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deletingId === marketplace.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminProductsFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useProducts } from "../contexts/useProducts";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function AdminProductsFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getProductById, createProduct, updateProduct } = useProducts();
+
+  const { subcategories, fetchSubcategories } = useSubcategories();
+
+  const { marketplaces, fetchMarketplaces } = useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+
+  const [currency, setCurrency] = useState("BRL");
+
+  const [rating, setRating] = useState("");
+  const [reviewsCount, setReviewsCount] = useState("0");
+
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [marketplaceId, setMarketplaceId] = useState("");
+
+  const [featured, setFeatured] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [active, setActive] = useState(true);
+
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchSubcategories();
+    void fetchMarketplaces();
+  }, [fetchSubcategories, fetchMarketplaces]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const productId = id;
+    const authToken = token;
+
+    let isMounted = true;
+
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId, authToken);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!product) {
+          setError("Produto não encontrado.");
+          return;
+        }
+
+        setTitle(product.title ?? "");
+
+        setDescription(product.description ?? "");
+
+        setShortDescription(product.shortDescription ?? "");
+
+        setImageUrl(product.imageUrl ?? "");
+
+        setPrice(String(product.price ?? ""));
+
+        setOriginalPrice(
+          product.originalPrice !== null && product.originalPrice !== undefined
+            ? String(product.originalPrice)
+            : "",
+        );
+
+        setCurrency(product.currency ?? "BRL");
+
+        setRating(
+          product.rating !== null && product.rating !== undefined
+            ? String(product.rating)
+            : "",
+        );
+
+        setReviewsCount(String(product.reviewsCount ?? 0));
+
+        setAffiliateUrl(product.affiliateUrl ?? "");
+
+        setSubcategoryId(product.subcategoryId ?? "");
+
+        setMarketplaceId(product.marketplaceId ?? "");
+
+        setFeatured(Boolean(product.featured));
+
+        setAvailable(Boolean(product.available));
+
+        setActive(Boolean(product.active));
+
+        setSeoTitle(product.seoTitle ?? "");
+
+        setSeoDescription(product.seoDescription ?? "");
+      } catch {
+        if (isMounted) {
+          setError("Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, token, getProductById]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria.");
+      return;
+    }
+
+    if (!marketplaceId) {
+      setError("Selecione um marketplace.");
+      return;
+    }
+
+    const parsedPrice = Number(price);
+
+    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (originalPrice.trim()) {
+      parsedOriginalPrice = Number(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        setError("Informe um preço original válido.");
+        return;
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        setError("A avaliação deve estar entre 0 e 5.");
+        return;
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      setError("A quantidade de avaliações deve ser um número inteiro.");
+      return;
+    }
+
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para a imagem.");
+      return;
+    }
+
+    try {
+      new URL(affiliateUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para o link de afiliado.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const productData = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        shortDescription: shortDescription.trim() || undefined,
+
+        imageUrl: imageUrl.trim(),
+
+        price: parsedPrice,
+        originalPrice: parsedOriginalPrice,
+
+        currency: currency.trim() || "BRL",
+
+        rating: parsedRating,
+        reviewsCount: parsedReviewsCount,
+
+        affiliateUrl: affiliateUrl.trim(),
+
+        subcategoryId,
+        marketplaceId,
+
+        featured,
+        available,
+        active,
+
+        seoTitle: seoTitle.trim() || undefined,
+        seoDescription: seoDescription.trim() || undefined,
+      };
+
+      if (isEditing && id) {
+        await updateProduct(id, productData, token);
+      } else {
+        await createProduct(productData, token);
+      }
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o produto."
+            : "Não foi possível criar o produto.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando produto...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/products"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para produtos
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar produto" : "Novo produto"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do produto."
+            : "Cadastre um novo produto no catálogo do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        {/* Informações principais */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Informações do produto
+          </h2>
+
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label
+                htmlFor="title"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Título *
+              </label>
+
+              <input
+                id="title"
+                type="text"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Ex.: Smartphone Samsung Galaxy"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                O slug será gerado automaticamente pela API.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="shortDescription"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição curta
+              </label>
+
+              <input
+                id="shortDescription"
+                type="text"
+                value={shortDescription}
+                onChange={(event) => setShortDescription(event.target.value)}
+                placeholder="Resumo rápido do produto"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={5}
+                placeholder="Descrição completa do produto..."
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="imageUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                URL da imagem *
+              </label>
+
+              <input
+                id="imageUrl"
+                type="url"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="https://exemplo.com/produto.jpg"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              {imageUrl.trim() && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Pré-visualização
+                  </p>
+
+                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <img
+                      src={imageUrl}
+                      alt="Pré-visualização do produto"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Preço e avaliações */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Preço e avaliações
+          </h2>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="price"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Preço *
+              </label>
+
+              <input
+                id="price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                placeholder="0,00"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="originalPrice"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Preço original
+              </label>
+
+              <input
+                id="originalPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={originalPrice}
+                onChange={(event) => setOriginalPrice(event.target.value)}
+                placeholder="0,00"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="currency"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Moeda
+              </label>
+
+              <input
+                id="currency"
+                type="text"
+                value={currency}
+                onChange={(event) => setCurrency(event.target.value)}
+                maxLength={3}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="rating"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Avaliação
+              </label>
+
+              <input
+                id="rating"
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                value={rating}
+                onChange={(event) => setRating(event.target.value)}
+                placeholder="Ex.: 4.8"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="reviewsCount"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Quantidade de avaliações
+              </label>
+
+              <input
+                id="reviewsCount"
+                type="number"
+                min="0"
+                step="1"
+                value={reviewsCount}
+                onChange={(event) => setReviewsCount(event.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Relacionamentos */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Classificação e marketplace
+          </h2>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="subcategoryId"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Subcategoria *
+              </label>
+
+              <select
+                id="subcategoryId"
+                value={subcategoryId}
+                onChange={(event) => setSubcategoryId(event.target.value)}
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              >
+                <option value="">Selecione uma subcategoria</option>
+
+                {subcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    {subcategory.category?.name
+                      ? `${subcategory.category.name} → ${subcategory.name}`
+                      : subcategory.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="marketplaceId"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Marketplace *
+              </label>
+
+              <select
+                id="marketplaceId"
+                value={marketplaceId}
+                onChange={(event) => setMarketplaceId(event.target.value)}
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              >
+                <option value="">Selecione um marketplace</option>
+
+                {marketplaces.map((marketplace) => (
+                  <option key={marketplace.id} value={marketplace.id}>
+                    {marketplace.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="affiliateUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Link de afiliado *
+              </label>
+
+              <input
+                id="affiliateUrl"
+                type="url"
+                value={affiliateUrl}
+                onChange={(event) => setAffiliateUrl(event.target.value)}
+                placeholder="https://..."
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Este será o link utilizado pelo botão de compra/afiliado.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">
+            Status do produto
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(event) => setFeatured(event.target.checked)}
+                disabled={loading}
+                className="h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-700">
+                  Destaque
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Exibir como produto destacado.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+              <input
+                type="checkbox"
+                checked={available}
+                onChange={(event) => setAvailable(event.target.checked)}
+                disabled={loading}
+                className="h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-700">
+                  Disponível
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Produto disponível no catálogo.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={(event) => setActive(event.target.checked)}
+                disabled={loading}
+                className="h-4 w-4"
+              />
+
+              <span>
+                <span className="block text-sm font-semibold text-gray-700">
+                  Ativo
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Produto ativo no sistema.
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* SEO */}
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
+
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label
+                htmlFor="seoTitle"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                SEO Title
+              </label>
+
+              <input
+                id="seoTitle"
+                type="text"
+                value={seoTitle}
+                onChange={(event) => setSeoTitle(event.target.value)}
+                placeholder="Título otimizado para buscadores"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="seoDescription"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                SEO Description
+              </label>
+
+              <textarea
+                id="seoDescription"
+                value={seoDescription}
+                onChange={(event) => setSeoDescription(event.target.value)}
+                rows={4}
+                placeholder="Descrição otimizada para mecanismos de busca"
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/products"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
+          >
+            {loading
+              ? isEditing
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar produto"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+```
+
 ## src\pages\AdminProductsPage.tsx
 
 ```tsx
 // src/pages/admin/AdminProductsPage.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/useAuth";
 import { useProducts } from "../contexts/useProducts";
 
 export function AdminProductsPage() {
-  const { products, fetchProducts, loading, error } = useProducts();
+  const { products, fetchAdminProducts, updateProductStatus, loading, error } =
+    useProducts();
+
+  const { token } = useAuth();
+
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchProducts();
-  }, [fetchProducts]);
+    if (!token) {
+      return;
+    }
 
-  if (loading) return <p>Carregando produtos...</p>;
-  if (error) return <p>Erro: {error}</p>;
+    void fetchAdminProducts(token);
+  }, [token, fetchAdminProducts]);
+
+  async function handleStatusChange(
+    id: string,
+    status: {
+      active?: boolean;
+      available?: boolean;
+      featured?: boolean;
+    },
+  ) {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setUpdatingId(id);
+
+      await updateProductStatus(id, status, token);
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível atualizar o status do produto.",
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  if (loading) {
+    return <p className="p-6">Carregando produtos...</p>;
+  }
+
+  if (error) {
+    return <p className="p-6">Erro: {error}</p>;
+  }
 
   return (
     <section className="p-6">
-      <header className="flex justify-between items-center mb-6">
+      <header className="flex justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
+
         <Link
           to="/admin/products/new"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
         >
           + Cadastrar Produto
         </Link>
       </header>
 
-      <table className="w-full border-collapse border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-3 py-2">Título</th>
-            <th className="border px-3 py-2">Preço</th>
-            <th className="border px-3 py-2">Disponível</th>
-            <th className="border px-3 py-2">Ativo</th>
-            <th className="border px-3 py-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.id}>
-              <td className="border px-3 py-2">{p.title}</td>
-              <td className="border px-3 py-2">
-                {p.price.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: p.currency,
-                })}
-              </td>
-              <td className="border px-3 py-2">
-                {p.available ? "Sim" : "Não"}
-              </td>
-              <td className="border px-3 py-2">{p.active ? "Sim" : "Não"}</td>
-              <td className="border px-3 py-2">
-                <Link
-                  to={`/admin/products/${p.id}/edit`}
-                  className="text-blue-600 hover:underline mr-3"
-                >
-                  Editar
-                </Link>
-                <Link
-                  to={`/admin/products/${p.id}/status`}
-                  className="text-green-600 hover:underline"
-                >
-                  Status
-                </Link>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1000px] border-collapse">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border-b px-3 py-2 text-left">Produto</th>
+
+              <th className="border-b px-3 py-2 text-left">Preço</th>
+
+              <th className="border-b px-3 py-2 text-center">Disponível</th>
+
+              <th className="border-b px-3 py-2 text-center">Ativo</th>
+
+              <th className="border-b px-3 py-2 text-center">Destaque</th>
+
+              <th className="border-b px-3 py-2 text-center">Ações</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {products.map((p) => {
+              const isUpdating = updatingId === p.id;
+
+              return (
+                <tr
+                  key={p.id}
+                  className="border-b last:border-b-0 hover:bg-gray-50"
+                >
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-3">
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.title}
+                          className="w-12 h-12 object-cover rounded-lg border"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg border bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                          Sem imagem
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="font-semibold">{p.title}</p>
+
+                        <p className="text-xs text-gray-500">/{p.slug}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-3 py-3">
+                    {p.price.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: p.currency,
+                    })}
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.available}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          available: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar disponibilidade de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.active}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          active: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar status ativo de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.featured}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          featured: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar destaque de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <Link
+                      to={`/admin/products/${p.id}/edit`}
+                      className="text-sm font-semibold text-blue hover:underline"
+                    >
+                      Editar
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {products.length === 0 && (
+        <div className="text-center py-10 text-gray-500">
+          Nenhum produto encontrado.
+        </div>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminSubcategoriesPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function AdminSubcategoriesPage() {
+  const { token } = useAuth();
+
+  const {
+    subcategories,
+    loading,
+    error,
+    fetchSubcategories,
+    deleteSubcategory,
+  } = useSubcategories();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchSubcategories();
+  }, [fetchSubcategories]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir a subcategoria "${name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteSubcategory(id, token);
+    } catch (requestError) {
+      alert(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível excluir a subcategoria.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-7xl">
+      {/* Cabeçalho */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Subcategorias</h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie as subcategorias do WorldMix360.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/subcategories/new"
+          className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
+        >
+          + Nova subcategoria
+        </Link>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading ? (
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando subcategorias...</p>
+        </div>
+      ) : subcategories.length === 0 ? (
+        /* Estado vazio */
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Nenhuma subcategoria encontrada
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Comece cadastrando a primeira subcategoria.
+          </p>
+
+          <Link to="/admin/subcategories/new" className="bg-navy">
+            Cadastrar subcategoria
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* ========================= */}
+          {/* DESKTOP */}
+          {/* ========================= */}
+
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] border-collapse">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
+                    <th className="px-5 py-4 font-semibold">Subcategoria</th>
+
+                    <th className="px-5 py-4 font-semibold">Categoria</th>
+
+                    <th className="px-5 py-4 font-semibold">Slug</th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Produtos
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-center font-semibold">
+                      Ordem
+                    </th>
+
+                    <th className="px-5 py-4 text-right font-semibold">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {subcategories.map((subcategory) => (
+                    <tr
+                      key={subcategory.id}
+                      className="border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      {/* Subcategoria */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {subcategory.image ? (
+                            <img
+                              src={subcategory.image}
+                              alt={subcategory.name}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                              WM
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {subcategory.name}
+                            </p>
+
+                            {subcategory.description && (
+                              <p className="max-w-xs truncate text-xs text-gray-500">
+                                {subcategory.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Categoria */}
+                      <td className="px-5 py-4">
+                        {subcategory.category ? (
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">
+                              {subcategory.category.name}
+                            </p>
+
+                            <p className="text-xs text-gray-500">
+                              /{subcategory.category.slug}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">—</span>
+                        )}
+                      </td>
+
+                      {/* Slug */}
+                      <td className="px-5 py-4 text-sm text-gray-500">
+                        {subcategory.slug}
+                      </td>
+
+                      {/* Produtos */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {subcategory.products?.length ?? 0}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4 text-center">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            subcategory.active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {subcategory.active ? "Ativa" : "Inativa"}
+                        </span>
+                      </td>
+
+                      {/* Ordem */}
+                      <td className="px-5 py-4 text-center text-sm text-gray-700">
+                        {subcategory.sortOrder ?? 0}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            to={`/admin/subcategories/${subcategory.id}/edit`}
+                            className="text-sm font-semibold text-blue hover:underline"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={deletingId === subcategory.id}
+                            onClick={() =>
+                              void handleDelete(
+                                subcategory.id,
+                                subcategory.name,
+                              )
+                            }
+                            className="text-sm font-semibold text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === subcategory.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ========================= */}
+          {/* MOBILE */}
+          {/* ========================= */}
+
+          <div className="space-y-4 md:hidden">
+            {subcategories.map((subcategory) => (
+              <article
+                key={subcategory.id}
+                className="rounded-xl bg-white p-4 shadow-sm"
+              >
+                {/* Cabeçalho do card */}
+                <div className="flex items-start gap-3">
+                  {subcategory.image ? (
+                    <img
+                      src={subcategory.image}
+                      alt={subcategory.name}
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
+                      WM
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {subcategory.name}
+                      </h2>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          subcategory.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {subcategory.active ? "Ativa" : "Inativa"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 truncate text-xs text-gray-500">
+                      /{subcategory.slug}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Categoria */}
+                <div className="mt-4 rounded-lg bg-blue-50 p-3">
+                  <p className="text-xs text-blue-600">Categoria</p>
+
+                  <p className="mt-1 font-semibold text-blue-800">
+                    {subcategory.category?.name ?? "Sem categoria"}
+                  </p>
+                </div>
+
+                {/* Descrição */}
+                {subcategory.description && (
+                  <p className="mt-3 text-sm text-gray-600">
+                    {subcategory.description}
+                  </p>
+                )}
+
+                {/* Informações */}
+                <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Produtos</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {subcategory.products?.length ?? 0}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Ordem</p>
+
+                    <p className="font-semibold text-gray-800">
+                      {subcategory.sortOrder ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ações */}
+                <div className="mt-4 flex gap-3 border-t pt-4">
+                  <Link
+                    to={`/admin/subcategories/${subcategory.id}/edit`}
+                    className="flex-1 rounded-lg bg-blue-50 px-4 py-2.5 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === subcategory.id}
+                    onClick={() =>
+                      void handleDelete(subcategory.id, subcategory.name)
+                    }
+                    className="flex-1 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                  >
+                    {deletingId === subcategory.id ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\AdminSubcategoryFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function AdminSubcategoryFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { categories, fetchCategories } = useCategories();
+
+  const { getSubcategoryById, createSubcategory, updateSubcategory } =
+    useSubcategories();
+
+  const isEditing = Boolean(id);
+
+  const [categoryId, setCategoryId] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [active, setActive] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    const subcategoryId = id;
+    let isMounted = true;
+    async function loadSubcategory() {
+      if (isMounted) {
+        setLoadingData(true);
+        setError(null);
+      }
+      try {
+        const subcategory = await getSubcategoryById(subcategoryId);
+        if (!isMounted) {
+          return;
+        }
+        if (!subcategory) {
+          setError("Subcategoria não encontrada.");
+          return;
+        }
+        setCategoryId(subcategory.categoryId);
+        setName(subcategory.name);
+        setDescription(subcategory.description ?? "");
+        setImage(subcategory.image ?? "");
+        setSortOrder(String(subcategory.sortOrder ?? 0));
+        setActive(subcategory.active);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+        setError("Não foi possível carregar a subcategoria.");
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+    void loadSubcategory();
+    return () => {
+      isMounted = false;
+    };
+  }, [id, getSubcategoryById]);
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!isEditing && !categoryId) {
+      setError("Selecione uma categoria.");
+      return;
+    }
+
+    if (!name.trim()) {
+      setError("Informe o nome da subcategoria.");
+      return;
+    }
+
+    const parsedSortOrder = Number(sortOrder);
+
+    if (!Number.isInteger(parsedSortOrder)) {
+      setError("A ordem deve ser um número inteiro.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateSubcategory(
+          id,
+          {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            image: image.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      } else {
+        await createSubcategory(
+          {
+            categoryId,
+            name: name.trim(),
+            description: description.trim() || undefined,
+            image: image.trim() || undefined,
+            active,
+            sortOrder: parsedSortOrder,
+          },
+          token,
+        );
+      }
+
+      navigate("/admin/subcategories");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar a subcategoria."
+            : "Não foi possível criar a subcategoria.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-4xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando subcategoria...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-4xl">
+      {/* Cabeçalho */}
+      <div className="mb-6">
+        <Link
+          to="/admin/subcategories"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para subcategorias
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar subcategoria" : "Nova subcategoria"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados da subcategoria."
+            : "Cadastre uma nova subcategoria para o WorldMix360."}
+        </p>
+      </div>
+
+      {/* Erro */}
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Formulário */}
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Categoria */}
+            <div>
+              <label
+                htmlFor="categoryId"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Categoria *
+              </label>
+
+              <select
+                id="categoryId"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                disabled={isEditing || loading}
+                required={!isEditing}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
+              >
+                <option value="">Selecione uma categoria</option>
+
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+
+              {isEditing && (
+                <p className="mt-2 text-xs text-gray-500">
+                  A categoria não pode ser alterada durante a edição.
+                </p>
+              )}
+            </div>
+
+            {/* Nome */}
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Nome *
+              </label>
+
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ex.: Smartphones"
+                required
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                O slug será gerado automaticamente pela API.
+              </p>
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Descrição
+              </label>
+
+              <textarea
+                id="description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Descreva brevemente esta subcategoria..."
+                rows={4}
+                disabled={loading}
+                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+            </div>
+
+            {/* Imagem */}
+            <div>
+              <label
+                htmlFor="image"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Imagem
+              </label>
+
+              <input
+                id="image"
+                type="url"
+                value={image}
+                onChange={(event) => setImage(event.target.value)}
+                placeholder="https://exemplo.com/imagem.jpg"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe uma URL válida para a imagem.
+              </p>
+
+              {image.trim() && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Pré-visualização
+                  </p>
+
+                  <img
+                    src={image}
+                    alt="Pré-visualização"
+                    className="h-24 w-24 rounded-lg object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Ordem */}
+            <div>
+              <label
+                htmlFor="sortOrder"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Ordem
+              </label>
+
+              <input
+                id="sortOrder"
+                type="number"
+                step="1"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Use números menores para exibir primeiro.
+              </p>
+            </div>
+
+            {/* Ativa */}
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Subcategoria ativa
+                </p>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Subcategorias inativas não devem aparecer no catálogo público.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={active}
+                disabled={loading}
+                onClick={() => setActive((value) => !value)}
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition ${
+                  active ? "bg-blue-600" : "bg-gray-300"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition ${
+                    active ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Link
+            to="/admin/subcategories"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          >
+            Cancelar
+          </Link>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center justify-center rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading
+              ? isEditing
+                ? "Salvando..."
+                : "Cadastrando..."
+              : isEditing
+                ? "Salvar alterações"
+                : "Cadastrar subcategoria"}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }
@@ -8484,9 +17596,17 @@ export function TermsOfUsePage() {
 
 ```tsx
 import type { RouteObject } from "react-router-dom";
+
 import { AdminLayout } from "../components/AdminLayout";
+import { AdminCategoryFormPage } from "../pages/AdminCategoriesFormPage";
+import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
 import AdminDashboardPage from "../pages/AdminDashboarPage";
+import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
+import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
+import { AdminProductsFormPage } from "../pages/AdminProductsFormPage";
 import { AdminProductsPage } from "../pages/AdminProductsPage";
+import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
+import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -8498,8 +17618,63 @@ export const adminRoutes: RouteObject[] = [
       </PrivateRoute>
     ),
     children: [
-      { path: "dashboard", element: <AdminDashboardPage /> },
-      { path: "products", element: <AdminProductsPage /> },
+      {
+        path: "dashboard",
+        element: <AdminDashboardPage />,
+      },
+      {
+        path: "products",
+        element: <AdminProductsPage />,
+      },
+      {
+        path: "products/new",
+        element: <AdminProductsFormPage />,
+      },
+      {
+        path: "products/:id/edit",
+        element: <AdminProductsFormPage />,
+      },
+
+      {
+        path: "categories",
+        element: <AdminCategoriesPage />,
+      },
+
+      {
+        path: "categories/new",
+        element: <AdminCategoryFormPage />,
+      },
+
+      {
+        path: "categories/:id/edit",
+        element: <AdminCategoryFormPage />,
+      },
+      {
+        path: "subcategories",
+        element: <AdminSubcategoriesPage />,
+      },
+
+      {
+        path: "subcategories/new",
+        element: <AdminSubcategoryFormPage />,
+      },
+
+      {
+        path: "subcategories/:id/edit",
+        element: <AdminSubcategoryFormPage />,
+      },
+      {
+        path: "marketplaces",
+        element: <AdminMarketplacesPage />,
+      },
+      {
+        path: "marketplaces/new",
+        element: <AdminMarketplaceFormPage />,
+      },
+      {
+        path: "marketplaces/:id/edit",
+        element: <AdminMarketplaceFormPage />,
+      },
     ],
   },
 ];
@@ -8605,28 +17780,51 @@ export const institutionalRoutes: RouteObject[] = [
 ## src\routes\PrivateRoute.tsx
 
 ```tsx
-// src/routes/PrivateRoute.tsx
-
-import type { JSX } from "react/jsx-runtime";
+import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth"; // supondo que você já tenha AuthContext
 
-export default function PrivateRoute({ children }: { children: JSX.Element }) {
+import { useAuth } from "../contexts/useAuth";
+
+type PrivateRouteProps = {
+  children: ReactNode;
+};
+
+export default function PrivateRoute({ children }: PrivateRouteProps) {
   const { user, isLoading } = useAuth();
 
+  /**
+   * Enquanto o AuthProvider verifica o localStorage,
+   * não devemos redirecionar o usuário para o login.
+   */
   if (isLoading) {
-    return <p>Verificando credenciais...</p>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f9fc]">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#dbe7f5] border-t-[#1769e0]" />
+
+          <p className="mt-4 text-sm font-medium text-[#52657c]">
+            Verificando sessão...
+          </p>
+        </div>
+      </div>
+    );
   }
 
+  /**
+   * Usuário não autenticado.
+   */
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  /**
+   * Usuário autenticado, mas sem permissão de administrador.
+   */
   if (user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
 
 ```
