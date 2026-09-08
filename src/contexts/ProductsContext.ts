@@ -1,5 +1,16 @@
 import { createContext } from "react";
 
+export type ProductImage = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+export type ProductImageFormData = {
+  imageUrl: string;
+  sortOrder?: number;
+};
+
 export type Product = {
   id: string;
   title: string;
@@ -9,6 +20,8 @@ export type Product = {
   shortDescription?: string | null;
 
   imageUrl: string;
+
+  images?: ProductImage[];
 
   price: number;
   originalPrice?: number | null;
@@ -40,6 +53,8 @@ export type ProductFormData = {
 
   imageUrl: string;
 
+  images?: ProductImageFormData[];
+
   price: number;
   originalPrice?: number;
 
@@ -67,6 +82,8 @@ export type ProductUpdateData = {
   shortDescription?: string;
 
   imageUrl?: string;
+
+  images?: ProductImageFormData[];
 
   price?: number;
   originalPrice?: number;

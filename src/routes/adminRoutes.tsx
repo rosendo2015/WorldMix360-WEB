@@ -6,10 +6,10 @@ import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
 import AdminDashboardPage from "../pages/AdminDashboarPage";
 import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
 import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
-import { AdminProductsFormPage } from "../pages/AdminProductsFormPage";
 import { AdminProductsPage } from "../pages/AdminProductsPage";
 import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
 import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [

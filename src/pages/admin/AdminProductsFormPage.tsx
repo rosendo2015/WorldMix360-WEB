@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { RichTextEditor } from "../../components/admin/RichTextEditor";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
-import { useProducts } from "../contexts/useProducts";
-import { useSubcategories } from "../contexts/useSubcategories";
+type ProductImageForm = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
 
 export function AdminProductsFormPage() {
   const { id } = useParams();
@@ -25,6 +31,8 @@ export function AdminProductsFormPage() {
   const [shortDescription, setShortDescription] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
+
+  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
 
   const [price, setPrice] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
@@ -86,6 +94,21 @@ export function AdminProductsFormPage() {
 
         setImageUrl(product.imageUrl ?? "");
 
+        setGalleryImages(
+          Array.isArray(product.images)
+            ? product.images
+                .map((image, index) => ({
+                  id: image.id ?? crypto.randomUUID(),
+                  imageUrl: image.imageUrl ?? "",
+                  sortOrder:
+                    typeof image.sortOrder === "number"
+                      ? image.sortOrder
+                      : index,
+                }))
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+            : [],
+        );
+
         setPrice(String(product.price ?? ""));
 
         setOriginalPrice(
@@ -136,6 +159,41 @@ export function AdminProductsFormPage() {
       isMounted = false;
     };
   }, [id, token, getProductById]);
+
+  function handleAddGalleryImage() {
+    setGalleryImages((currentImages) => [
+      ...currentImages,
+      {
+        id: crypto.randomUUID(),
+        imageUrl: "",
+        sortOrder: currentImages.length,
+      },
+    ]);
+  }
+
+  function handleGalleryImageChange(id: string, value: string) {
+    setGalleryImages((currentImages) =>
+      currentImages.map((image) =>
+        image.id === id
+          ? {
+              ...image,
+              imageUrl: value,
+            }
+          : image,
+      ),
+    );
+  }
+
+  function handleRemoveGalleryImage(id: string) {
+    setGalleryImages((currentImages) =>
+      currentImages
+        .filter((image) => image.id !== id)
+        .map((image, index) => ({
+          ...image,
+          sortOrder: index,
+        })),
+    );
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -226,15 +284,40 @@ export function AdminProductsFormPage() {
       return;
     }
 
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    for (const image of cleanGalleryImages) {
+      try {
+        new URL(image.imageUrl);
+      } catch {
+        setError(
+          `Informe uma URL válida para a imagem da galeria na posição ${
+            image.sortOrder + 1
+          }.`,
+        );
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
+      const cleanDescription =
+        description === "<p></p>" ? undefined : description.trim();
+
       const productData = {
         title: title.trim(),
-        description: description.trim() || undefined,
+        description: cleanDescription,
         shortDescription: shortDescription.trim() || undefined,
 
         imageUrl: imageUrl.trim(),
+
+        images: cleanGalleryImages,
 
         price: parsedPrice,
         originalPrice: parsedOriginalPrice,
@@ -376,23 +459,26 @@ export function AdminProductsFormPage() {
                 Descrição
               </label>
 
-              <textarea
-                id="description"
+              <RichTextEditor
                 value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={5}
-                placeholder="Descrição completa do produto..."
+                onChange={setDescription}
                 disabled={loading}
-                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                placeholder="Escreva uma descrição completa e detalhada do produto..."
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Use títulos, negrito, listas, links e outros recursos para
+                deixar a descrição mais organizada e agradável para o cliente.
+              </p>
             </div>
 
+            {/* Imagem principal */}
             <div>
               <label
                 htmlFor="imageUrl"
                 className="mb-2 block text-sm font-semibold text-gray-700"
               >
-                URL da imagem *
+                URL da imagem principal *
               </label>
 
               <input
@@ -409,7 +495,7 @@ export function AdminProductsFormPage() {
               {imageUrl.trim() && (
                 <div className="mt-4">
                   <p className="mb-2 text-xs font-semibold text-gray-500">
-                    Pré-visualização
+                    Pré-visualização da imagem principal
                   </p>
 
                   <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
@@ -419,6 +505,113 @@ export function AdminProductsFormPage() {
                       className="max-h-full max-w-full object-contain"
                     />
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Galeria */}
+            <div className="border-t border-gray-100 pt-6">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    Galeria de imagens
+                  </h3>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Adicione imagens adicionais para exibir na página do
+                    produto.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddGalleryImage}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  + Adicionar imagem
+                </button>
+              </div>
+
+              {galleryImages.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center">
+                  <p className="text-sm text-gray-500">
+                    Nenhuma imagem adicional adicionada.
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-400">
+                    A imagem principal continuará sendo utilizada normalmente.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {galleryImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">
+                            Imagem {image.sortOrder}
+                          </p>
+
+                          <p className="mt-1 text-xs text-gray-500">
+                            Ordem: {image.sortOrder}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGalleryImage(image.id)}
+                          disabled={loading}
+                          className="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Remover
+                        </button>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
+                        <div>
+                          <label
+                            htmlFor={`gallery-image-${image.id}`}
+                            className="mb-2 block text-xs font-semibold text-gray-600"
+                          >
+                            URL da imagem
+                          </label>
+
+                          <input
+                            id={`gallery-image-${image.id}`}
+                            type="url"
+                            value={image.imageUrl}
+                            onChange={(event) =>
+                              handleGalleryImageChange(
+                                image.id,
+                                event.target.value,
+                              )
+                            }
+                            placeholder="https://exemplo.com/imagem.jpg"
+                            disabled={loading}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                          />
+                        </div>
+
+                        <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
+                          {image.imageUrl.trim() ? (
+                            <img
+                              src={image.imageUrl}
+                              alt={`Pré-visualização da imagem ${image.sortOrder}`}
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="px-2 text-center text-xs text-gray-400">
+                              Sem imagem
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -748,7 +941,7 @@ export function AdminProductsFormPage() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
+            className="rounded-lg bg-blue px-4 py-2 text-white transition hover:bg-navy"
           >
             {loading
               ? isEditing
