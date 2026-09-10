@@ -105,8 +105,8 @@ export function AdminBlogPage() {
     return (
       <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-            <h1 className="text-xl font-semibold text-red-700">
+          <div className="rounded-xl border border-danger bg-danger-light p-6 text-center">
+            <h1 className="text-xl font-semibold text-danger">
               Acesso não autorizado
             </h1>
 
@@ -137,7 +137,7 @@ export function AdminBlogPage() {
 
           <Link
             to="/admin/blog/novo"
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="inline-flex items-center justify-center rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue"
           >
             + Novo artigo
           </Link>
@@ -158,7 +158,7 @@ export function AdminBlogPage() {
             <button
               type="button"
               onClick={() => void loadPosts()}
-              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+              className="mt-3 rounded-lg bg-danger-light px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger hover:text-navy"
             >
               Tentar novamente
             </button>
@@ -190,7 +190,7 @@ export function AdminBlogPage() {
           </div>
         ) : (
           /* Tabela */
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[900px] border-collapse">
                 <thead>
@@ -294,7 +294,7 @@ export function AdminBlogPage() {
 
                           <Link
                             to={`/admin/blog/editar/${post.id}`}
-                            className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                            className="rounded-lg bg-navy px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue"
                           >
                             Editar
                           </Link>
@@ -305,7 +305,7 @@ export function AdminBlogPage() {
                               void handleDelete(post.id, post.title)
                             }
                             disabled={deletingId === post.id}
-                            className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg bg-danger px-3 py-2 text-xs font-semibold text-white transition hover:bg-danger-light disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {deletingId === post.id
                               ? "Excluindo..."

@@ -1,4 +1,4 @@
-import { RichTextEditor } from "../RichTextEditor";
+import { RichTextEditor } from "./RichTextEditor";
 
 type ProductBasicInfoProps = {
   title: string;

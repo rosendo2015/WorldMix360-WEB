@@ -1,8 +1,8 @@
 // src/pages/admin/AdminProductsPage.tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth";
-import { useProducts } from "../contexts/useProducts";
+import { useAuth } from "../../contexts/useAuth";
+import { useProducts } from "../../contexts/useProducts";
 
 export function AdminProductsPage() {
   const { products, fetchAdminProducts, updateProductStatus, loading, error } =

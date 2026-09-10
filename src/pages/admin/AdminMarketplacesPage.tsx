@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
 
 export function AdminMarketplacesPage() {
   const { token } = useAuth();

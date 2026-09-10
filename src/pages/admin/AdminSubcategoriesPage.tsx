@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
 export function AdminSubcategoriesPage() {
   const { token } = useAuth();

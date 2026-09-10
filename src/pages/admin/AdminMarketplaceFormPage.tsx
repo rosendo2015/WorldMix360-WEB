@@ -1,27 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
 
-export function AdminSubcategoryFormPage() {
+export function AdminMarketplaceFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { token } = useAuth();
 
-  const { categories, fetchCategories } = useCategories();
-
-  const { getSubcategoryById, createSubcategory, updateSubcategory } =
-    useSubcategories();
+  const { getMarketplaceById, createMarketplace, updateMarketplace } =
+    useMarketplaces();
 
   const isEditing = Boolean(id);
 
-  const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
   const [active, setActive] = useState(true);
 
@@ -33,48 +30,53 @@ export function AdminSubcategoryFormPage() {
     if (!id) {
       return;
     }
-    const subcategoryId = id;
+
+    const marketplaceId = id;
     let isMounted = true;
-    async function loadSubcategory() {
+
+    async function loadMarketplace() {
       if (isMounted) {
         setLoadingData(true);
         setError(null);
       }
+
       try {
-        const subcategory = await getSubcategoryById(subcategoryId);
+        const marketplace = await getMarketplaceById(marketplaceId);
+
         if (!isMounted) {
           return;
         }
-        if (!subcategory) {
-          setError("Subcategoria não encontrada.");
+
+        if (!marketplace) {
+          setError("Marketplace não encontrado.");
           return;
         }
-        setCategoryId(subcategory.categoryId);
-        setName(subcategory.name);
-        setDescription(subcategory.description ?? "");
-        setImage(subcategory.image ?? "");
-        setSortOrder(String(subcategory.sortOrder ?? 0));
-        setActive(subcategory.active);
+
+        setName(marketplace.name);
+        setDescription(marketplace.description ?? "");
+        setWebsiteUrl(marketplace.websiteUrl ?? "");
+        setLogoUrl(marketplace.logoUrl ?? "");
+        setSortOrder(String(marketplace.sortOrder ?? 0));
+        setActive(marketplace.active);
       } catch {
         if (!isMounted) {
           return;
         }
-        setError("Não foi possível carregar a subcategoria.");
+
+        setError("Não foi possível carregar o marketplace.");
       } finally {
         if (isMounted) {
           setLoadingData(false);
         }
       }
     }
-    void loadSubcategory();
+
+    void loadMarketplace();
+
     return () => {
       isMounted = false;
     };
-  }, [id, getSubcategoryById]);
-
-  useEffect(() => {
-    void fetchCategories();
-  }, [fetchCategories]);
+  }, [id, getMarketplaceById]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,13 +88,13 @@ export function AdminSubcategoryFormPage() {
       return;
     }
 
-    if (!isEditing && !categoryId) {
-      setError("Selecione uma categoria.");
+    if (!name.trim()) {
+      setError("Informe o nome do marketplace.");
       return;
     }
 
-    if (!name.trim()) {
-      setError("Informe o nome da subcategoria.");
+    if (name.trim().length < 2) {
+      setError("O nome do marketplace deve ter pelo menos 2 caracteres.");
       return;
     }
 
@@ -103,28 +105,47 @@ export function AdminSubcategoryFormPage() {
       return;
     }
 
+    if (websiteUrl.trim()) {
+      try {
+        new URL(websiteUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o website.");
+        return;
+      }
+    }
+
+    if (logoUrl.trim()) {
+      try {
+        new URL(logoUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o logo.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
       if (isEditing && id) {
-        await updateSubcategory(
+        await updateMarketplace(
           id,
           {
             name: name.trim(),
             description: description.trim() || undefined,
-            image: image.trim() || undefined,
+            websiteUrl: websiteUrl.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
             active,
             sortOrder: parsedSortOrder,
           },
           token,
         );
       } else {
-        await createSubcategory(
+        await createMarketplace(
           {
-            categoryId,
             name: name.trim(),
             description: description.trim() || undefined,
-            image: image.trim() || undefined,
+            websiteUrl: websiteUrl.trim() || undefined,
+            logoUrl: logoUrl.trim() || undefined,
             active,
             sortOrder: parsedSortOrder,
           },
@@ -132,14 +153,14 @@ export function AdminSubcategoryFormPage() {
         );
       }
 
-      navigate("/admin/subcategories");
+      navigate("/admin/marketplaces");
     } catch (requestError) {
       setError(
         requestError instanceof Error
           ? requestError.message
           : isEditing
-            ? "Não foi possível atualizar a subcategoria."
-            : "Não foi possível criar a subcategoria.",
+            ? "Não foi possível atualizar o marketplace."
+            : "Não foi possível criar o marketplace.",
       );
     } finally {
       setLoading(false);
@@ -150,7 +171,7 @@ export function AdminSubcategoryFormPage() {
     return (
       <section className="mx-auto w-full max-w-4xl">
         <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">Carregando subcategoria...</p>
+          <p className="text-gray-500">Carregando marketplace...</p>
         </div>
       </section>
     );
@@ -161,20 +182,20 @@ export function AdminSubcategoryFormPage() {
       {/* Cabeçalho */}
       <div className="mb-6">
         <Link
-          to="/admin/subcategories"
+          to="/admin/marketplaces"
           className="text-sm font-semibold text-blue hover:underline"
         >
-          ← Voltar para subcategorias
+          ← Voltar para marketplaces
         </Link>
 
         <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          {isEditing ? "Editar subcategoria" : "Nova subcategoria"}
+          {isEditing ? "Editar marketplace" : "Novo marketplace"}
         </h1>
 
         <p className="mt-1 text-sm text-gray-500">
           {isEditing
-            ? "Atualize os dados da subcategoria."
-            : "Cadastre uma nova subcategoria para o WorldMix360."}
+            ? "Atualize os dados do marketplace."
+            : "Cadastre um novo marketplace para o WorldMix360."}
         </p>
       </div>
 
@@ -192,39 +213,6 @@ export function AdminSubcategoryFormPage() {
       >
         <div className="rounded-xl bg-white p-6 shadow-sm">
           <div className="grid grid-cols-1 gap-6">
-            {/* Categoria */}
-            <div>
-              <label
-                htmlFor="categoryId"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Categoria *
-              </label>
-
-              <select
-                id="categoryId"
-                value={categoryId}
-                onChange={(event) => setCategoryId(event.target.value)}
-                disabled={isEditing || loading}
-                required={!isEditing}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
-              >
-                <option value="">Selecione uma categoria</option>
-
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-
-              {isEditing && (
-                <p className="mt-2 text-xs text-gray-500">
-                  A categoria não pode ser alterada durante a edição.
-                </p>
-              )}
-            </div>
-
             {/* Nome */}
             <div>
               <label
@@ -239,7 +227,7 @@ export function AdminSubcategoryFormPage() {
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Ex.: Smartphones"
+                placeholder="Ex.: Mercado Livre"
                 required
                 disabled={loading}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
@@ -263,50 +251,76 @@ export function AdminSubcategoryFormPage() {
                 id="description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Descreva brevemente esta subcategoria..."
+                placeholder="Descreva brevemente o marketplace..."
                 rows={4}
                 disabled={loading}
                 className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
               />
             </div>
 
-            {/* Imagem */}
+            {/* Website */}
             <div>
               <label
-                htmlFor="image"
+                htmlFor="websiteUrl"
                 className="mb-2 block text-sm font-semibold text-gray-700"
               >
-                Imagem
+                Website
               </label>
 
               <input
-                id="image"
+                id="websiteUrl"
                 type="url"
-                value={image}
-                onChange={(event) => setImage(event.target.value)}
-                placeholder="https://exemplo.com/imagem.jpg"
+                value={websiteUrl}
+                onChange={(event) => setWebsiteUrl(event.target.value)}
+                placeholder="https://www.exemplo.com.br"
                 disabled={loading}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Informe uma URL válida para a imagem.
+                Informe a URL oficial do marketplace.
+              </p>
+            </div>
+
+            {/* Logo */}
+            <div>
+              <label
+                htmlFor="logoUrl"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Logo
+              </label>
+
+              <input
+                id="logoUrl"
+                type="url"
+                value={logoUrl}
+                onChange={(event) => setLogoUrl(event.target.value)}
+                placeholder="https://exemplo.com/logo.png"
+                disabled={loading}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Informe uma URL válida para o logo.
               </p>
 
-              {image.trim() && (
+              {logoUrl.trim() && (
                 <div className="mt-4">
                   <p className="mb-2 text-xs font-semibold text-gray-500">
                     Pré-visualização
                   </p>
 
-                  <img
-                    src={image}
-                    alt="Pré-visualização"
-                    className="h-24 w-24 rounded-lg object-cover"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
-                  />
+                  <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <img
+                      src={logoUrl}
+                      alt="Pré-visualização do logo"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -335,15 +349,16 @@ export function AdminSubcategoryFormPage() {
               </p>
             </div>
 
-            {/* Ativa */}
+            {/* Ativo */}
             <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
               <div>
                 <p className="text-sm font-semibold text-gray-700">
-                  Subcategoria ativa
+                  Marketplace ativo
                 </p>
 
                 <p className="mt-1 text-xs text-gray-500">
-                  Subcategorias inativas não devem aparecer no catálogo público.
+                  Marketplaces inativos não devem aparecer em áreas públicas do
+                  catálogo.
                 </p>
               </div>
 
@@ -370,7 +385,7 @@ export function AdminSubcategoryFormPage() {
         {/* Ações */}
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Link
-            to="/admin/subcategories"
+            to="/admin/marketplaces"
             className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
             Cancelar
@@ -387,7 +402,7 @@ export function AdminSubcategoryFormPage() {
                 : "Cadastrando..."
               : isEditing
                 ? "Salvar alterações"
-                : "Cadastrar subcategoria"}
+                : "Cadastrar marketplace"}
           </button>
         </div>
       </form>

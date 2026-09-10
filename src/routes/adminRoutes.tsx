@@ -1,16 +1,17 @@
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
-import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
-import { AdminProductsPage } from "../pages/AdminProductsPage";
-import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
-import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminBlogFormPage } from "../pages/admin/AdminBlogFormPage";
 import { AdminBlogPage } from "../pages/admin/AdminBlogPage";
 import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
 import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage";
 import { AdminDashboardPage } from "../pages/admin/AdminDashboarPage";
+import { AdminMarketplaceFormPage } from "../pages/admin/AdminMarketplaceFormPage";
+import { AdminMarketplacesPage } from "../pages/admin/AdminMarketplacesPage";
 import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
+import { AdminProductsPage } from "../pages/admin/AdminProductsPage";
+import { AdminSubcategoriesPage } from "../pages/admin/AdminSubcategoriesPage";
+import { AdminSubcategoryFormPage } from "../pages/admin/AdminSubcategoryFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -82,6 +83,14 @@ export const adminRoutes: RouteObject[] = [
       {
         path: "blog",
         element: <AdminBlogPage />,
+      },
+      {
+        path: "blog/novo",
+        element: <AdminBlogFormPage />,
+      },
+      {
+        path: "blog/editar/:id",
+        element: <AdminBlogFormPage />,
       },
     ],
   },
