@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
 
 export function AdminCategoriesPage() {
   const { token } = useAuth();
@@ -137,7 +137,7 @@ export function AdminCategoriesPage() {
                             />
                           ) : (
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
-                              WM
+                              WM360
                             </div>
                           )}
 

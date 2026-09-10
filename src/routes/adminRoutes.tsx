@@ -1,14 +1,15 @@
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminCategoryFormPage } from "../pages/AdminCategoriesFormPage";
-import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
-import AdminDashboardPage from "../pages/AdminDashboarPage";
 import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
 import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
 import { AdminProductsPage } from "../pages/AdminProductsPage";
 import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
 import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminBlogPage } from "../pages/admin/AdminBlogPage";
+import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
+import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage";
+import { AdminDashboardPage } from "../pages/admin/AdminDashboarPage";
 import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
 import PrivateRoute from "./PrivateRoute";
 
@@ -25,6 +26,7 @@ export const adminRoutes: RouteObject[] = [
         path: "dashboard",
         element: <AdminDashboardPage />,
       },
+
       {
         path: "products",
         element: <AdminProductsPage />,
@@ -42,30 +44,28 @@ export const adminRoutes: RouteObject[] = [
         path: "categories",
         element: <AdminCategoriesPage />,
       },
-
       {
         path: "categories/new",
         element: <AdminCategoryFormPage />,
       },
-
       {
         path: "categories/:id/edit",
         element: <AdminCategoryFormPage />,
       },
+
       {
         path: "subcategories",
         element: <AdminSubcategoriesPage />,
       },
-
       {
         path: "subcategories/new",
         element: <AdminSubcategoryFormPage />,
       },
-
       {
         path: "subcategories/:id/edit",
         element: <AdminSubcategoryFormPage />,
       },
+
       {
         path: "marketplaces",
         element: <AdminMarketplacesPage />,
@@ -77,6 +77,11 @@ export const adminRoutes: RouteObject[] = [
       {
         path: "marketplaces/:id/edit",
         element: <AdminMarketplaceFormPage />,
+      },
+
+      {
+        path: "blog",
+        element: <AdminBlogPage />,
       },
     ],
   },

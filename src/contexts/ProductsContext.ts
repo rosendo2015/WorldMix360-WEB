@@ -117,7 +117,7 @@ export type ProductsContextValue = {
   loading: boolean;
   error: string | null;
 
-  fetchProducts: (category?: string) => Promise<void>;
+  fetchProducts: (category?: string, search?: string) => Promise<void>;
 
   fetchAdminProducts: (
     token: string,

@@ -3,13 +3,14 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
-import { useMarketplaces } from "../contexts/useMarketplaces";
-import { useProducts } from "../contexts/useProducts";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+import { useCategories } from "../../contexts/useCategories";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
-export default function AdminDashboardPage() {
+export function AdminDashboardPage() {
   const { token } = useAuth();
 
   const {
@@ -40,10 +41,17 @@ export default function AdminDashboardPage() {
     error: marketplacesError,
   } = useMarketplaces();
 
+  const {
+    posts,
+    fetchAdminPosts,
+    loading: blogLoading,
+    error: blogError,
+  } = useBlog();
+
   /**
    * Carrega os dados necessários para o Dashboard.
    *
-   * Produtos administrativos precisam do token.
+   * Produtos e Blog administrativos precisam do token.
    * Categorias, subcategorias e marketplaces possuem
    * endpoints públicos de leitura.
    */
@@ -57,6 +65,7 @@ export default function AdminDashboardPage() {
       fetchCategories(),
       fetchSubcategories(),
       fetchMarketplaces(),
+      fetchAdminPosts(token),
     ]);
   }, [
     token,
@@ -64,6 +73,7 @@ export default function AdminDashboardPage() {
     fetchCategories,
     fetchSubcategories,
     fetchMarketplaces,
+    fetchAdminPosts,
   ]);
 
   // ================================
@@ -112,17 +122,35 @@ export default function AdminDashboardPage() {
     (marketplace) => marketplace.active,
   ).length;
 
+  // ================================
+  // Estatísticas do Blog
+  // ================================
+
+  const totalPosts = posts.length;
+
+  const publishedPosts = posts.filter(
+    (post) => post.status === "PUBLISHED",
+  ).length;
+
+  const draftPosts = posts.filter((post) => post.status === "DRAFT").length;
+
+  const scheduledPosts = posts.filter(
+    (post) => post.status === "SCHEDULED",
+  ).length;
+
   const isLoading =
     productsLoading ||
     categoriesLoading ||
     subcategoriesLoading ||
-    marketplacesLoading;
+    marketplacesLoading ||
+    blogLoading;
 
   const errors = [
     productsError,
     categoriesError,
     subcategoriesError,
     marketplacesError,
+    blogError,
   ].filter(Boolean);
 
   return (
@@ -141,7 +169,8 @@ export default function AdminDashboardPage() {
             </h1>
 
             <p className="mt-2 text-sm text-gray-500 sm:text-base">
-              Visão geral do catálogo e das principais áreas do sistema.
+              Visão geral do catálogo, conteúdo e das principais áreas do
+              sistema.
             </p>
           </div>
 
@@ -195,7 +224,7 @@ export default function AdminDashboardPage() {
           CARDS PRINCIPAIS
       ======================================== */}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {/* Produtos */}
 
         <Link
@@ -305,6 +334,33 @@ export default function AdminDashboardPage() {
 
           <div className="mt-5 flex items-center justify-between text-xs">
             <span className="text-gray-500">{activeMarketplaces} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Blog */}
+
+        <Link
+          to="/admin/blog"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Blog</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">{totalPosts}</p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📝
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{publishedPosts} publicados</span>
 
             <span className="font-semibold text-blue group-hover:underline">
               Gerenciar →
@@ -456,6 +512,59 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ========================================
+          RESUMO DO BLOG
+      ======================================== */}
+
+      <section className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-navy">Resumo do Blog</h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Situação atual dos conteúdos publicados e em produção.
+            </p>
+          </div>
+
+          <Link
+            to="/admin/blog"
+            className="text-sm font-semibold text-blue hover:underline"
+          >
+            Gerenciar Blog →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Total</p>
+
+            <p className="mt-1 text-2xl font-bold text-navy">{totalPosts}</p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Publicados</p>
+
+            <p className="mt-1 text-2xl font-bold text-green">
+              {publishedPosts}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Rascunhos</p>
+
+            <p className="mt-1 text-2xl font-bold text-yellow">{draftPosts}</p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Agendados</p>
+
+            <p className="mt-1 text-2xl font-bold text-blue">
+              {scheduledPosts}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================
           AÇÕES RÁPIDAS
       ======================================== */}
 
@@ -468,7 +577,7 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Link
             to="/admin/products/new"
             className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
@@ -518,6 +627,19 @@ export default function AdminDashboardPage() {
 
             <p className="mt-1 text-xs text-gray-500">
               Adicionar um canal de venda.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/blog"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📝</span>
+
+            <p className="mt-2 font-semibold text-navy">Gerenciar Blog</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Gerenciar os artigos e conteúdos.
             </p>
           </Link>
         </div>

@@ -1,4 +1,5 @@
 import { AuthProvider } from "./contexts/AuthProvider";
+import { BlogProvider } from "./contexts/BlogProvider";
 import { CategoriesProvider } from "./contexts/CategoriesProvider";
 import { MarketplacesProvider } from "./contexts/MarketplacesProvider";
 import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
@@ -14,7 +15,9 @@ export function App() {
           <SubcategoriesProvider>
             <MarketplacesProvider>
               <ProductsProvider>
-                <AppRoutes />
+                <BlogProvider>
+                  <AppRoutes />
+                </BlogProvider>
               </ProductsProvider>
             </MarketplacesProvider>
           </SubcategoriesProvider>

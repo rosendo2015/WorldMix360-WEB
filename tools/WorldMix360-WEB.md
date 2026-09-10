@@ -44,8 +44,13 @@ export default defineConfig([
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/extension-underline": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "class-variance-authority": "^0.7.1",
     "crypto": "^1.0.1",
+    "dompurify": "^3.4.15",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-icons": "^5.7.0",
@@ -59,6 +64,7 @@ export default defineConfig([
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -108,6 +114,1129 @@ export function App() {
         </CategoriesProvider>
       </MercadoLivreProvider>
     </AuthProvider>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductBasicInfo.tsx
+
+```tsx
+import { RichTextEditor } from "../RichTextEditor";
+
+type ProductBasicInfoProps = {
+  title: string;
+  description: string;
+  shortDescription: string;
+  imageUrl: string;
+  loading: boolean;
+  onTitleChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onShortDescriptionChange: (value: string) => void;
+  onImageUrlChange: (value: string) => void;
+};
+
+export function ProductBasicInfo({
+  title,
+  description,
+  shortDescription,
+  imageUrl,
+  loading,
+  onTitleChange,
+  onDescriptionChange,
+  onShortDescriptionChange,
+  onImageUrlChange,
+}: ProductBasicInfoProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Informações do produto
+      </h2>
+
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <label
+            htmlFor="title"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Título *
+          </label>
+
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={(event) => onTitleChange(event.target.value)}
+            placeholder="Ex.: Smartphone Samsung Galaxy"
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+            O slug será gerado automaticamente pela API.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="shortDescription"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Descrição curta
+          </label>
+
+          <input
+            id="shortDescription"
+            type="text"
+            value={shortDescription}
+            onChange={(event) => onShortDescriptionChange(event.target.value)}
+            placeholder="Resumo rápido do produto"
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="description"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Descrição
+          </label>
+
+          <RichTextEditor
+            value={description}
+            onChange={onDescriptionChange}
+            disabled={loading}
+            placeholder="Escreva uma descrição completa e detalhada do produto..."
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+            Use títulos, negrito, listas, links e outros recursos para deixar a
+            descrição mais organizada e agradável para o cliente.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="imageUrl"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            URL da imagem principal *
+          </label>
+
+          <input
+            id="imageUrl"
+            type="url"
+            value={imageUrl}
+            onChange={(event) => onImageUrlChange(event.target.value)}
+            placeholder="https://exemplo.com/produto.jpg"
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+
+          {imageUrl.trim() && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-semibold text-gray-500">
+                Pré-visualização da imagem principal
+              </p>
+
+              <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <img
+                  src={imageUrl}
+                  alt="Pré-visualização do produto"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductFormActions.tsx
+
+```tsx
+import { Link } from "react-router-dom";
+
+type ProductFormActionsProps = {
+  loading: boolean;
+  isEditing: boolean;
+};
+
+export function ProductFormActions({
+  loading,
+  isEditing,
+}: ProductFormActionsProps) {
+  return (
+    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <Link
+        to="/admin/products"
+        className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+      >
+        Cancelar
+      </Link>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="rounded-lg bg-blue px-4 py-2 text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {loading
+          ? isEditing
+            ? "Salvando..."
+            : "Cadastrando..."
+          : isEditing
+            ? "Salvar alterações"
+            : "Cadastrar produto"}
+      </button>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductGallery.tsx
+
+```tsx
+import type { ProductImageForm } from "./types";
+
+type ProductGalleryProps = {
+  galleryImages: ProductImageForm[];
+  loading: boolean;
+  onAdd: () => void;
+  onChange: (id: string, value: string) => void;
+  onRemove: (id: string) => void;
+};
+
+export function ProductGallery({
+  galleryImages,
+  loading,
+  onAdd,
+  onChange,
+  onRemove,
+}: ProductGalleryProps) {
+  return (
+    <div className="border-t border-gray-100 pt-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">
+            Galeria de imagens
+          </h3>
+
+          <p className="mt-1 text-xs text-gray-500">
+            Adicione imagens adicionais para exibir na página do produto.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={loading}
+          className="inline-flex items-center justify-center rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          + Adicionar imagem
+        </button>
+      </div>
+
+      {galleryImages.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center">
+          <p className="text-sm text-gray-500">
+            Nenhuma imagem adicional adicionada.
+          </p>
+
+          <p className="mt-1 text-xs text-gray-400">
+            A imagem principal continuará sendo utilizada normalmente.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {galleryImages.map((image) => (
+            <div
+              key={image.id}
+              className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    Imagem {image.sortOrder + 1}
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Ordem: {image.sortOrder + 1}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onRemove(image.id)}
+                  disabled={loading}
+                  className="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Remover
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
+                <div>
+                  <label
+                    htmlFor={`gallery-image-${image.id}`}
+                    className="mb-2 block text-xs font-semibold text-gray-600"
+                  >
+                    URL da imagem
+                  </label>
+
+                  <input
+                    id={`gallery-image-${image.id}`}
+                    type="url"
+                    value={image.imageUrl}
+                    onChange={(event) => onChange(image.id, event.target.value)}
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    disabled={loading}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                  />
+                </div>
+
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
+                  {image.imageUrl.trim() ? (
+                    <img
+                      src={image.imageUrl}
+                      alt={`Pré-visualização da imagem ${image.sortOrder + 1}`}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <span className="px-2 text-center text-xs text-gray-400">
+                      Sem imagem
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductPricing.tsx
+
+```tsx
+import { formatCurrencyInput } from "../../../utils/formatCurrency";
+
+type ProductPricingProps = {
+  price: string;
+  originalPrice: string;
+  currency: string;
+  rating: string;
+  reviewsCount: string;
+  loading: boolean;
+  onPriceChange: (value: string) => void;
+  onOriginalPriceChange: (value: string) => void;
+  onCurrencyChange: (value: string) => void;
+  onRatingChange: (value: string) => void;
+  onReviewsCountChange: (value: string) => void;
+};
+
+export function ProductPricing({
+  price,
+  originalPrice,
+  currency,
+  rating,
+  reviewsCount,
+  loading,
+  onPriceChange,
+  onOriginalPriceChange,
+  onCurrencyChange,
+  onRatingChange,
+  onReviewsCountChange,
+}: ProductPricingProps) {
+  function handlePriceChange(value: string) {
+    onPriceChange(formatCurrencyInput(value));
+  }
+
+  function handleOriginalPriceChange(value: string) {
+    onOriginalPriceChange(formatCurrencyInput(value));
+  }
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Preço e avaliações
+      </h2>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="price"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Preço *
+          </label>
+
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">
+              R$
+            </span>
+
+            <input
+              id="price"
+              type="text"
+              inputMode="decimal"
+              value={price}
+              onChange={(event) => handlePriceChange(event.target.value)}
+              placeholder="0,00"
+              required
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 py-3 pl-12 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            />
+          </div>
+
+          <p className="mt-2 text-xs text-gray-500">
+            Digite o valor no formato brasileiro. Ex.: 38,99
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="originalPrice"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Preço original
+          </label>
+
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">
+              R$
+            </span>
+
+            <input
+              id="originalPrice"
+              type="text"
+              inputMode="decimal"
+              value={originalPrice}
+              onChange={(event) =>
+                handleOriginalPriceChange(event.target.value)
+              }
+              placeholder="0,00"
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 py-3 pl-12 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            />
+          </div>
+
+          <p className="mt-2 text-xs text-gray-500">Opcional. Ex.: 49,90</p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="currency"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Moeda
+          </label>
+
+          <input
+            id="currency"
+            type="text"
+            value={currency}
+            onChange={(event) =>
+              onCurrencyChange(event.target.value.toUpperCase())
+            }
+            maxLength={3}
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="rating"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Avaliação
+          </label>
+
+          <input
+            id="rating"
+            type="number"
+            min="0"
+            max="5"
+            step="0.1"
+            value={rating}
+            onChange={(event) => onRatingChange(event.target.value)}
+            placeholder="Ex.: 4.8"
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="reviewsCount"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Quantidade de avaliações
+          </label>
+
+          <input
+            id="reviewsCount"
+            type="number"
+            min="0"
+            step="1"
+            value={reviewsCount}
+            onChange={(event) => onReviewsCountChange(event.target.value)}
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductRelationships.tsx
+
+```tsx
+type Subcategory = {
+  id: string;
+  name: string;
+  category?: {
+    name: string;
+  } | null;
+};
+
+type Marketplace = {
+  id: string;
+  name: string;
+};
+
+type ProductRelationshipsProps = {
+  subcategories: Subcategory[];
+  marketplaces: Marketplace[];
+  subcategoryId: string;
+  marketplaceId: string;
+  affiliateUrl: string;
+  loading: boolean;
+  onSubcategoryChange: (value: string) => void;
+  onMarketplaceChange: (value: string) => void;
+  onAffiliateUrlChange: (value: string) => void;
+};
+
+export function ProductRelationships({
+  subcategories,
+  marketplaces,
+  subcategoryId,
+  marketplaceId,
+  affiliateUrl,
+  loading,
+  onSubcategoryChange,
+  onMarketplaceChange,
+  onAffiliateUrlChange,
+}: ProductRelationshipsProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Classificação e marketplace
+      </h2>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="subcategoryId"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Subcategoria *
+          </label>
+
+          <select
+            id="subcategoryId"
+            value={subcategoryId}
+            onChange={(event) => onSubcategoryChange(event.target.value)}
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          >
+            <option value="">Selecione uma subcategoria</option>
+
+            {subcategories.map((subcategory) => (
+              <option key={subcategory.id} value={subcategory.id}>
+                {subcategory.category?.name
+                  ? `${subcategory.category.name} → ${subcategory.name}`
+                  : subcategory.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="marketplaceId"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Marketplace *
+          </label>
+
+          <select
+            id="marketplaceId"
+            value={marketplaceId}
+            onChange={(event) => onMarketplaceChange(event.target.value)}
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          >
+            <option value="">Selecione um marketplace</option>
+
+            {marketplaces.map((marketplace) => (
+              <option key={marketplace.id} value={marketplace.id}>
+                {marketplace.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="affiliateUrl"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Link de afiliado *
+          </label>
+
+          <input
+            id="affiliateUrl"
+            type="url"
+            value={affiliateUrl}
+            onChange={(event) => onAffiliateUrlChange(event.target.value)}
+            placeholder="https://..."
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+            Este será o link utilizado pelo botão de compra/afiliado.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductSeo.tsx
+
+```tsx
+type ProductSeoProps = {
+  seoTitle: string;
+  seoDescription: string;
+  loading: boolean;
+  onSeoTitleChange: (value: string) => void;
+  onSeoDescriptionChange: (value: string) => void;
+};
+
+export function ProductSeo({
+  seoTitle,
+  seoDescription,
+  loading,
+  onSeoTitleChange,
+  onSeoDescriptionChange,
+}: ProductSeoProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
+
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <label
+            htmlFor="seoTitle"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            SEO Title
+          </label>
+
+          <input
+            id="seoTitle"
+            type="text"
+            value={seoTitle}
+            onChange={(event) => onSeoTitleChange(event.target.value)}
+            placeholder="Título otimizado para buscadores"
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="seoDescription"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            SEO Description
+          </label>
+
+          <textarea
+            id="seoDescription"
+            value={seoDescription}
+            onChange={(event) => onSeoDescriptionChange(event.target.value)}
+            rows={4}
+            placeholder="Descrição otimizada para mecanismos de busca"
+            disabled={loading}
+            className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductStatus.tsx
+
+```tsx
+type ProductStatusProps = {
+  featured: boolean;
+  available: boolean;
+  active: boolean;
+  loading: boolean;
+  onFeaturedChange: (value: boolean) => void;
+  onAvailableChange: (value: boolean) => void;
+  onActiveChange: (value: boolean) => void;
+};
+
+export function ProductStatus({
+  featured,
+  available,
+  active,
+  loading,
+  onFeaturedChange,
+  onAvailableChange,
+  onActiveChange,
+}: ProductStatusProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Status do produto
+      </h2>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(event) => onFeaturedChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Destaque
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir como produto destacado.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={available}
+            onChange={(event) => onAvailableChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Disponível
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Produto disponível no catálogo.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={(event) => onActiveChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Ativo
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Produto ativo no sistema.
+            </span>
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\types.ts
+
+```ts
+export type ProductImageForm = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+```
+
+## src\components\admin\RichTextEditor.tsx
+
+```tsx
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useEffect } from "react";
+
+interface RichTextEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+export function RichTextEditor({
+  value,
+  onChange,
+  disabled = false,
+  placeholder = "Escreva a descrição completa do produto...",
+}: RichTextEditorProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+      }),
+    ],
+
+    content: value,
+
+    editable: !disabled,
+
+    editorProps: {
+      attributes: {
+        class:
+          "min-h-[260px] w-full px-4 py-4 text-sm leading-7 text-gray-700 outline-none",
+        "data-placeholder": placeholder,
+      },
+    },
+
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    editor.setEditable(!disabled);
+  }, [editor, disabled]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const currentHtml = editor.getHTML();
+
+    if (value !== currentHtml && value !== "") {
+      editor.commands.setContent(value, {
+        emitUpdate: false,
+      });
+    }
+
+    if (value === "" && !editor.isEmpty) {
+      editor.commands.clearContent();
+    }
+  }, [editor, value]);
+
+  if (!editor) {
+    return (
+      <div className="rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
+        Carregando editor...
+      </div>
+    );
+  }
+
+  function setLink() {
+    const previousUrl = editor.getAttributes("link").href;
+
+    const url = window.prompt(
+      "Informe a URL do link:",
+      previousUrl || "https://",
+    );
+
+    if (url === null) {
+      return;
+    }
+
+    if (url.trim() === "") {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({
+        href: url.trim(),
+        target: "_blank",
+      })
+      .run();
+  }
+
+  return (
+    <div
+      className={`overflow-hidden rounded-lg border border-gray-300 bg-white ${
+        disabled ? "opacity-60" : ""
+      }`}
+    >
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 p-2">
+        {/* Parágrafo */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("paragraph")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Parágrafo"
+        >
+          P
+        </button>
+
+        {/* Título 2 */}
+        <button
+          type="button"
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-bold transition ${
+            editor.isActive("heading", { level: 2 })
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Título 2"
+        >
+          H2
+        </button>
+
+        {/* Título 3 */}
+        <button
+          type="button"
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-bold transition ${
+            editor.isActive("heading", { level: 3 })
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Título 3"
+        >
+          H3
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Negrito */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-sm font-bold transition ${
+            editor.isActive("bold")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Negrito"
+        >
+          B
+        </button>
+
+        {/* Itálico */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-sm italic transition ${
+            editor.isActive("italic")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Itálico"
+        >
+          I
+        </button>
+
+        {/* Sublinhado */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-sm underline transition ${
+            editor.isActive("underline")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Sublinhado"
+        >
+          U
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Lista */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("bulletList")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Lista com marcadores"
+        >
+          • Lista
+        </button>
+
+        {/* Lista numerada */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("orderedList")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Lista numerada"
+        >
+          1. Lista
+        </button>
+
+        {/* Citação */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("blockquote")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Citação"
+        >
+          “ Citação
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Link */}
+        <button
+          type="button"
+          onClick={setLink}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("link")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Adicionar link"
+        >
+          Link
+        </button>
+
+        {/* Remover link */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          disabled={disabled || !editor.isActive("link")}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Remover link"
+        >
+          Remover link
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Separador */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          disabled={disabled}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200"
+          title="Separador"
+        >
+          ―
+        </button>
+
+        {/* Desfazer */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={disabled || !editor.can().undo()}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Desfazer"
+        >
+          ↶
+        </button>
+
+        {/* Refazer */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={disabled || !editor.can().redo()}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Refazer"
+        >
+          ↷
+        </button>
+      </div>
+
+      {/* Área de edição */}
+      <EditorContent editor={editor} />
+    </div>
   );
 }
 
@@ -576,14 +1705,16 @@ export function Footer() {
 ```tsx
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+
 import { useAuth } from "../../contexts/useAuth";
+
 import { Icon } from "../Icon";
-import { InputText } from "../InputText";
 import { Logo } from "../Logo";
 import { Menu } from "../Menu";
-import { menuItems } from "../Menu/items";
+import { SearchBar } from "../SearchBar";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -594,6 +1725,11 @@ export function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  /*
+   * ============================================================
+   * FECHAR PESQUISA AO CLICAR FORA
+   * ============================================================
+   */
   useEffect(() => {
     if (!isSearchOpen) return;
 
@@ -613,6 +1749,11 @@ export function Header() {
     };
   }, [isSearchOpen]);
 
+  /*
+   * ============================================================
+   * FECHAR MENU MOBILE AO CLICAR FORA
+   * ============================================================
+   */
   useEffect(() => {
     if (!isMenuOpen) return;
 
@@ -632,7 +1773,15 @@ export function Header() {
   return (
     <div className="w-full border-b-2 border-blue/20">
       <header className="relative mx-auto w-full px-6 py-10 md:max-w-[1200px] md:py-5">
+        {/* ======================================================
+            HEADER PRINCIPAL
+        ====================================================== */}
+
         <div className="flex items-center justify-between md:min-h-[60px] md:gap-6">
+          {/* ====================================================
+              BOTÃO MENU MOBILE
+          ==================================================== */}
+
           <button
             type="button"
             aria-label="Abrir menu"
@@ -646,6 +1795,10 @@ export function Header() {
             <Icon svg={MenuIcon} size="md" />
           </button>
 
+          {/* ====================================================
+              LOGO
+          ==================================================== */}
+
           <Link
             to="/"
             className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:flex md:items-center"
@@ -654,6 +1807,10 @@ export function Header() {
           >
             <Logo />
           </Link>
+
+          {/* ====================================================
+              BOTÃO PESQUISA MOBILE
+          ==================================================== */}
 
           {!isSearchOpen && (
             <button
@@ -670,15 +1827,18 @@ export function Header() {
             </button>
           )}
 
+          {/* ====================================================
+              ÁREA DESKTOP
+          ==================================================== */}
+
           <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
-            <div className="w-full">
-              <InputText
-                className="h-12 w-full min-w-0"
-                iconPosition="right"
-                placeholder="Buscar produtos, categorias ou artigos"
-                icon={<Icon svg={SearchIcon} />}
-              />
-            </div>
+            {/* Pesquisa */}
+
+            <SearchBar className="w-full" />
+
+            {/* ==================================================
+                AUTENTICAÇÃO
+            ================================================== */}
 
             {user ? (
               <div className="flex shrink-0 items-center gap-3">
@@ -693,7 +1853,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={signOut}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-navy transition bg-gray-100 hover:bg-gray-50"
+                  className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-navy transition hover:bg-gray-50"
                 >
                   Sair
                 </button>
@@ -709,23 +1869,24 @@ export function Header() {
           </div>
         </div>
 
+        {/* ======================================================
+            MENU DESKTOP
+        ====================================================== */}
+
         <div className="mt-3 hidden md:block">
           <Menu variant="header" />
         </div>
+
+        {/* ======================================================
+            PESQUISA MOBILE
+        ====================================================== */}
 
         {isSearchOpen && (
           <div
             ref={searchRef}
             className="mt-10 flex items-center gap-2 md:hidden"
           >
-            <div className="flex-1">
-              <InputText
-                className="w-full"
-                iconPosition="right"
-                placeholder="Buscar produtos, categorias ou artigos"
-                icon={<Icon svg={SearchIcon} />}
-              />
-            </div>
+            <SearchBar className="flex-1" />
 
             <button
               type="button"
@@ -738,12 +1899,20 @@ export function Header() {
           </div>
         )}
 
+        {/* ======================================================
+            MENU MOBILE
+        ====================================================== */}
+
         {isMenuOpen && (
           <div className="fixed inset-0 z-40 bg-[#071a2f]/60 md:hidden">
             <div
               ref={menuRef}
-              className="h-full w-[85%] max-w-[360px] bg-[#071a2f] px-5 py-6 text-white"
+              className="h-full w-[85%] max-w-[360px] overflow-y-auto bg-[#071a2f] px-5 py-6 text-white"
             >
+              {/* ==================================================
+                  CABEÇALHO DO MENU MOBILE
+              ================================================== */}
+
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
@@ -752,6 +1921,7 @@ export function Header() {
 
                   <div>
                     <p className="text-xl font-bold leading-none">WORLD</p>
+
                     <p className="text-lg font-bold leading-none">MIX 360</p>
                   </div>
                 </div>
@@ -766,15 +1936,20 @@ export function Header() {
                 </button>
               </div>
 
-              <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
-                <span className="text-lg">⌕</span>
+              {/* ==================================================
+                  PESQUISA MOBILE DO MENU
+              ================================================== */}
 
-                <input
-                  type="text"
-                  placeholder="Buscar"
-                  className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
+              <div className="mb-5">
+                <SearchBar
+                  className="[&_input]:border-white/10 [&_input]:bg-white/5 [&_input]:text-white [&_input]:placeholder:text-white/60"
+                  onSearch={() => setIsMenuOpen(false)}
                 />
               </div>
+
+              {/* ==================================================
+                  AUTENTICAÇÃO MOBILE
+              ================================================== */}
 
               <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
                 {user ? (
@@ -807,26 +1982,17 @@ export function Header() {
                 )}
               </div>
 
-              <nav className="flex flex-col gap-2">
-                {menuItems.map(({ label, icon: Icon, href }) => (
-                  <Link
-                    key={label}
-                    to={href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-between rounded-lg px-3 py-3 text-left text-base font-medium text-white/90 transition hover:bg-white/5"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
-                        <Icon className="text-base" />
-                      </span>
+              {/* ==================================================
+                  MENU DINÂMICO
 
-                      {label}
-                    </span>
+                  Agora categorias e subcategorias vêm da API.
+              ================================================== */}
 
-                    {label !== "Blog" && <span className="text-lg">›</span>}
-                  </Link>
-                ))}
-              </nav>
+              <Menu variant="mobile" onNavigate={() => setIsMenuOpen(false)} />
+
+              {/* ==================================================
+                  LINKS INSTITUCIONAIS
+              ================================================== */}
 
               <div className="mt-8 border-t border-white/10 pt-5 text-sm text-white/70">
                 <Link
@@ -1282,47 +2448,349 @@ export function Logo({ location = "header" }: LogoProps) {
 ## src\components\Menu\index.tsx
 
 ```tsx
+import { useEffect, useMemo, useState } from "react";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import { menuItems } from "./items";
+import { useCategories } from "../../contexts/useCategories";
+import { useSubcategories } from "../../contexts/useSubcategories";
+import { getCategoryIcon } from "./items";
 
-type MenuVariant = "header" | "footer";
+type MenuVariant = "header" | "footer" | "mobile";
 
 interface MenuProps {
   variant?: MenuVariant;
   className?: string;
+  onNavigate?: () => void;
 }
 
-export function Menu({ variant = "header", className = "" }: MenuProps) {
+export function Menu({
+  variant = "header",
+  className = "",
+  onNavigate,
+}: MenuProps) {
   const isHeader = variant === "header";
+  const isMobile = variant === "mobile";
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    fetchCategories,
+  } = useCategories();
+
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    fetchSubcategories,
+  } = useSubcategories();
+
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+
+  /*
+   * ============================================================
+   * CARREGAMENTO DAS CATEGORIAS
+   * ============================================================
+   */
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      void fetchCategories();
+    }
+  }, [categories.length, fetchCategories]);
+
+  /*
+   * ============================================================
+   * CARREGAMENTO DAS SUBCATEGORIAS
+   * ============================================================
+   */
+
+  useEffect(() => {
+    if (subcategories.length === 0) {
+      void fetchSubcategories();
+    }
+  }, [subcategories.length, fetchSubcategories]);
+
+  /*
+   * ============================================================
+   * ESTRUTURA DINÂMICA DO MENU
+   * ============================================================
+   *
+   * Categoria
+   *   ├── Subcategoria
+   *   ├── Subcategoria
+   *   └── Subcategoria
+   *
+   * Somente categorias e subcategorias ativas são exibidas.
+   */
+
+  const menuCategories = useMemo(() => {
+    return categories
+      .filter((category) => category.active)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((category) => ({
+        id: category.id,
+        label: category.name,
+        slug: category.slug,
+        icon: getCategoryIcon(category.slug),
+        href: `/categoria/${category.slug}`,
+
+        subcategories: subcategories
+          .filter(
+            (subcategory) =>
+              subcategory.categoryId === category.id && subcategory.active,
+          )
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((subcategory) => ({
+            id: subcategory.id,
+            label: subcategory.name,
+            href: `/categoria/${category.slug}/${subcategory.slug}`,
+          })),
+      }));
+  }, [categories, subcategories]);
+
+  /*
+   * ============================================================
+   * FOOTER
+   * ============================================================
+   */
+
+  if (variant === "footer") {
+    return (
+      <nav
+        className={["mt-0 flex flex-col gap-1 text-sm text-white/80", className]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {menuCategories.map((category) => (
+          <Link
+            key={category.id}
+            to={category.href}
+            className="block text-left text-sm transition hover:text-white"
+          >
+            {category.label}
+          </Link>
+        ))}
+      </nav>
+    );
+  }
+
+  /*
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
+
+  if (categoriesLoading || subcategoriesLoading) {
+    /*
+     * Loading mobile
+     */
+
+    if (isMobile) {
+      return (
+        <nav
+          className={["flex flex-col gap-2", className]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+        </nav>
+      );
+    }
+
+    /*
+     * Loading desktop
+     */
+
+    return (
+      <nav
+        className={[
+          "hidden md:flex md:items-center md:justify-start md:gap-2",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <span className="h-8 w-24 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-32 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-20 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-20 animate-pulse rounded-full bg-slate-100" />
+      </nav>
+    );
+  }
+
+  /*
+   * ============================================================
+   * MENU MOBILE
+   * ============================================================
+   */
+
+  if (isMobile) {
+    return (
+      <nav
+        className={["flex flex-col gap-2", className].filter(Boolean).join(" ")}
+      >
+        {menuCategories.map((category) => {
+          const Icon = category.icon;
+
+          const isOpen = openCategory === category.id;
+
+          const hasSubcategories = category.subcategories.length > 0;
+
+          return (
+            <div key={category.id}>
+              {/* Categoria principal */}
+
+              <div className="flex items-center rounded-lg transition hover:bg-white/5">
+                <Link
+                  to={category.href}
+                  onClick={onNavigate}
+                  className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left text-base font-medium text-white/90"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
+                    <Icon className="text-base" />
+                  </span>
+
+                  <span className="truncate">{category.label}</span>
+                </Link>
+
+                {/* Botão das subcategorias */}
+
+                {hasSubcategories && (
+                  <button
+                    type="button"
+                    aria-label={
+                      isOpen
+                        ? `Recolher ${category.label}`
+                        : `Expandir ${category.label}`
+                    }
+                    aria-expanded={isOpen}
+                    onClick={() =>
+                      setOpenCategory((current) =>
+                        current === category.id ? null : category.id,
+                      )
+                    }
+                    className="flex h-11 w-11 shrink-0 items-center justify-center text-white/70 transition hover:text-white"
+                  >
+                    {isOpen ? <FiChevronDown /> : <FiChevronRight />}
+                  </button>
+                )}
+              </div>
+
+              {/* Subcategorias */}
+
+              {isOpen && hasSubcategories && (
+                <div className="ml-8 border-l border-white/10 pl-3">
+                  {category.subcategories.map((subcategory) => (
+                    <Link
+                      key={subcategory.id}
+                      to={subcategory.href}
+                      onClick={onNavigate}
+                      className="block rounded-lg px-3 py-2.5 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                    >
+                      {subcategory.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+    );
+  }
+
+  /*
+   * ============================================================
+   * MENU DESKTOP
+   * ============================================================
+   *
+   * O submenu usa Tailwind group-hover.
+   *
+   * Isso evita onMouseEnter/onMouseLeave em elementos
+   * estáticos e elimina o aviso do Biome:
+   *
+   * a11y/noStaticElementInteractions
+   */
 
   return (
     <nav
       className={[
         isHeader
-          ? "hidden md:flex md:items-center md:justify-between md:gap-2 md:px-0 md:py-0 md:bg-transparent"
-          : "mt-0 flex flex-col gap-1 text-sm text-white/80",
+          ? "hidden md:flex md:items-center md:justify-start md:gap-2 md:px-0 md:py-0 md:bg-transparent"
+          : "flex flex-col gap-1 text-sm",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {menuItems.map(({ label, icon: Icon, href }) => (
-        <Link
-          key={label}
-          to={href}
-          className={[
-            isHeader
-              ? "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-[#071a2f] transition hover:text-[#0b3d66]"
-              : "block text-left text-sm transition hover:text-white",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {!isHeader && <Icon className="hidden" />}
-          <span>{label}</span>
-        </Link>
-      ))}
+      {menuCategories.map((category) => {
+        const Icon = category.icon;
+
+        const hasSubcategories = category.subcategories.length > 0;
+
+        return (
+          <div key={category.id} className="group relative">
+            {/* Categoria principal */}
+
+            <Link
+              to={category.href}
+              className={[
+                isHeader
+                  ? "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#071a2f] transition hover:bg-slate-50 hover:text-[#0b3d66]"
+                  : "block text-left text-sm transition hover:text-white",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {variant !== "header" && <Icon className="mr-2 inline-block" />}
+
+              <span>{category.label}</span>
+
+              {hasSubcategories && isHeader && (
+                <FiChevronDown className="text-xs transition-transform group-hover:rotate-180" />
+              )}
+            </Link>
+
+            {/* ==================================================
+                SUBMENU DESKTOP
+            ================================================== */}
+
+            {isHeader && hasSubcategories && (
+              <div className="absolute left-1/2 top-full z-50 hidden min-w-[250px] -translate-x-1/2 pt-3 group-hover:block">
+                <div className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+                  {/* Link para a categoria */}
+
+                  <Link
+                    to={category.href}
+                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                  >
+                    Ver {category.label}
+                  </Link>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  {/* Subcategorias */}
+
+                  {category.subcategories.map((subcategory) => (
+                    <Link
+                      key={subcategory.id}
+                      to={subcategory.href}
+                      className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
+                    >
+                      <span>{subcategory.label}</span>
+
+                      <FiChevronRight className="text-xs text-slate-400" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 }
@@ -1343,21 +2811,63 @@ import {
   FiTool,
 } from "react-icons/fi";
 
-export type MenuItem = {
+export type MenuCategory = {
   label: string;
   icon: IconType;
   href: string;
+  slug: string;
 };
 
-export const menuItems: MenuItem[] = [
-  { label: "Tecnologia", icon: FiMonitor, href: "/tecnologia" },
-  { label: "Casa & Utilidades", icon: FiTool, href: "/casa-utilidades" },
-  { label: "Moda", icon: FiShoppingBag, href: "/moda" },
-  { label: "Pets", icon: FiHeart, href: "/pets" },
-  { label: "Produtos Digitais", icon: FiGrid, href: "/produtos-digitais" },
-  { label: "Ofertas", icon: FiTag, href: "/ofertas" },
-  { label: "Blog", icon: FiBookOpen, href: "/blog" },
-];
+export type MenuItem = MenuCategory & {
+  subcategories: Array<{
+    id: string;
+    label: string;
+    href: string;
+  }>;
+};
+
+/**
+ * Ícone padrão para categorias.
+ *
+ * O slug é usado para manter os ícones atuais
+ * mesmo com as categorias vindo da API.
+ */
+export function getCategoryIcon(slug: string): IconType {
+  const normalizedSlug = slug.toLowerCase();
+
+  if (normalizedSlug.includes("tecnologia")) {
+    return FiMonitor;
+  }
+
+  if (normalizedSlug.includes("casa") || normalizedSlug.includes("utilidade")) {
+    return FiTool;
+  }
+
+  if (normalizedSlug.includes("moda")) {
+    return FiShoppingBag;
+  }
+
+  if (normalizedSlug.includes("pet")) {
+    return FiHeart;
+  }
+
+  if (
+    normalizedSlug.includes("digital") ||
+    normalizedSlug.includes("produto-digital")
+  ) {
+    return FiGrid;
+  }
+
+  if (normalizedSlug.includes("oferta")) {
+    return FiTag;
+  }
+
+  if (normalizedSlug.includes("blog")) {
+    return FiBookOpen;
+  }
+
+  return FiGrid;
+}
 
 ```
 
@@ -1441,41 +2951,534 @@ export function OffersBanner() {
 
 ```
 
+## src\components\product\ProductBreadcrumb.tsx
+
+```tsx
+import { Link } from "react-router-dom";
+
+export function ProductBreadcrumb() {
+  return (
+    <nav className="mb-6 text-sm text-[#52657c]" aria-label="Breadcrumb">
+      <Link to="/" className="transition hover:text-[#1769e0]">
+        Início
+      </Link>
+
+      <span className="px-2">/</span>
+
+      <span>Detalhes do produto</span>
+    </nav>
+  );
+}
+
+```
+
+## src\components\product\ProductDescription.tsx
+
+```tsx
+import DOMPurify from "dompurify";
+import type { ReactNode } from "react";
+
+import type { Product } from "../../contexts/ProductsContext";
+
+type ProductDescriptionProps = {
+  product: Product;
+};
+
+function decodeHtmlEntities(value: string): string {
+  const textarea = document.createElement("textarea");
+
+  textarea.innerHTML = value;
+
+  return textarea.value;
+}
+
+function normalizeDescription(value: string): string {
+  if (!value.trim()) {
+    return "";
+  }
+
+  let normalized = value.trim();
+
+  if (
+    normalized.includes("&lt;") ||
+    normalized.includes("&gt;") ||
+    normalized.includes("&amp;lt;") ||
+    normalized.includes("&amp;gt;")
+  ) {
+    normalized = decodeHtmlEntities(normalized);
+
+    if (normalized.includes("&lt;") || normalized.includes("&gt;")) {
+      normalized = decodeHtmlEntities(normalized);
+    }
+  }
+
+  return normalized;
+}
+
+function renderDescriptionHtml(html: string): ReactNode {
+  if (!html.trim()) {
+    return null;
+  }
+
+  const parser = new DOMParser();
+  const parsedDocument = parser.parseFromString(html, "text/html");
+
+  function renderNode(node: ChildNode, key: string): ReactNode {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return null;
+    }
+
+    const element = node as HTMLElement;
+
+    const children = Array.from(element.childNodes).map((child, index) =>
+      renderNode(child, `${key}-${index}`),
+    );
+
+    switch (element.tagName.toLowerCase()) {
+      case "p":
+        return <p key={key}>{children}</p>;
+
+      case "br":
+        return <br key={key} />;
+
+      case "strong":
+        return <strong key={key}>{children}</strong>;
+
+      case "b":
+        return <b key={key}>{children}</b>;
+
+      case "em":
+        return <em key={key}>{children}</em>;
+
+      case "i":
+        return <i key={key}>{children}</i>;
+
+      case "u":
+        return <u key={key}>{children}</u>;
+
+      case "h2":
+        return <h2 key={key}>{children}</h2>;
+
+      case "h3":
+        return <h3 key={key}>{children}</h3>;
+
+      case "h4":
+        return <h4 key={key}>{children}</h4>;
+
+      case "ul":
+        return <ul key={key}>{children}</ul>;
+
+      case "ol":
+        return <ol key={key}>{children}</ol>;
+
+      case "li":
+        return <li key={key}>{children}</li>;
+
+      case "blockquote":
+        return <blockquote key={key}>{children}</blockquote>;
+
+      case "hr":
+        return <hr key={key} />;
+
+      case "a": {
+        const href = element.getAttribute("href");
+
+        if (!href) {
+          return <span key={key}>{children}</span>;
+        }
+
+        return (
+          <a key={key} href={href} target="_blank" rel="noopener noreferrer">
+            {children}
+          </a>
+        );
+      }
+
+      default:
+        return <span key={key}>{children}</span>;
+    }
+  }
+
+  return Array.from(parsedDocument.body.childNodes).map((node, index) =>
+    renderNode(node, `description-${index}`),
+  );
+}
+
+export function ProductDescription({ product }: ProductDescriptionProps) {
+  const normalizedDescription = normalizeDescription(product.description || "");
+
+  const safeDescription = DOMPurify.sanitize(normalizedDescription, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "h2",
+      "h3",
+      "h4",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "hr",
+      "a",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel"],
+  });
+
+  if (!safeDescription) {
+    return null;
+  }
+
+  const renderedDescription = renderDescriptionHtml(safeDescription);
+
+  return (
+    <section
+      className="mt-10 rounded-[28px] border border-[#e7edf5] bg-white p-8 shadow-[0_12px_35px_rgba(15,23,42,0.05)] md:p-10"
+      aria-labelledby="product-description-title"
+    >
+      <h2
+        id="product-description-title"
+        className="mb-6 text-2xl font-black text-[#071a2f]"
+      >
+        Descrição do produto
+      </h2>
+
+      <div
+        className="
+          product-description
+          text-[15px]
+          leading-7
+          text-[#52657c]
+
+          [&_h2]:mb-4
+          [&_h2]:mt-8
+          [&_h2]:text-2xl
+          [&_h2]:font-black
+          [&_h2]:leading-tight
+          [&_h2]:text-[#071a2f]
+
+          [&_h3]:mb-3
+          [&_h3]:mt-7
+          [&_h3]:text-xl
+          [&_h3]:font-bold
+          [&_h3]:text-[#071a2f]
+
+          [&_h4]:mb-2
+          [&_h4]:mt-6
+          [&_h4]:text-lg
+          [&_h4]:font-bold
+          [&_h4]:text-[#071a2f]
+
+          [&_p]:mb-4
+
+          [&_ul]:mb-5
+          [&_ul]:list-disc
+          [&_ul]:pl-6
+
+          [&_ol]:mb-5
+          [&_ol]:list-decimal
+          [&_ol]:pl-6
+
+          [&_li]:mb-2
+
+          [&_strong]:font-bold
+          [&_strong]:text-[#071a2f]
+
+          [&_b]:font-bold
+          [&_b]:text-[#071a2f]
+
+          [&_em]:italic
+
+          [&_u]:underline
+          [&_u]:underline-offset-2
+
+          [&_a]:font-semibold
+          [&_a]:text-[#1769e0]
+          [&_a]:underline
+          [&_a]:underline-offset-2
+
+          [&_blockquote]:my-5
+          [&_blockquote]:border-l-4
+          [&_blockquote]:border-[#1769e0]
+          [&_blockquote]:bg-[#f7f9fc]
+          [&_blockquote]:px-5
+          [&_blockquote]:py-4
+          [&_blockquote]:italic
+          [&_blockquote]:text-[#52657c]
+
+          [&_hr]:my-7
+          [&_hr]:border-[#e7edf5]
+        "
+      >
+        {renderedDescription}
+      </div>
+    </section>
+  );
+}
+
+```
+
+## src\components\product\ProductGallery.tsx
+
+```tsx
+import { useState } from "react";
+
+import type { Product } from "../../contexts/ProductsContext";
+
+type ProductGalleryProps = {
+  product: Product;
+};
+
+type GalleryImage = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+export function ProductGallery({ product }: ProductGalleryProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const productImages: GalleryImage[] = [
+    {
+      id: "primary",
+      imageUrl: product.imageUrl,
+      sortOrder: -1,
+    },
+    ...(Array.isArray(product.images)
+      ? product.images.map((image) => ({
+          id: image.id,
+          imageUrl: image.imageUrl,
+          sortOrder: image.sortOrder,
+        }))
+      : []),
+  ]
+    .filter((image) => image.imageUrl.trim())
+    .filter(
+      (image, index, array) =>
+        array.findIndex(
+          (item) => item.imageUrl.trim() === image.imageUrl.trim(),
+        ) === index,
+    )
+    .sort((a, b) => {
+      if (a.id === "primary") {
+        return -1;
+      }
+
+      if (b.id === "primary") {
+        return 1;
+      }
+
+      return a.sortOrder - b.sortOrder;
+    });
+
+  const safeSelectedImageIndex =
+    selectedImageIndex >= productImages.length ? 0 : selectedImageIndex;
+
+  const selectedImage =
+    productImages[safeSelectedImageIndex]?.imageUrl || product.imageUrl;
+
+  return (
+    <div className="bg-[#f7f9fc] p-6 md:p-8">
+      <div className="flex min-h-[340px] items-center justify-center md:min-h-[470px]">
+        <img
+          src={selectedImage}
+          alt={product.title}
+          className="max-h-[420px] w-full object-contain"
+        />
+      </div>
+
+      {productImages.length > 1 && (
+        <div className="mt-6">
+          <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-5">
+            {productImages.map((image, index) => {
+              const isSelected = index === safeSelectedImageIndex;
+
+              return (
+                <button
+                  key={image.id}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(index)}
+                  aria-label={`Exibir imagem ${index + 1}`}
+                  aria-pressed={isSelected}
+                  className={`flex aspect-square items-center justify-center overflow-hidden rounded-xl border-2 bg-white p-2 transition ${
+                    isSelected
+                      ? "border-[#1769e0] shadow-[0_0_0_2px_rgba(23,105,224,0.12)]"
+                      : "border-transparent hover:border-[#b9c9dc]"
+                  }`}
+                >
+                  <img
+                    src={image.imageUrl}
+                    alt={`${product.title} - imagem ${index + 1}`}
+                    className="h-full w-full object-contain"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+```
+
+## src\components\product\ProductInfo.tsx
+
+```tsx
+import type { Product } from "../../contexts/ProductsContext";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { ProductRating } from "./ProductRating";
+
+type ProductInfoProps = {
+  product: Product;
+};
+
+export function ProductInfo({ product }: ProductInfoProps) {
+  const price = formatCurrencyBRL(product.price);
+  const originalPrice = product.originalPrice
+    ? formatCurrencyBRL(product.originalPrice)
+    : null;
+
+  return (
+    <div className="flex flex-col justify-center p-8 md:p-12">
+      {product.category && (
+        <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
+          {product.category}
+        </span>
+      )}
+
+      <h1 className="text-3xl font-black leading-tight text-[#071a2f] md:text-4xl">
+        {product.title}
+      </h1>
+
+      <ProductRating
+        rating={product.rating}
+        reviewsCount={product.reviewsCount}
+      />
+
+      {product.shortDescription && (
+        <p className="mt-5 text-sm leading-6 text-[#52657c]">
+          {product.shortDescription}
+        </p>
+      )}
+
+      <div className="mt-8 border-y border-[#edf2f7] py-6">
+        <p className="text-sm text-[#667085]">
+          Preço apresentado no momento da consulta
+        </p>
+
+        {originalPrice && (
+          <p className="mt-2 text-sm text-gray-500 line-through">
+            {originalPrice}
+          </p>
+        )}
+
+        <p className="mt-1 text-3xl font-black text-[#071a2f]">{price}</p>
+      </div>
+
+      <p className="mt-6 text-sm leading-6 text-[#52657c]">
+        Você será direcionado ao site do parceiro para conferir disponibilidade,
+        frete, avaliações e finalizar a compra.
+      </p>
+
+      <a
+        href={product.affiliateUrl}
+        target="_blank"
+        rel="sponsored noopener noreferrer"
+        className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-[#20b35b] px-6 font-bold text-white transition hover:bg-[#159447]"
+      >
+        Ver oferta
+      </a>
+
+      <p className="mt-4 text-xs text-[#667085]">
+        Este é um link de afiliado. A compra é realizada diretamente no site do
+        parceiro.
+      </p>
+    </div>
+  );
+}
+
+```
+
+## src\components\product\ProductRating.tsx
+
+```tsx
+type ProductRatingProps = {
+  rating?: number | null;
+  reviewsCount: number;
+};
+
+export function ProductRating({ rating, reviewsCount }: ProductRatingProps) {
+  if (rating === null || rating === undefined || reviewsCount <= 0) {
+    return null;
+  }
+
+  const normalizedRating = Number(rating);
+  const roundedRating = Math.round(normalizedRating);
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span
+            key={`star-${star}`}
+            className={star <= roundedRating ? "text-yellow" : "text-gray-500"}
+            aria-hidden="true"
+          >
+            ★
+          </span>
+        ))}
+      </div>
+
+      <span className="text-sm font-bold text-[#071a2f]">
+        {normalizedRating.toFixed(1)}
+      </span>
+
+      <span className="text-sm text-[#667085]">
+        ({reviewsCount.toLocaleString("pt-BR")} avaliações)
+      </span>
+    </div>
+  );
+}
+
+```
+
 ## src\components\ProductCard\index.tsx
 
 ```tsx
-import { FaRegStar, FaStar, FaStarHalfAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 import type { Product } from "../../contexts/ProductsContext";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { ProductRating } from "../product/ProductRating";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const rating = Math.min(Math.max(product.rating ?? 0, 0), 5);
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 !== 0;
-  const emptyStars = 5 - Math.ceil(rating);
+  console.log("PRODUTO DO CARD:", product);
+  const formattedPrice = formatCurrencyBRL(product.price);
 
-  const formattedPrice = product.price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: product.currency || "BRL",
-  });
-
-  const formattedOriginalPrice = product.originalPrice?.toLocaleString(
-    "pt-BR",
-    {
-      style: "currency",
-      currency: product.currency || "BRL",
-    },
-  );
-
-  const starPositions = [1, 2, 3, 4, 5];
+  const formattedOriginalPrice = product.originalPrice
+    ? formatCurrencyBRL(product.originalPrice)
+    : null;
 
   return (
-    <div className="flex h-[420px] w-full flex-col items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg">
+    <div
+      className={`
+    flex h-[420px] w-full flex-col 
+    items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg`}
+    >
       <Link
         to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-3 flex h-40 w-full shrink-0 items-center justify-center rounded-xl bg-[#f8fafc] p-2"
@@ -1495,22 +3498,10 @@ export function ProductCard({ product }: ProductCardProps) {
         </p>
       )}
 
-      <div className="mb-1 flex h-5 shrink-0 items-center justify-center">
-        {starPositions.slice(0, fullStars).map((star) => (
-          <FaStar key={`${product.id}-full-${star}`} className="text-yellow" />
-        ))}
-
-        {hasHalfStar && (
-          <FaStarHalfAlt key={`${product.id}-half`} className="text-yellow" />
-        )}
-
-        {starPositions.slice(0, emptyStars).map((star) => (
-          <FaRegStar
-            key={`${product.id}-empty-${star}`}
-            className="text-yellow"
-          />
-        ))}
-      </div>
+      <ProductRating
+        rating={product.rating}
+        reviewsCount={product.reviewsCount}
+      />
 
       <Link
         to={`/produto/${encodeURIComponent(product.slug)}`}
@@ -1535,6 +3526,74 @@ export function ProductCard({ product }: ProductCardProps) {
       >
         VER DETALHES
       </Link>
+    </div>
+  );
+}
+
+```
+
+## src\components\SearchBar\index.tsx
+
+```tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+
+import { Icon } from "../Icon";
+import { InputText } from "../InputText";
+
+interface SearchBarProps {
+  className?: string;
+  onSearch?: () => void;
+}
+
+export function SearchBar({ className = "", onSearch }: SearchBarProps) {
+  const navigate = useNavigate();
+
+  const [search, setSearch] = useState("");
+
+  function handleSearch() {
+    const value = search.trim();
+
+    if (!value) {
+      return;
+    }
+
+    navigate(`/produtos?search=${encodeURIComponent(value)}`);
+
+    setSearch("");
+
+    onSearch?.();
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSearch();
+    }
+  }
+
+  return (
+    <div className={className}>
+      <InputText
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        onKeyDown={handleKeyDown}
+        className="h-12 w-full min-w-0"
+        iconPosition="right"
+        placeholder="Buscar produtos, categorias ou artigos"
+        icon={
+          <button
+            type="button"
+            onClick={handleSearch}
+            aria-label="Pesquisar"
+            className="flex items-center justify-center"
+          >
+            <Icon svg={SearchIcon} />
+          </button>
+        }
+      />
     </div>
   );
 }
@@ -2499,6 +4558,17 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
 ```ts
 import { createContext } from "react";
 
+export type ProductImage = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+export type ProductImageFormData = {
+  imageUrl: string;
+  sortOrder?: number;
+};
+
 export type Product = {
   id: string;
   title: string;
@@ -2508,6 +4578,8 @@ export type Product = {
   shortDescription?: string | null;
 
   imageUrl: string;
+
+  images?: ProductImage[];
 
   price: number;
   originalPrice?: number | null;
@@ -2539,6 +4611,8 @@ export type ProductFormData = {
 
   imageUrl: string;
 
+  images?: ProductImageFormData[];
+
   price: number;
   originalPrice?: number;
 
@@ -2566,6 +4640,8 @@ export type ProductUpdateData = {
   shortDescription?: string;
 
   imageUrl?: string;
+
+  images?: ProductImageFormData[];
 
   price?: number;
   originalPrice?: number;
@@ -2599,7 +4675,7 @@ export type ProductsContextValue = {
   loading: boolean;
   error: string | null;
 
-  fetchProducts: (category?: string) => Promise<void>;
+  fetchProducts: (category?: string, search?: string) => Promise<void>;
 
   fetchAdminProducts: (
     token: string,
@@ -2642,6 +4718,7 @@ export const ProductsContext = createContext<ProductsContextValue | undefined>(
 
 ```tsx
 import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import {
   type Product,
   type ProductFormData,
@@ -2657,29 +4734,52 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Listagem
-  const fetchProducts = useCallback(async (category?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (category) params.set("category", category);
+  // Listagem pública
+  const fetchProducts = useCallback(
+    async (category?: string, search?: string) => {
+      setLoading(true);
+      setError(null);
 
-      const response = await fetch(`${apiUrl}/products?${params.toString()}`);
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error("Não foi possível carregar os produtos.");
-      setProducts(data.products ?? []);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao carregar produtos.",
-      );
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const params = new URLSearchParams();
 
+        if (category) {
+          params.set("category", category);
+        }
+
+        if (search) {
+          params.set("search", search);
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar os produtos.",
+          );
+        }
+
+        setProducts(data.products ?? []);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar produtos.",
+        );
+
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Listagem administrativa
   const fetchAdminProducts = useCallback(
     async (
       token: string,
@@ -2755,17 +4855,24 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Detalhe
+  // Detalhe por slug
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
       try {
         const response = await fetch(
           `${apiUrl}/products/${encodeURIComponent(slug)}`,
         );
-        if (response.status === 404) return null;
+
+        if (response.status === 404) {
+          return null;
+        }
+
         const data = await response.json();
-        if (!response.ok)
+
+        if (!response.ok) {
           throw new Error("Não foi possível carregar o produto.");
+        }
+
         return data.product;
       } catch {
         return null;
@@ -2774,6 +4881,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Detalhe por ID
   const getProductById = useCallback(
     async (id: string, token: string): Promise<Product | null> => {
       try {
@@ -3570,15 +5678,15 @@ export function AboutPage() {
 
 ```
 
-## src\pages\AdminCategoriesFormPage.tsx
+## src\pages\admin\AdminCategoriesFormPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import type { CategoryFormData } from "../contexts/CategoriesContext";
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
+import type { CategoryFormData } from "../../contexts/CategoriesContext";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
 
 export function AdminCategoryFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -3861,6 +5969,493 @@ export function AdminCategoryFormPage() {
 
 ```
 
+## src\pages\admin\AdminProductsFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
+import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
+import { ProductGallery } from "../../components/admin/products/ProductGallery";
+import { ProductPricing } from "../../components/admin/products/ProductPricing";
+import { ProductRelationships } from "../../components/admin/products/ProductRelationships";
+import { ProductSeo } from "../../components/admin/products/ProductSeo";
+import { ProductStatus } from "../../components/admin/products/ProductStatus";
+import type { ProductImageForm } from "../../components/admin/products/types";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
+import { parseCurrencyBRL } from "../../utils/formatCurrency";
+
+export function AdminProductsFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getProductById, createProduct, updateProduct } = useProducts();
+
+  const { subcategories, fetchSubcategories } = useSubcategories();
+
+  const { marketplaces, fetchMarketplaces } = useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
+
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+
+  const [currency, setCurrency] = useState("BRL");
+
+  const [rating, setRating] = useState("");
+  const [reviewsCount, setReviewsCount] = useState("0");
+
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [marketplaceId, setMarketplaceId] = useState("");
+
+  const [featured, setFeatured] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [active, setActive] = useState(true);
+
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchSubcategories();
+    void fetchMarketplaces();
+  }, [fetchSubcategories, fetchMarketplaces]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const productId = id;
+    const authToken = token;
+
+    let isMounted = true;
+
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId, authToken);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!product) {
+          setError("Produto não encontrado.");
+          setLoadingData(false);
+          return;
+        }
+
+        setTitle(product.title ?? "");
+        setDescription(product.description ?? "");
+        setShortDescription(product.shortDescription ?? "");
+        setImageUrl(product.imageUrl ?? "");
+
+        setGalleryImages(
+          Array.isArray(product.images)
+            ? product.images
+                .map((image, index) => ({
+                  id: image.id ?? crypto.randomUUID(),
+                  imageUrl: image.imageUrl ?? "",
+                  sortOrder:
+                    typeof image.sortOrder === "number"
+                      ? image.sortOrder
+                      : index,
+                }))
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+            : [],
+        );
+
+        setPrice(
+          product.price !== null && product.price !== undefined
+            ? Number(product.price).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setOriginalPrice(
+          product.originalPrice !== null && product.originalPrice !== undefined
+            ? Number(product.originalPrice).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setCurrency(product.currency ?? "BRL");
+
+        setRating(
+          product.rating !== null && product.rating !== undefined
+            ? String(product.rating)
+            : "",
+        );
+
+        setReviewsCount(String(product.reviewsCount ?? 0));
+
+        setAffiliateUrl(product.affiliateUrl ?? "");
+
+        setSubcategoryId(product.subcategoryId ?? "");
+        setMarketplaceId(product.marketplaceId ?? "");
+
+        setFeatured(Boolean(product.featured));
+        setAvailable(Boolean(product.available));
+        setActive(Boolean(product.active));
+
+        setSeoTitle(product.seoTitle ?? "");
+        setSeoDescription(product.seoDescription ?? "");
+      } catch {
+        if (isMounted) {
+          setError("Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, token, getProductById]);
+
+  function handleAddGalleryImage() {
+    setGalleryImages((currentImages) => [
+      ...currentImages,
+      {
+        id: crypto.randomUUID(),
+        imageUrl: "",
+        sortOrder: currentImages.length,
+      },
+    ]);
+  }
+
+  function handleGalleryImageChange(id: string, value: string) {
+    setGalleryImages((currentImages) =>
+      currentImages.map((image) =>
+        image.id === id
+          ? {
+              ...image,
+              imageUrl: value,
+            }
+          : image,
+      ),
+    );
+  }
+
+  function handleRemoveGalleryImage(id: string) {
+    setGalleryImages((currentImages) =>
+      currentImages
+        .filter((image) => image.id !== id)
+        .map((image, index) => ({
+          ...image,
+          sortOrder: index,
+        })),
+    );
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria.");
+      return;
+    }
+
+    if (!marketplaceId) {
+      setError("Selecione um marketplace.");
+      return;
+    }
+
+    const parsedPrice = parseCurrencyBRL(price);
+
+    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        setError("Informe um preço original válido.");
+        return;
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        setError("A avaliação deve estar entre 0 e 5.");
+        return;
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      setError("A quantidade de avaliações deve ser um número inteiro.");
+      return;
+    }
+
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para a imagem.");
+      return;
+    }
+
+    try {
+      new URL(affiliateUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para o link de afiliado.");
+      return;
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    for (const image of cleanGalleryImages) {
+      try {
+        new URL(image.imageUrl);
+      } catch {
+        setError(
+          `Informe uma URL válida para a imagem da galeria na posição ${
+            image.sortOrder + 1
+          }.`,
+        );
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      const cleanDescription =
+        description === "<p></p>" ? undefined : description.trim();
+
+      const productData = {
+        title: title.trim(),
+        description: cleanDescription,
+        shortDescription: shortDescription.trim() || undefined,
+
+        imageUrl: imageUrl.trim(),
+
+        images: cleanGalleryImages,
+
+        price: parsedPrice,
+        originalPrice: parsedOriginalPrice,
+
+        currency: currency.trim().toUpperCase() || "BRL",
+
+        rating: parsedRating,
+        reviewsCount: parsedReviewsCount,
+
+        affiliateUrl: affiliateUrl.trim(),
+
+        subcategoryId,
+        marketplaceId,
+
+        featured,
+        available,
+        active,
+
+        seoTitle: seoTitle.trim() || undefined,
+        seoDescription: seoDescription.trim() || undefined,
+      };
+
+      if (isEditing && id) {
+        await updateProduct(id, productData, token);
+      } else {
+        await createProduct(productData, token);
+      }
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o produto."
+            : "Não foi possível criar o produto.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando produto...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/products"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para produtos
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar produto" : "Novo produto"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do produto."
+            : "Cadastre um novo produto no catálogo do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <ProductBasicInfo
+          title={title}
+          description={description}
+          shortDescription={shortDescription}
+          imageUrl={imageUrl}
+          loading={loading}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onShortDescriptionChange={setShortDescription}
+          onImageUrlChange={setImageUrl}
+        />
+
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <ProductGallery
+            galleryImages={galleryImages}
+            loading={loading}
+            onAdd={handleAddGalleryImage}
+            onChange={handleGalleryImageChange}
+            onRemove={handleRemoveGalleryImage}
+          />
+        </div>
+
+        <ProductPricing
+          price={price}
+          originalPrice={originalPrice}
+          currency={currency}
+          rating={rating}
+          reviewsCount={reviewsCount}
+          loading={loading}
+          onPriceChange={setPrice}
+          onOriginalPriceChange={setOriginalPrice}
+          onCurrencyChange={setCurrency}
+          onRatingChange={setRating}
+          onReviewsCountChange={setReviewsCount}
+        />
+
+        <ProductRelationships
+          subcategories={subcategories}
+          marketplaces={marketplaces}
+          subcategoryId={subcategoryId}
+          marketplaceId={marketplaceId}
+          affiliateUrl={affiliateUrl}
+          loading={loading}
+          onSubcategoryChange={setSubcategoryId}
+          onMarketplaceChange={setMarketplaceId}
+          onAffiliateUrlChange={setAffiliateUrl}
+        />
+
+        <ProductStatus
+          featured={featured}
+          available={available}
+          active={active}
+          loading={loading}
+          onFeaturedChange={setFeatured}
+          onAvailableChange={setAvailable}
+          onActiveChange={setActive}
+        />
+
+        <ProductSeo
+          seoTitle={seoTitle}
+          seoDescription={seoDescription}
+          loading={loading}
+          onSeoTitleChange={setSeoTitle}
+          onSeoDescriptionChange={setSeoDescription}
+        />
+
+        <ProductFormActions loading={loading} isEditing={isEditing} />
+      </form>
+    </section>
+  );
+}
+
+```
+
 ## src\pages\AdminCategoriesPage.tsx
 
 ```tsx
@@ -4003,7 +6598,7 @@ export function AdminCategoriesPage() {
                             />
                           ) : (
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
-                              WM
+                              WM360
                             </div>
                           )}
 
@@ -4176,63 +6771,527 @@ export function AdminCategoriesPage() {
 // src/pages/admin/AdminDashboardPage.tsx
 
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+
 import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+import { useMarketplaces } from "../contexts/useMarketplaces";
 import { useProducts } from "../contexts/useProducts";
+import { useSubcategories } from "../contexts/useSubcategories";
 
 export default function AdminDashboardPage() {
-  const { products, fetchAdminProducts, loading, error } = useProducts();
   const { token } = useAuth();
 
+  const {
+    products,
+    fetchAdminProducts,
+    loading: productsLoading,
+    error: productsError,
+  } = useProducts();
+
+  const {
+    categories,
+    fetchCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+
+  const {
+    subcategories,
+    fetchSubcategories,
+    loading: subcategoriesLoading,
+    error: subcategoriesError,
+  } = useSubcategories();
+
+  const {
+    marketplaces,
+    fetchMarketplaces,
+    loading: marketplacesLoading,
+    error: marketplacesError,
+  } = useMarketplaces();
+
+  /**
+   * Carrega os dados necessários para o Dashboard.
+   *
+   * Produtos administrativos precisam do token.
+   * Categorias, subcategorias e marketplaces possuem
+   * endpoints públicos de leitura.
+   */
   useEffect(() => {
     if (!token) {
       return;
     }
 
-    void fetchAdminProducts(token);
-  }, [token, fetchAdminProducts]);
+    void Promise.all([
+      fetchAdminProducts(token),
+      fetchCategories(),
+      fetchSubcategories(),
+      fetchMarketplaces(),
+    ]);
+  }, [
+    token,
+    fetchAdminProducts,
+    fetchCategories,
+    fetchSubcategories,
+    fetchMarketplaces,
+  ]);
+
+  // ================================
+  // Estatísticas de produtos
+  // ================================
 
   const totalProducts = products.length;
 
-  const activeProducts = products.filter((p) => p.active).length;
+  const activeProducts = products.filter((product) => product.active).length;
 
-  const featuredProducts = products.filter((p) => p.featured).length;
+  const availableProducts = products.filter(
+    (product) => product.available,
+  ).length;
+
+  const featuredProducts = products.filter(
+    (product) => product.featured,
+  ).length;
+
+  // ================================
+  // Estatísticas de categorias
+  // ================================
+
+  const totalCategories = categories.length;
+
+  const activeCategories = categories.filter(
+    (category) => category.active,
+  ).length;
+
+  // ================================
+  // Estatísticas de subcategorias
+  // ================================
+
+  const totalSubcategories = subcategories.length;
+
+  const activeSubcategories = subcategories.filter(
+    (subcategory) => subcategory.active,
+  ).length;
+
+  // ================================
+  // Estatísticas de marketplaces
+  // ================================
+
+  const totalMarketplaces = marketplaces.length;
+
+  const activeMarketplaces = marketplaces.filter(
+    (marketplace) => marketplace.active,
+  ).length;
+
+  const isLoading =
+    productsLoading ||
+    categoriesLoading ||
+    subcategoriesLoading ||
+    marketplacesLoading;
+
+  const errors = [
+    productsError,
+    categoriesError,
+    subcategoriesError,
+    marketplacesError,
+  ].filter(Boolean);
 
   return (
-    <section className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Dashboard Administrativo</h1>
+    <section className="min-h-full bg-gray-50 p-4 sm:p-6 lg:p-8">
+      {/* ========================================
+          CABEÇALHO
+      ======================================== */}
 
-      {loading ? (
-        <p className="text-gray-600 mb-6">Carregando estatísticas...</p>
-      ) : error ? (
-        <p className="text-red-600 mb-6">Erro ao carregar produtos: {error}</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-lg bg-white shadow p-6">
-            <h2 className="text-lg font-semibold">Total de Produtos</h2>
+      <header className="mb-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="mb-1 text-sm font-semibold text-blue">WorldMix360</p>
 
-            <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+            <h1 className="text-2xl font-bold text-navy sm:text-3xl">
+              Dashboard Administrativo
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-500 sm:text-base">
+              Visão geral do catálogo e das principais áreas do sistema.
+            </p>
           </div>
 
-          <div className="rounded-lg bg-white shadow p-6">
-            <h2 className="text-lg font-semibold">Produtos Ativos</h2>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/admin/products/new"
+              className="inline-flex items-center justify-center rounded-lg bg-blue px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue/90"
+            >
+              + Novo produto
+            </Link>
 
-            <p className="text-3xl font-bold mt-2">{activeProducts}</p>
+            <Link
+              to="/admin/categories/new"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              + Nova categoria
+            </Link>
           </div>
+        </div>
+      </header>
 
-          <div className="rounded-lg bg-white shadow p-6">
-            <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
+      {/* ========================================
+          CARREGAMENTO
+      ======================================== */}
 
-            <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
-          </div>
+      {isLoading && (
+        <div className="mb-6 rounded-xl border border-blue-light bg-blue-light px-5 py-4">
+          <p className="text-sm font-medium text-blue">
+            Atualizando informações do painel...
+          </p>
         </div>
       )}
 
-      <div className="mt-8">
-        <p className="text-gray-600">
-          Bem-vindo ao painel administrativo. Aqui você pode gerenciar produtos,
-          categorias, usuários e acompanhar estatísticas do sistema.
-        </p>
+      {/* ========================================
+          ERROS
+      ======================================== */}
+
+      {errors.length > 0 && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+          <p className="font-semibold text-red-700">
+            Algumas informações não puderam ser carregadas.
+          </p>
+
+          <p className="mt-1 text-sm text-red-600">
+            Verifique a conexão com a API e tente novamente.
+          </p>
+        </div>
+      )}
+
+      {/* ========================================
+          CARDS PRINCIPAIS
+      ======================================== */}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Produtos */}
+
+        <Link
+          to="/admin/products"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Produtos</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalProducts}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📦
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeProducts} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Categorias */}
+
+        <Link
+          to="/admin/categories"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Categorias</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalCategories}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              🗂️
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeCategories} ativas</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Subcategorias */}
+
+        <Link
+          to="/admin/subcategories"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Subcategorias</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalSubcategories}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📁
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeSubcategories} ativas</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Marketplaces */}
+
+        <Link
+          to="/admin/marketplaces"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Marketplaces</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalMarketplaces}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              🛒
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeMarketplaces} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
       </div>
+
+      {/* ========================================
+          RESUMO DO CATÁLOGO
+      ======================================== */}
+
+      <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* Resumo dos produtos */}
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-navy">
+                Resumo dos produtos
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Situação atual do catálogo de produtos.
+              </p>
+            </div>
+
+            <Link
+              to="/admin/products"
+              className="text-sm font-semibold text-blue hover:underline"
+            >
+              Ver produtos
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Total</p>
+
+              <p className="mt-1 text-2xl font-bold text-navy">
+                {totalProducts}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Ativos</p>
+
+              <p className="mt-1 text-2xl font-bold text-green">
+                {activeProducts}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Disponíveis</p>
+
+              <p className="mt-1 text-2xl font-bold text-blue">
+                {availableProducts}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Destaques</p>
+
+              <p className="mt-1 text-2xl font-bold text-yellow">
+                {featuredProducts}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Resumo do catálogo */}
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-navy">
+              Estrutura do catálogo
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Organização atual das categorias e canais de venda.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Link
+              to="/admin/categories"
+              className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition hover:border-blue-light hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-light">
+                  🗂️
+                </span>
+
+                <div>
+                  <p className="font-semibold text-navy">Categorias</p>
+
+                  <p className="text-xs text-gray-500">
+                    {activeCategories} ativas de {totalCategories}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-blue">→</span>
+            </Link>
+
+            <Link
+              to="/admin/subcategories"
+              className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition hover:border-blue-light hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-light">
+                  📁
+                </span>
+
+                <div>
+                  <p className="font-semibold text-navy">Subcategorias</p>
+
+                  <p className="text-xs text-gray-500">
+                    {activeSubcategories} ativas de {totalSubcategories}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-blue">→</span>
+            </Link>
+
+            <Link
+              to="/admin/marketplaces"
+              className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition hover:border-blue-light hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-light">
+                  🛒
+                </span>
+
+                <div>
+                  <p className="font-semibold text-navy">Marketplaces</p>
+
+                  <p className="text-xs text-gray-500">
+                    {activeMarketplaces} ativos de {totalMarketplaces}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-blue">→</span>
+            </Link>
+          </div>
+        </section>
+      </div>
+
+      {/* ========================================
+          AÇÕES RÁPIDAS
+      ======================================== */}
+
+      <section className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-navy">Ações rápidas</h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Acesse rapidamente as principais áreas de gerenciamento.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link
+            to="/admin/products/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📦</span>
+
+            <p className="mt-2 font-semibold text-navy">Cadastrar produto</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Adicionar um novo produto ao catálogo.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/categories/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">🗂️</span>
+
+            <p className="mt-2 font-semibold text-navy">Nova categoria</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Criar uma nova categoria.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/subcategories/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📁</span>
+
+            <p className="mt-2 font-semibold text-navy">Nova subcategoria</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Organizar melhor o catálogo.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/marketplaces/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">🛒</span>
+
+            <p className="mt-2 font-semibold text-navy">Novo marketplace</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Adicionar um canal de venda.
+            </p>
+          </Link>
+        </div>
+      </section>
     </section>
   );
 }
@@ -5007,777 +8066,6 @@ export function AdminMarketplacesPage() {
           </div>
         </>
       )}
-    </section>
-  );
-}
-
-```
-
-## src\pages\AdminProductsFormPage.tsx
-
-```tsx
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
-import { useProducts } from "../contexts/useProducts";
-import { useSubcategories } from "../contexts/useSubcategories";
-
-export function AdminProductsFormPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const { token } = useAuth();
-
-  const { getProductById, createProduct, updateProduct } = useProducts();
-
-  const { subcategories, fetchSubcategories } = useSubcategories();
-
-  const { marketplaces, fetchMarketplaces } = useMarketplaces();
-
-  const isEditing = Boolean(id);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-
-  const [imageUrl, setImageUrl] = useState("");
-
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-
-  const [currency, setCurrency] = useState("BRL");
-
-  const [rating, setRating] = useState("");
-  const [reviewsCount, setReviewsCount] = useState("0");
-
-  const [affiliateUrl, setAffiliateUrl] = useState("");
-
-  const [subcategoryId, setSubcategoryId] = useState("");
-  const [marketplaceId, setMarketplaceId] = useState("");
-
-  const [featured, setFeatured] = useState(false);
-  const [available, setAvailable] = useState(true);
-  const [active, setActive] = useState(true);
-
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDescription, setSeoDescription] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(isEditing);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchSubcategories();
-    void fetchMarketplaces();
-  }, [fetchSubcategories, fetchMarketplaces]);
-
-  useEffect(() => {
-    if (!id || !token) {
-      return;
-    }
-
-    const productId = id;
-    const authToken = token;
-
-    let isMounted = true;
-
-    async function loadProduct() {
-      try {
-        const product = await getProductById(productId, authToken);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (!product) {
-          setError("Produto não encontrado.");
-          return;
-        }
-
-        setTitle(product.title ?? "");
-
-        setDescription(product.description ?? "");
-
-        setShortDescription(product.shortDescription ?? "");
-
-        setImageUrl(product.imageUrl ?? "");
-
-        setPrice(String(product.price ?? ""));
-
-        setOriginalPrice(
-          product.originalPrice !== null && product.originalPrice !== undefined
-            ? String(product.originalPrice)
-            : "",
-        );
-
-        setCurrency(product.currency ?? "BRL");
-
-        setRating(
-          product.rating !== null && product.rating !== undefined
-            ? String(product.rating)
-            : "",
-        );
-
-        setReviewsCount(String(product.reviewsCount ?? 0));
-
-        setAffiliateUrl(product.affiliateUrl ?? "");
-
-        setSubcategoryId(product.subcategoryId ?? "");
-
-        setMarketplaceId(product.marketplaceId ?? "");
-
-        setFeatured(Boolean(product.featured));
-
-        setAvailable(Boolean(product.available));
-
-        setActive(Boolean(product.active));
-
-        setSeoTitle(product.seoTitle ?? "");
-
-        setSeoDescription(product.seoDescription ?? "");
-      } catch {
-        if (isMounted) {
-          setError("Não foi possível carregar o produto.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingData(false);
-        }
-      }
-    }
-
-    void loadProduct();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [id, token, getProductById]);
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setError(null);
-
-    if (!token) {
-      setError("Sua sessão não está autenticada.");
-      return;
-    }
-
-    if (!title.trim()) {
-      setError("Informe o título do produto.");
-      return;
-    }
-
-    if (!imageUrl.trim()) {
-      setError("Informe a URL da imagem.");
-      return;
-    }
-
-    if (!affiliateUrl.trim()) {
-      setError("Informe o link de afiliado.");
-      return;
-    }
-
-    if (!subcategoryId) {
-      setError("Selecione uma subcategoria.");
-      return;
-    }
-
-    if (!marketplaceId) {
-      setError("Selecione um marketplace.");
-      return;
-    }
-
-    const parsedPrice = Number(price);
-
-    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      setError("Informe um preço válido.");
-      return;
-    }
-
-    let parsedOriginalPrice: number | undefined;
-
-    if (originalPrice.trim()) {
-      parsedOriginalPrice = Number(originalPrice);
-
-      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
-        setError("Informe um preço original válido.");
-        return;
-      }
-    }
-
-    let parsedRating: number | undefined;
-
-    if (rating.trim()) {
-      parsedRating = Number(rating);
-
-      if (
-        !Number.isFinite(parsedRating) ||
-        parsedRating < 0 ||
-        parsedRating > 5
-      ) {
-        setError("A avaliação deve estar entre 0 e 5.");
-        return;
-      }
-    }
-
-    const parsedReviewsCount = Number(reviewsCount);
-
-    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
-      setError("A quantidade de avaliações deve ser um número inteiro.");
-      return;
-    }
-
-    try {
-      new URL(imageUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para a imagem.");
-      return;
-    }
-
-    try {
-      new URL(affiliateUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para o link de afiliado.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const productData = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        shortDescription: shortDescription.trim() || undefined,
-
-        imageUrl: imageUrl.trim(),
-
-        price: parsedPrice,
-        originalPrice: parsedOriginalPrice,
-
-        currency: currency.trim() || "BRL",
-
-        rating: parsedRating,
-        reviewsCount: parsedReviewsCount,
-
-        affiliateUrl: affiliateUrl.trim(),
-
-        subcategoryId,
-        marketplaceId,
-
-        featured,
-        available,
-        active,
-
-        seoTitle: seoTitle.trim() || undefined,
-        seoDescription: seoDescription.trim() || undefined,
-      };
-
-      if (isEditing && id) {
-        await updateProduct(id, productData, token);
-      } else {
-        await createProduct(productData, token);
-      }
-
-      navigate("/admin/products");
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : isEditing
-            ? "Não foi possível atualizar o produto."
-            : "Não foi possível criar o produto.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loadingData) {
-    return (
-      <section className="mx-auto w-full max-w-5xl">
-        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">Carregando produto...</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="mx-auto w-full max-w-5xl">
-      <div className="mb-6">
-        <Link
-          to="/admin/products"
-          className="text-sm font-semibold text-blue hover:underline"
-        >
-          ← Voltar para produtos
-        </Link>
-
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          {isEditing ? "Editar produto" : "Novo produto"}
-        </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
-          {isEditing
-            ? "Atualize os dados do produto."
-            : "Cadastre um novo produto no catálogo do WorldMix360."}
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <form
-        onSubmit={(event) => void handleSubmit(event)}
-        className="space-y-6"
-      >
-        {/* Informações principais */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Informações do produto
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label
-                htmlFor="title"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Título *
-              </label>
-
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Ex.: Smartphone Samsung Galaxy"
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-
-              <p className="mt-2 text-xs text-gray-500">
-                O slug será gerado automaticamente pela API.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="shortDescription"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Descrição curta
-              </label>
-
-              <input
-                id="shortDescription"
-                type="text"
-                value={shortDescription}
-                onChange={(event) => setShortDescription(event.target.value)}
-                placeholder="Resumo rápido do produto"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Descrição
-              </label>
-
-              <textarea
-                id="description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={5}
-                placeholder="Descrição completa do produto..."
-                disabled={loading}
-                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="imageUrl"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                URL da imagem *
-              </label>
-
-              <input
-                id="imageUrl"
-                type="url"
-                value={imageUrl}
-                onChange={(event) => setImageUrl(event.target.value)}
-                placeholder="https://exemplo.com/produto.jpg"
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-
-              {imageUrl.trim() && (
-                <div className="mt-4">
-                  <p className="mb-2 text-xs font-semibold text-gray-500">
-                    Pré-visualização
-                  </p>
-
-                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
-                    <img
-                      src={imageUrl}
-                      alt="Pré-visualização do produto"
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Preço e avaliações */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Preço e avaliações
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="price"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Preço *
-              </label>
-
-              <input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                placeholder="0,00"
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="originalPrice"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Preço original
-              </label>
-
-              <input
-                id="originalPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                value={originalPrice}
-                onChange={(event) => setOriginalPrice(event.target.value)}
-                placeholder="0,00"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="currency"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Moeda
-              </label>
-
-              <input
-                id="currency"
-                type="text"
-                value={currency}
-                onChange={(event) => setCurrency(event.target.value)}
-                maxLength={3}
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="rating"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Avaliação
-              </label>
-
-              <input
-                id="rating"
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                value={rating}
-                onChange={(event) => setRating(event.target.value)}
-                placeholder="Ex.: 4.8"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="reviewsCount"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Quantidade de avaliações
-              </label>
-
-              <input
-                id="reviewsCount"
-                type="number"
-                min="0"
-                step="1"
-                value={reviewsCount}
-                onChange={(event) => setReviewsCount(event.target.value)}
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Relacionamentos */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Classificação e marketplace
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="subcategoryId"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Subcategoria *
-              </label>
-
-              <select
-                id="subcategoryId"
-                value={subcategoryId}
-                onChange={(event) => setSubcategoryId(event.target.value)}
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              >
-                <option value="">Selecione uma subcategoria</option>
-
-                {subcategories.map((subcategory) => (
-                  <option key={subcategory.id} value={subcategory.id}>
-                    {subcategory.category?.name
-                      ? `${subcategory.category.name} → ${subcategory.name}`
-                      : subcategory.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="marketplaceId"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Marketplace *
-              </label>
-
-              <select
-                id="marketplaceId"
-                value={marketplaceId}
-                onChange={(event) => setMarketplaceId(event.target.value)}
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              >
-                <option value="">Selecione um marketplace</option>
-
-                {marketplaces.map((marketplace) => (
-                  <option key={marketplace.id} value={marketplace.id}>
-                    {marketplace.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="affiliateUrl"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Link de afiliado *
-              </label>
-
-              <input
-                id="affiliateUrl"
-                type="url"
-                value={affiliateUrl}
-                onChange={(event) => setAffiliateUrl(event.target.value)}
-                placeholder="https://..."
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-
-              <p className="mt-2 text-xs text-gray-500">
-                Este será o link utilizado pelo botão de compra/afiliado.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Status do produto
-          </h2>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-              <input
-                type="checkbox"
-                checked={featured}
-                onChange={(event) => setFeatured(event.target.checked)}
-                disabled={loading}
-                className="h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-semibold text-gray-700">
-                  Destaque
-                </span>
-                <span className="block text-xs text-gray-500">
-                  Exibir como produto destacado.
-                </span>
-              </span>
-            </label>
-
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-              <input
-                type="checkbox"
-                checked={available}
-                onChange={(event) => setAvailable(event.target.checked)}
-                disabled={loading}
-                className="h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-semibold text-gray-700">
-                  Disponível
-                </span>
-                <span className="block text-xs text-gray-500">
-                  Produto disponível no catálogo.
-                </span>
-              </span>
-            </label>
-
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={(event) => setActive(event.target.checked)}
-                disabled={loading}
-                className="h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-semibold text-gray-700">
-                  Ativo
-                </span>
-                <span className="block text-xs text-gray-500">
-                  Produto ativo no sistema.
-                </span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* SEO */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
-
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label
-                htmlFor="seoTitle"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                SEO Title
-              </label>
-
-              <input
-                id="seoTitle"
-                type="text"
-                value={seoTitle}
-                onChange={(event) => setSeoTitle(event.target.value)}
-                placeholder="Título otimizado para buscadores"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="seoDescription"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                SEO Description
-              </label>
-
-              <textarea
-                id="seoDescription"
-                value={seoDescription}
-                onChange={(event) => setSeoDescription(event.target.value)}
-                rows={4}
-                placeholder="Descrição otimizada para mecanismos de busca"
-                disabled={loading}
-                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Ações */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Link
-            to="/admin/products"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-          >
-            Cancelar
-          </Link>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
-          >
-            {loading
-              ? isEditing
-                ? "Salvando..."
-                : "Cadastrando..."
-              : isEditing
-                ? "Salvar alterações"
-                : "Cadastrar produto"}
-          </button>
-        </div>
-      </form>
     </section>
   );
 }
@@ -6798,6 +9086,252 @@ export function BlogPage() {
 
 ```
 
+## src\pages\CategoriesPage.tsx
+
+```tsx
+import { useEffect, useMemo } from "react";
+import { Link, useParams } from "react-router-dom";
+
+import { ProductCard } from "../components/ProductCard";
+import { useCategories } from "../contexts/useCategories";
+import { useProducts } from "../contexts/useProducts";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function CategoryPage() {
+  const { slug } = useParams();
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
+
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    error: subcategoriesError,
+    fetchSubcategories,
+  } = useSubcategories();
+
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    fetchProducts,
+  } = useProducts();
+
+  useEffect(() => {
+    void fetchCategories();
+    void fetchSubcategories();
+  }, [fetchCategories, fetchSubcategories]);
+
+  const category = useMemo(() => {
+    if (!slug) return null;
+
+    return (
+      categories.find(
+        (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+      ) ?? null
+    );
+  }, [categories, slug]);
+
+  useEffect(() => {
+    if (!category) return;
+
+    void fetchProducts(category.slug);
+  }, [category, fetchProducts]);
+
+  const categorySubcategories = useMemo(() => {
+    if (!category) return [];
+
+    return subcategories
+      .filter(
+        (subcategory) =>
+          subcategory.categoryId === category.id && subcategory.active,
+      )
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [category, subcategories]);
+
+  const categoryProducts = useMemo(() => {
+    if (!category) return [];
+
+    return products.filter((product) => product.active && product.available);
+  }, [category, products]);
+
+  const loading = categoriesLoading || subcategoriesLoading || productsLoading;
+
+  const error = categoriesError ?? subcategoriesError ?? productsError ?? null;
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-[#52657c]">Carregando categoria...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <h1 className="text-xl font-bold text-red-700">
+            Não foi possível carregar a categoria
+          </h1>
+
+          <p className="mt-2 text-sm text-red-600">{error}</p>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f58c7]"
+          >
+            Voltar para a página inicial
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (!category) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-[#071a2f]">
+            Categoria não encontrada
+          </h1>
+
+          <p className="mt-2 text-sm text-[#52657c]">
+            A categoria que você está procurando não existe ou não está
+            disponível.
+          </p>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f58c7]"
+          >
+            Voltar para a página inicial
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-16">
+      {/* Hero da categoria */}
+      <div className="mb-10 overflow-hidden rounded-3xl border border-[#e7edf5] bg-white shadow-sm">
+        <div className="grid min-h-[260px] md:grid-cols-2">
+          <div className="flex flex-col justify-center p-8 md:p-10">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#1769e0]">
+              Categoria
+            </p>
+
+            <h1 className="text-3xl font-bold text-[#071a2f] md:text-4xl">
+              {category.name}
+            </h1>
+
+            {category.description && (
+              <p className="mt-4 max-w-2xl text-base leading-7 text-[#52657c]">
+                {category.description}
+              </p>
+            )}
+          </div>
+
+          {category.image && (
+            <div className="min-h-[220px] bg-[#f8fafc]">
+              <img
+                src={category.image}
+                alt={category.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Subcategorias */}
+      {categorySubcategories.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-5">
+            <h2 className="text-2xl font-bold text-[#071a2f]">Subcategorias</h2>
+
+            <p className="mt-1 text-sm text-[#52657c]">
+              Explore os produtos por subcategoria.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {categorySubcategories.map((subcategory) => (
+              <Link
+                key={subcategory.id}
+                to={`/categoria/${encodeURIComponent(
+                  category.slug,
+                )}/${encodeURIComponent(subcategory.slug)}`}
+                className="group rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1769e0] hover:shadow-md"
+              >
+                <h3 className="text-lg font-semibold text-[#071a2f] transition group-hover:text-[#1769e0]">
+                  {subcategory.name}
+                </h3>
+
+                {subcategory.description && (
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#52657c]">
+                    {subcategory.description}
+                  </p>
+                )}
+
+                <span className="mt-4 inline-block text-sm font-semibold text-[#1769e0]">
+                  Ver subcategoria →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Produtos da categoria */}
+      <section>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-[#071a2f]">
+            Produtos de {category.name}
+          </h2>
+
+          <p className="mt-1 text-sm text-[#52657c]">
+            {categoryProducts.length > 0
+              ? `${categoryProducts.length} ${
+                  categoryProducts.length === 1
+                    ? "produto encontrado"
+                    : "produtos encontrados"
+                }`
+              : "Nenhum produto disponível nesta categoria no momento."}
+          </p>
+        </div>
+
+        {categoryProducts.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {categoryProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+            <h3 className="text-lg font-semibold text-[#071a2f]">
+              Nenhum produto disponível
+            </h3>
+
+            <p className="mt-2 text-sm text-[#52657c]">
+              Ainda não existem produtos ativos e disponíveis nesta categoria.
+            </p>
+          </div>
+        )}
+      </section>
+    </section>
+  );
+}
+
+```
+
 ## src\pages\ContactPage.tsx
 
 ```tsx
@@ -7271,36 +9805,64 @@ export function FashionPage() {
 import { useEffect } from "react";
 import {
   FiArrowUpRight,
+  FiBookOpen,
   FiCheckCircle,
+  FiGrid,
+  FiHeart,
   FiSearch,
   FiShield,
+  FiShoppingBag,
   FiStar,
+  FiTool,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Banner } from "../components/Banner";
 import { BlogBanner } from "../components/BlogBanner";
-import { menuItems } from "../components/Menu/items";
 
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
 import { SocialBanner } from "../components/SocialBanner";
+import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 
 export function HomePage() {
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
+
   const { products, loading, error, fetchProducts } = useProducts();
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
 
   useEffect(() => {
     void fetchProducts();
   }, [fetchProducts]);
 
+  const activeCategories = categories
+    .filter((category) => category.active)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const categoryIcons = {
+    tecnologia: FiGrid,
+    "casa-utilidades": FiTool,
+    moda: FiShoppingBag,
+    pets: FiHeart,
+    "produtos-digitais": FiGrid,
+  };
+
   return (
     <>
       <Banner />
 
-      {error && (
+      {(error || categoriesError) && (
         <div className="mx-auto max-w-[1200px] px-6 pb-2 pt-4 text-sm text-red-600">
-          {error}
+          {error ?? categoriesError}
         </div>
       )}
 
@@ -7324,43 +9886,77 @@ export function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
-          {menuItems.map(({ label, icon: Icon, href }) => (
+        {categoriesLoading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+            {[
+              "category-skeleton-1",
+              "category-skeleton-2",
+              "category-skeleton-3",
+              "category-skeleton-4",
+              "category-skeleton-5",
+              "category-skeleton-6",
+              "category-skeleton-7",
+            ].map((skeletonKey) => (
+              <div
+                key={skeletonKey}
+                className="aspect-square animate-pulse rounded-2xl border border-[#e7edf5] bg-[#f7f9fc]"
+              />
+            ))}
+          </div>
+        ) : activeCategories.length === 0 ? (
+          <div className="rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
+            Nenhuma categoria disponível no momento.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+            {activeCategories.map((category) => {
+              const Icon =
+                categoryIcons[category.slug as keyof typeof categoryIcons] ??
+                FiGrid;
+
+              return (
+                <Link
+                  key={category.id}
+                  to={`/categoria/${category.slug}`}
+                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
+                >
+                  <span className="flex h-40 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-30 md:w-full">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Icon className="text-3xl md:text-4xl" />
+                    )}
+                  </span>
+
+                  <span className="text-sm font-semibold leading-5 text-[#071a2f] my-5">
+                    {category.name}
+                  </span>
+                </Link>
+              );
+            })}
+
             <Link
-              key={label}
-              to={href}
-              className={`group flex aspect-square flex-col items-center justify-between rounded-2xl border p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] ${
-                label === "Blog"
-                  ? "border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)]"
-                  : "border-[#e7edf5] bg-white text-[#071a2f] hover:border-[#b9d6f4]"
-              }`}
+              to="/blog"
+              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-4 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1"
             >
-              <span
-                className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl ${
-                  label === "Blog"
-                    ? "bg-white/15 text-[#9ad7ff]"
-                    : "bg-[#edf5ff] text-[#1769e0] group-hover:bg-[#1769e0] group-hover:text-white"
-                }`}
-              >
-                <Icon />
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl text-[#9ad7ff] transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl">
+                <FiBookOpen />
               </span>
 
-              <span
-                className={`text-sm font-semibold leading-5 ${
-                  label === "Blog" ? "text-white" : "text-[#071a2f]"
-                }`}
-              >
-                {label}
+              <span className="text-sm font-semibold leading-5 text-white">
+                Blog
               </span>
 
-              {label === "Blog" && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
-                  Conteúdos
-                </span>
-              )}
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
+                Conteúdos
+              </span>
             </Link>
-          ))}
-        </div>
+          </div>
+        )}
       </section>
 
       <Session title="Ofertas em destaque">
@@ -7787,9 +10383,11 @@ export function PrivacyPolicyPage() {
 
 ```tsx
 import { useEffect, useState } from "react";
-
 import { Link, useParams } from "react-router-dom";
-
+import { ProductBreadcrumb } from "../components/product/ProductBreadcrumb";
+import { ProductDescription } from "../components/product/ProductDescription";
+import { ProductGallery } from "../components/product/ProductGallery";
+import { ProductInfo } from "../components/product/ProductInfo";
 import type { Product } from "../contexts/ProductsContext";
 import { useProducts } from "../contexts/useProducts";
 
@@ -7813,11 +10411,20 @@ export function ProductPage() {
 
       setLoading(true);
 
-      const data = await getProductBySlug(slug);
+      try {
+        const data = await getProductBySlug(slug);
 
-      if (!cancelled) {
-        setProduct(data);
-        setLoading(false);
+        if (!cancelled) {
+          setProduct(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setProduct(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -7849,7 +10456,7 @@ export function ProductPage() {
 
         <Link
           to="/"
-          className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white"
+          className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white transition hover:bg-[#0f58c7]"
         >
           Voltar para a página inicial
         </Link>
@@ -7857,88 +10464,335 @@ export function ProductPage() {
     );
   }
 
-  const price = product.price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: product.currency || "BRL",
-  });
+  return (
+    <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-16">
+      <ProductBreadcrumb />
 
-  const originalPrice = product.originalPrice?.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: product.currency || "BRL",
-  });
+      <div className="grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.07)] md:grid-cols-[0.9fr_1.1fr]">
+        <ProductGallery product={product} />
+
+        <ProductInfo product={product} />
+      </div>
+
+      <ProductDescription product={product} />
+    </section>
+  );
+}
+
+```
+
+## src\pages\ProductsPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+
+import { ProductCard } from "../components/ProductCard";
+import type { Product } from "../contexts/ProductsContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+type SearchCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+};
+
+type SearchSubcategory = {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+};
+
+type SearchResponse = {
+  query: string;
+  products: Product[];
+  categories: SearchCategory[];
+  subcategories: SearchSubcategory[];
+};
+
+export function ProductsPage() {
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get("search")?.trim() ?? "";
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<SearchCategory[]>([]);
+  const [subcategories, setSubcategories] = useState<SearchSubcategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSearchResults() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (!search) {
+          const response = await fetch(`${apiUrl}/products`);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.message ?? "Não foi possível carregar os produtos.",
+            );
+          }
+
+          if (!cancelled) {
+            setProducts(data.products ?? []);
+            setCategories([]);
+            setSubcategories([]);
+          }
+
+          return;
+        }
+
+        const response = await fetch(
+          `${apiUrl}/search?q=${encodeURIComponent(search)}`,
+        );
+
+        const data: SearchResponse = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            (data as { message?: string }).message ??
+              "Não foi possível realizar a pesquisa.",
+          );
+        }
+
+        if (!cancelled) {
+          setProducts(data.products ?? []);
+          setCategories(data.categories ?? []);
+          setSubcategories(data.subcategories ?? []);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Erro ao realizar a pesquisa.",
+          );
+
+          setProducts([]);
+          setCategories([]);
+          setSubcategories([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadSearchResults();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [search]);
+
+  const hasResults =
+    products.length > 0 || categories.length > 0 || subcategories.length > 0;
 
   return (
     <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-16">
-      <nav className="mb-6 text-sm text-[#52657c]" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-[#1769e0]">
-          Início
-        </Link>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[#071a2f]">
+          {search ? `Resultados para "${search}"` : "Produtos"}
+        </h1>
 
-        <span className="px-2">/</span>
-
-        <span>Detalhes do produto</span>
-      </nav>
-
-      <div className="grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.07)] md:grid-cols-[0.9fr_1.1fr]">
-        <div className="flex min-h-[340px] items-center justify-center bg-[#f7f9fc] p-8 md:min-h-[520px] md:p-12">
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="max-h-[420px] w-full object-contain"
-          />
-        </div>
-
-        <div className="flex flex-col justify-center p-8 md:p-12">
-          {product.category && (
-            <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
-              {product.category}
-            </span>
-          )}
-
-          <h1 className="text-3xl font-black leading-tight text-[#071a2f] md:text-4xl">
-            {product.title}
-          </h1>
-
-          {product.shortDescription && (
-            <p className="mt-5 text-sm leading-6 text-[#52657c]">
-              {product.description}
-            </p>
-          )}
-
-          <div className="mt-8 border-y border-[#edf2f7] py-6">
-            <p className="text-sm text-[#667085]">
-              Preço apresentado no momento da consulta
-            </p>
-
-            {originalPrice && (
-              <p className="mt-2 text-sm text-gray-500 line-through">
-                {originalPrice}
-              </p>
-            )}
-
-            <p className="mt-1 text-3xl font-black text-[#071a2f]">{price}</p>
-          </div>
-
-          <p className="mt-6 text-sm leading-6 text-[#52657c]">
-            Você será direcionado ao site do parceiro para conferir
-            disponibilidade, frete, avaliações e finalizar a compra.
+        {search && !loading && !error && (
+          <p className="mt-2 text-sm text-[#52657c]">
+            {[
+              categories.length > 0 &&
+                `${categories.length} ${
+                  categories.length === 1 ? "categoria" : "categorias"
+                }`,
+              subcategories.length > 0 &&
+                `${subcategories.length} ${
+                  subcategories.length === 1 ? "subcategoria" : "subcategorias"
+                }`,
+              products.length > 0 &&
+                `${products.length} ${
+                  products.length === 1 ? "produto" : "produtos"
+                }`,
+            ]
+              .filter(Boolean)
+              .join(" • ")}
           </p>
-
-          <a
-            href={product.affiliateUrl}
-            target="_blank"
-            rel="sponsored noopener noreferrer"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-[#20b35b] px-6 font-bold text-white transition hover:bg-[#159447]"
-          >
-            Ver oferta
-          </a>
-
-          <p className="mt-4 text-xs text-[#667085]">
-            Este é um link de afiliado. A compra é realizada diretamente no site
-            do parceiro.
-          </p>
-        </div>
+        )}
       </div>
+
+      {loading && (
+        <div className="py-16 text-center">
+          <p className="text-sm text-[#52657c]">
+            {search ? "Pesquisando..." : "Carregando produtos..."}
+          </p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-semibold text-red-700">
+            Não foi possível carregar os resultados.
+          </p>
+
+          <p className="mt-2 text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && !hasResults && (
+        <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+          <h2 className="text-xl font-semibold text-[#071a2f]">
+            Nenhum resultado encontrado
+          </h2>
+
+          <p className="mt-2 text-sm text-[#52657c]">
+            {search
+              ? `Não encontramos categorias, subcategorias ou produtos para "${search}".`
+              : "Ainda não existem produtos disponíveis no catálogo."}
+          </p>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white transition hover:bg-[#0f58c7]"
+          >
+            Voltar para a página inicial
+          </Link>
+        </div>
+      )}
+
+      {!loading && !error && hasResults && (
+        <div className="space-y-12">
+          {categories.length > 0 && (
+            <section>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-[#071a2f]">
+                  Categorias
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    to={`/categoria/${encodeURIComponent(category.slug)}`}
+                    className="group rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1769e0] hover:shadow-md"
+                  >
+                    <h3 className="text-lg font-semibold text-[#071a2f] transition group-hover:text-[#1769e0]">
+                      {category.name}
+                    </h3>
+
+                    {category.description && (
+                      <p className="mt-2 line-clamp-2 text-sm text-[#52657c]">
+                        {category.description}
+                      </p>
+                    )}
+
+                    <span className="mt-4 inline-block text-sm font-semibold text-[#1769e0]">
+                      Ver categoria →
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {subcategories.length > 0 && (
+            <section>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-[#071a2f]">
+                  Subcategorias
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {subcategories.map((subcategory) => {
+                  const categorySlug = subcategory.category?.slug;
+
+                  if (!categorySlug) {
+                    return (
+                      <div
+                        key={subcategory.id}
+                        className="rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm"
+                      >
+                        <h3 className="text-lg font-semibold text-[#071a2f]">
+                          {subcategory.name}
+                        </h3>
+
+                        {subcategory.description && (
+                          <p className="mt-2 line-clamp-2 text-sm text-[#52657c]">
+                            {subcategory.description}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={subcategory.id}
+                      to={`/categoria/${encodeURIComponent(
+                        categorySlug,
+                      )}/${encodeURIComponent(subcategory.slug)}`}
+                      className="group rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1769e0] hover:shadow-md"
+                    >
+                      <h3 className="text-lg font-semibold text-[#071a2f] transition group-hover:text-[#1769e0]">
+                        {subcategory.name}
+                      </h3>
+
+                      {subcategory.category && (
+                        <p className="mt-1 text-xs font-medium text-[#1769e0]">
+                          {subcategory.category.name}
+                        </p>
+                      )}
+
+                      {subcategory.description && (
+                        <p className="mt-2 line-clamp-2 text-sm text-[#52657c]">
+                          {subcategory.description}
+                        </p>
+                      )}
+
+                      <span className="mt-4 inline-block text-sm font-semibold text-[#1769e0]">
+                        Ver subcategoria →
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {products.length > 0 && (
+            <section>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-[#071a2f]">Produtos</h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -8105,326 +10959,389 @@ export function RegisterPage() {
 ## src\pages\SubcategoryPage.tsx
 
 ```tsx
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { FiArrowLeft, FiArrowRight, FiGrid, FiHome } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
+import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
-
-type SubcategoryData = {
-  title: string;
-  category: string;
-  query: string;
-  description: string;
-  image: string;
-  imageAlt: string;
-};
-
-const subcategories: Record<string, SubcategoryData> = {
-  "smartphones-acessorios": {
-    title: "Smartphones e acessórios",
-    category: "Tecnologia",
-    query: "smartphone acessórios",
-    description:
-      "Encontre celulares, capas, carregadores e acessórios para acompanhar sua rotina.",
-    image:
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Smartphone sobre uma mesa",
-  },
-  "audio-imagem": {
-    title: "Áudio e imagem",
-    category: "Tecnologia",
-    query: "fone de ouvido caixa de som",
-    description:
-      "Explore opções para ouvir, assistir e transformar seus momentos de entretenimento.",
-    image:
-      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Fones de ouvido modernos",
-  },
-  "casa-inteligente": {
-    title: "Casa inteligente",
-    category: "Tecnologia",
-    query: "casa inteligente automação",
-    description:
-      "Conheça dispositivos conectados que trazem mais praticidade para sua casa.",
-    image:
-      "https://images.unsplash.com/photo-1558008258-3256797b43f3?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Dispositivo inteligente em uma casa",
-  },
-  "trabalho-lazer": {
-    title: "Trabalho e lazer",
-    category: "Tecnologia",
-    query: "notebook acessórios informática",
-    description:
-      "Equipamentos e acessórios para produzir, estudar e aproveitar melhor seu tempo.",
-    image:
-      "https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Notebook e acessórios em uma mesa",
-  },
-  "organizacao-domestica": {
-    title: "Organização doméstica",
-    category: "Casa & Utilidades",
-    query: "organização doméstica",
-    description:
-      "Soluções para aproveitar cada espaço e deixar a rotina mais leve.",
-    image:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Ambiente doméstico organizado",
-  },
-  decoracao: {
-    title: "Decoração",
-    category: "Casa & Utilidades",
-    query: "decoração casa",
-    description:
-      "Detalhes que ajudam a transformar sua casa em um ambiente mais acolhedor.",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Sala com decoração contemporânea",
-  },
-  "utilidades-essenciais": {
-    title: "Utilidades essenciais",
-    category: "Casa & Utilidades",
-    query: "utilidades domésticas cozinha",
-    description:
-      "Itens práticos para resolver as tarefas do dia a dia com mais facilidade.",
-    image:
-      "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Utensílios em uma cozinha",
-  },
-  "conforto-rotina": {
-    title: "Conforto para a rotina",
-    category: "Casa & Utilidades",
-    query: "conforto casa quarto",
-    description:
-      "Escolhas simples para tornar seus momentos em casa ainda mais agradáveis.",
-    image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Quarto confortável e iluminado",
-  },
-  "roupas-calcados": {
-    title: "Roupas e calçados",
-    category: "Moda",
-    query: "roupas calçados",
-    description:
-      "Peças para expressar seu estilo com conforto em diferentes ocasiões.",
-    image:
-      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Roupas organizadas em uma arara",
-  },
-  acessorios: {
-    title: "Acessórios",
-    category: "Moda",
-    query: "acessórios moda",
-    description: "Os detalhes que dão personalidade a cada produção.",
-    image:
-      "https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Acessórios de moda",
-  },
-  "casual-elegante": {
-    title: "Casual e elegante",
-    category: "Moda",
-    query: "moda casual elegante",
-    description: "Combinações versáteis para todos os seus planos.",
-    image:
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Pessoa escolhendo roupas em uma loja",
-  },
-  "estilo-diario": {
-    title: "Estilo diário",
-    category: "Moda",
-    query: "look casual feminino masculino",
-    description:
-      "Inspirações práticas para vestir sua melhor versão todos os dias.",
-    image:
-      "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Look casual de moda",
-  },
-  "cuidados-higiene": {
-    title: "Cuidados e higiene",
-    category: "Pets",
-    query: "cuidados higiene pet",
-    description:
-      "Produtos para cuidar do bem-estar do seu companheiro com carinho.",
-    image:
-      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorro recebendo cuidados",
-  },
-  "brinquedos-diversao": {
-    title: "Brinquedos e diversão",
-    category: "Pets",
-    query: "brinquedos pet cachorro gato",
-    description: "Mais estímulo, alegria e momentos especiais juntos.",
-    image:
-      "https://images.unsplash.com/photo-1535294435445-d7249524ef2e?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorro brincando ao ar livre",
-  },
-  "acessorios-pets": {
-    title: "Acessórios para pets",
-    category: "Pets",
-    query: "acessórios pet",
-    description: "Conforto e praticidade para passeios e momentos em casa.",
-    image:
-      "https://images.unsplash.com/photo-1558788353-f76d92427f16?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorro usando acessório",
-  },
-  "rotina-pet": {
-    title: "Rotina pet",
-    category: "Pets",
-    query: "produtos rotina pet",
-    description: "Tudo para deixar o dia do seu companheiro mais completo.",
-    image:
-      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorros juntos em um parque",
-  },
-  "cursos-conteudos": {
-    title: "Cursos e conteúdos",
-    category: "Produtos Digitais",
-    query: "cursos online",
-    description: "Aprenda no seu ritmo e amplie suas possibilidades.",
-    image:
-      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Pessoa estudando em um notebook",
-  },
-  "software-utilitarios": {
-    title: "Software e utilitários",
-    category: "Produtos Digitais",
-    query: "software utilitários licença",
-    description: "Ferramentas digitais para resolver mais com menos esforço.",
-    image:
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Código em uma tela de computador",
-  },
-  produtividade: {
-    title: "Produtividade",
-    category: "Produtos Digitais",
-    query: "produtividade software",
-    description: "Organize ideias, projetos e tarefas em um só lugar.",
-    image:
-      "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Mesa de trabalho organizada",
-  },
-  "entretenimento-digital": {
-    title: "Entretenimento digital",
-    category: "Produtos Digitais",
-    query: "jogos digitais streaming",
-    description: "Novas experiências para relaxar e se divertir.",
-    image:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Controle de videogame e televisão",
-  },
-};
-
-function normalizeSlug(value: string) {
-  return value.replace(/-e-/g, "-");
-}
+import { useSubcategories } from "../contexts/useSubcategories";
 
 export function SubcategoryPage() {
-  const { subcategory } = useParams();
+  const { categorySlug, subcategorySlug } = useParams<{
+    categorySlug: string;
+    subcategorySlug: string;
+  }>();
 
-  const { products, loading, error, fetchProducts } = useProducts();
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
 
-  const data = subcategory
-    ? (subcategories[subcategory] ?? subcategories[normalizeSlug(subcategory)])
-    : undefined;
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    error: subcategoriesError,
+    fetchSubcategories,
+  } = useSubcategories();
+
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    fetchProducts,
+  } = useProducts();
 
   useEffect(() => {
-    if (data) {
-      void fetchProducts(data.category);
+    if (categories.length === 0) {
+      void fetchCategories();
     }
-  }, [data, fetchProducts]);
+  }, [categories.length, fetchCategories]);
 
-  const visibleProducts = products.slice(0, 4);
+  useEffect(() => {
+    if (subcategories.length === 0) {
+      void fetchSubcategories();
+    }
+  }, [subcategories.length, fetchSubcategories]);
 
-  if (!data) {
+  const category = useMemo(() => {
+    if (!categorySlug) {
+      return undefined;
+    }
+
+    return categories.find(
+      (item) =>
+        item.slug.toLowerCase() === categorySlug.toLowerCase() && item.active,
+    );
+  }, [categories, categorySlug]);
+
+  const subcategory = useMemo(() => {
+    if (!subcategorySlug || !category) {
+      return undefined;
+    }
+
+    return subcategories.find(
+      (item) =>
+        item.slug.toLowerCase() === subcategorySlug.toLowerCase() &&
+        item.categoryId === category.id &&
+        item.active,
+    );
+  }, [subcategories, subcategorySlug, category]);
+
+  useEffect(() => {
+    if (category) {
+      void fetchProducts(category.name);
+    }
+  }, [category, fetchProducts]);
+
+  const visibleProducts = useMemo(() => {
+    if (!subcategory) {
+      return [];
+    }
+
+    return products
+      .filter(
+        (product) =>
+          product.subcategoryId === subcategory.id &&
+          product.active &&
+          product.available,
+      )
+      .slice(0, 4);
+  }, [products, subcategory]);
+
+  const loading = categoriesLoading || subcategoriesLoading || productsLoading;
+
+  const error = categoriesError || subcategoriesError || productsError;
+
+  /*
+   * Estado de carregamento
+   */
+  if (loading && !category) {
     return (
-      <section className="mx-auto max-w-[1200px] px-6 py-16">
-        <h1 className="text-3xl font-bold text-[#071a2f]">
-          Subcategoria não encontrada
-        </h1>
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="animate-pulse">
+          <div className="mb-6 h-5 w-40 rounded bg-slate-200" />
 
-        <Link to="/" className="mt-4 inline-block font-semibold text-[#1769e0]">
-          Voltar para a página inicial
-        </Link>
+          <div className="grid min-h-[360px] overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:grid-cols-[1fr_0.9fr]">
+            <div className="space-y-5 p-8 md:p-12">
+              <div className="h-5 w-32 rounded bg-slate-200" />
+              <div className="h-12 w-3/4 rounded bg-slate-200" />
+              <div className="h-20 w-full rounded bg-slate-200" />
+            </div>
+
+            <div className="min-h-[260px] bg-slate-200" />
+          </div>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {["one", "two", "three", "four"].map((item) => (
+              <div
+                key={`subcategory-product-skeleton-${item}`}
+                className="h-[360px] rounded-[24px] bg-slate-100"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+   * Categoria não encontrada
+   */
+  if (!category) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[32px] border border-[#e7edf5] bg-white px-6 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <FiGrid className="text-2xl text-slate-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Categoria não encontrada
+          </h1>
+
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
+            A categoria que você está procurando não existe ou não está
+            disponível no momento.
+          </p>
+
+          <Link
+            to="/"
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            <FiHome />
+            Voltar para o início
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+   * Subcategoria não encontrada
+   */
+  if (!subcategory) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="mb-6 flex items-center gap-2 text-sm text-slate-500">
+          <Link to="/" className="transition hover:text-slate-900">
+            Início
+          </Link>
+
+          <span>/</span>
+
+          <Link
+            to={`/categoria/${category.slug}`}
+            className="transition hover:text-slate-900"
+          >
+            {category.name}
+          </Link>
+        </div>
+
+        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[32px] border border-[#e7edf5] bg-white px-6 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <FiGrid className="text-2xl text-slate-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Subcategoria não encontrada
+          </h1>
+
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
+            A subcategoria que você está procurando não existe ou não está
+            disponível nesta categoria.
+          </p>
+
+          <Link
+            to={`/categoria/${category.slug}`}
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            <FiArrowLeft />
+            Voltar para {category.name}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+   * Erro
+   */
+  if (error) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="rounded-[32px] border border-red-100 bg-white px-6 py-12 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+            <FiGrid className="text-2xl text-red-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Não foi possível carregar esta seleção
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500">
+            Ocorreu um problema ao carregar os produtos. Tente novamente em
+            alguns instantes.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              void fetchProducts(category.name);
+            }}
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            Tentar novamente
+          </button>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-14">
-      <nav className="mb-6 text-sm text-[#52657c]" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-[#1769e0]">
+    <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+      {/* Breadcrumb */}
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500"
+      >
+        <Link to="/" className="transition hover:text-slate-900">
           Início
         </Link>
 
-        <span className="px-2">/</span>
+        <span>/</span>
 
-        <span>{data.category}</span>
+        <Link
+          to={`/categoria/${category.slug}`}
+          className="transition hover:text-slate-900"
+        >
+          {category.name}
+        </Link>
+
+        <span>/</span>
+
+        <span className="font-medium text-slate-900">{subcategory.name}</span>
       </nav>
 
-      <div className="mb-10 grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.05)] md:grid-cols-[1fr_0.85fr]">
-        <div className="flex flex-col justify-center p-8 md:p-10">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#0b3d66]">
-            Seleção de produtos
-          </p>
+      {/* Hero */}
+      <div className="mb-12 grid min-h-[360px] overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:grid-cols-[1fr_0.9fr]">
+        {/* Conteúdo */}
+        <div className="flex flex-col justify-center p-8 md:p-12">
+          <span className="mb-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Subcategoria
+          </span>
 
-          <h1 className="text-3xl font-black text-[#071a2f] md:text-5xl">
-            {data.title}
+          <h1 className="max-w-xl text-3xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
+            {subcategory.name}
           </h1>
 
-          <p className="mt-4 max-w-xl text-base leading-7 text-[#52657c]">
-            {data.description}
-          </p>
+          {subcategory.description && (
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
+              {subcategory.description}
+            </p>
+          )}
 
-          <p className="mt-5 text-xs text-[#667085]">
-            Produtos apresentados por marketplaces parceiros. A compra acontece
-            no site do anunciante.
-          </p>
+          <div className="mt-7">
+            <Link
+              to={`/categoria/${category.slug}`}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
+            >
+              <FiArrowLeft />
+              Voltar para {category.name}
+            </Link>
+          </div>
         </div>
 
-        <div className="relative min-h-[240px] overflow-hidden md:min-h-[320px]">
-          <img
-            src={data.image}
-            alt={data.imageAlt}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-
-          <div className="absolute inset-0 bg-gradient-to-r from-[#071a2f]/20 to-transparent" />
+        {/* Imagem */}
+        <div className="relative min-h-[280px] overflow-hidden bg-slate-100 md:min-h-full">
+          {subcategory.image ? (
+            <img
+              src={subcategory.image}
+              alt={subcategory.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full min-h-[280px] items-center justify-center">
+              <FiGrid className="text-7xl text-slate-300" />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="mb-6 flex items-end justify-between gap-4">
+      {/* Cabeçalho dos produtos */}
+      <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
+          <span className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
             Ofertas encontradas
-          </p>
+          </span>
 
-          <h2 className="mt-2 text-2xl font-bold text-[#071a2f]">
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 md:text-3xl">
             Escolha o que combina com você
           </h2>
         </div>
 
-        <span className="hidden text-sm text-[#52657c] sm:inline">
+        <span className="text-sm text-slate-400">
           Links patrocinados identificados
         </span>
       </div>
 
-      {loading && (
-        <p className="py-10 text-sm text-[#52657c]">Buscando produtos...</p>
+      {/* Produtos */}
+      {productsLoading ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {["one", "two", "three", "four"].map((item) => (
+            <div
+              key={`product-skeleton-${item}`}
+              className="h-[360px] animate-pulse rounded-[24px] bg-slate-100"
+            />
+          ))}
+        </div>
+      ) : visibleProducts.length === 0 ? (
+        <div className="rounded-[24px] border border-[#e7edf5] bg-white px-6 py-12 text-center shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+            <FiGrid className="text-xl text-slate-500" />
+          </div>
+
+          <h3 className="text-xl font-bold text-slate-900">
+            Nenhum produto disponível
+          </h3>
+
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            Ainda não encontramos produtos ativos e disponíveis nesta
+            subcategoria.
+          </p>
+
+          <Link
+            to={`/categoria/${category.slug}`}
+            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
+          >
+            Ver outras subcategorias
+            <FiArrowRight />
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {visibleProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          {visibleProducts.length === 4 && (
+            <div className="mt-8 flex justify-center">
+              <Link
+                to={`/categoria/${category.slug}`}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+              >
+                Voltar para a categoria
+                <FiArrowRight />
+              </Link>
+            </div>
+          )}
+        </>
       )}
-
-      {error && <p className="py-4 text-sm text-red-600">{error}</p>}
-
-      {!loading && !error && visibleProducts.length === 0 && (
-        <p className="py-10 text-sm text-[#52657c]">
-          Nenhum produto encontrado nesta categoria.
-        </p>
-      )}
-
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {visibleProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
     </section>
   );
 }
@@ -8528,15 +11445,15 @@ export function TermsOfUsePage() {
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminCategoryFormPage } from "../pages/AdminCategoriesFormPage";
 import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
 import AdminDashboardPage from "../pages/AdminDashboarPage";
 import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
 import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
-import { AdminProductsFormPage } from "../pages/AdminProductsFormPage";
 import { AdminProductsPage } from "../pages/AdminProductsPage";
 import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
 import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
+import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -8635,6 +11552,7 @@ export const authRoutes: RouteObject[] = [
 ## src\routes\homeRoutes.tsx
 
 ```tsx
+/** src/routes/homeRoutes.tsx */
 import type { RouteObject } from "react-router-dom";
 
 import { HomePage } from "../pages/HomePage";
@@ -8651,6 +11569,7 @@ export const homeRoutes: RouteObject[] = [
 ## src\routes\index.tsx
 
 ```tsx
+/* src/routes/index.tsx */
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
@@ -8765,17 +11684,34 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
 import type { RouteObject } from "react-router-dom";
 
 import { BlogPage } from "../pages/BlogPage";
+import { CategoryPage } from "../pages/CategoriesPage";
 import { DigitalProductsPage } from "../pages/DigitalProductsPage";
 import { FashionPage } from "../pages/FashionPage";
 import { HomeUtilitiesPage } from "../pages/HomeUtilitiesPage";
 import { OffersPage } from "../pages/OffersPage";
 import { PetsPage } from "../pages/PetsPage";
 import { ProductPage } from "../pages/ProductPage";
+import { ProductsPage } from "../pages/ProductsPage";
 import { SubcategoryPage } from "../pages/SubcategoryPage";
 import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
+  // Busca de produtos
+  { path: "produtos", element: <ProductsPage /> },
+
+  // Detalhes do produto
   { path: "produto/:slug", element: <ProductPage /> },
+
+  // Categoria
+  { path: "categoria/:slug", element: <CategoryPage /> },
+
+  // Subcategoria - rota hierárquica
+  {
+    path: "categoria/:categorySlug/:subcategorySlug",
+    element: <SubcategoryPage />,
+  },
+
+  // Rotas de categorias legadas
   { path: "tecnologia", element: <TechnologyPage /> },
   { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
   { path: "moda", element: <FashionPage /> },
@@ -8783,6 +11719,8 @@ export const productRoutes: RouteObject[] = [
   { path: "produtos-digitais", element: <DigitalProductsPage /> },
   { path: "ofertas", element: <OffersPage /> },
   { path: "blog", element: <BlogPage /> },
+
+  // Compatibilidade com URLs antigas
   {
     path: ":category/:subcategory",
     element: <SubcategoryPage />,
@@ -8819,6 +11757,60 @@ export type User = {
   email: string;
   role: "admin" | "customer";
 };
+
+```
+
+## src\utils\formatCurrency.ts
+
+```ts
+export function formatCurrencyBRL(
+  value: number | string | null | undefined,
+): string {
+  if (value === null || value === undefined || value === "") {
+    return "R$ 0,00";
+  }
+
+  const numericValue =
+    typeof value === "string"
+      ? Number.parseFloat(value.replace(",", "."))
+      : value;
+
+  if (!Number.isFinite(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(numericValue);
+}
+
+export function parseCurrencyBRL(value: string): number {
+  const normalizedValue = value
+    .replace(/\s/g, "")
+    .replace(/R\$/gi, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+
+  const numericValue = Number.parseFloat(normalizedValue);
+
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+export function formatCurrencyInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  const numericValue = Number(digits) / 100;
+
+  return numericValue.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 ```
 
@@ -9114,8 +12106,13 @@ export default defineConfig([
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/extension-underline": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "class-variance-authority": "^0.7.1",
     "crypto": "^1.0.1",
+    "dompurify": "^3.4.15",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-icons": "^5.7.0",
@@ -9129,6 +12126,7 @@ export default defineConfig([
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
@@ -9178,6 +12176,1129 @@ export function App() {
         </CategoriesProvider>
       </MercadoLivreProvider>
     </AuthProvider>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductBasicInfo.tsx
+
+```tsx
+import { RichTextEditor } from "../RichTextEditor";
+
+type ProductBasicInfoProps = {
+  title: string;
+  description: string;
+  shortDescription: string;
+  imageUrl: string;
+  loading: boolean;
+  onTitleChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onShortDescriptionChange: (value: string) => void;
+  onImageUrlChange: (value: string) => void;
+};
+
+export function ProductBasicInfo({
+  title,
+  description,
+  shortDescription,
+  imageUrl,
+  loading,
+  onTitleChange,
+  onDescriptionChange,
+  onShortDescriptionChange,
+  onImageUrlChange,
+}: ProductBasicInfoProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Informações do produto
+      </h2>
+
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <label
+            htmlFor="title"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Título *
+          </label>
+
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={(event) => onTitleChange(event.target.value)}
+            placeholder="Ex.: Smartphone Samsung Galaxy"
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+            O slug será gerado automaticamente pela API.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="shortDescription"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Descrição curta
+          </label>
+
+          <input
+            id="shortDescription"
+            type="text"
+            value={shortDescription}
+            onChange={(event) => onShortDescriptionChange(event.target.value)}
+            placeholder="Resumo rápido do produto"
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="description"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Descrição
+          </label>
+
+          <RichTextEditor
+            value={description}
+            onChange={onDescriptionChange}
+            disabled={loading}
+            placeholder="Escreva uma descrição completa e detalhada do produto..."
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+            Use títulos, negrito, listas, links e outros recursos para deixar a
+            descrição mais organizada e agradável para o cliente.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="imageUrl"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            URL da imagem principal *
+          </label>
+
+          <input
+            id="imageUrl"
+            type="url"
+            value={imageUrl}
+            onChange={(event) => onImageUrlChange(event.target.value)}
+            placeholder="https://exemplo.com/produto.jpg"
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+
+          {imageUrl.trim() && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-semibold text-gray-500">
+                Pré-visualização da imagem principal
+              </p>
+
+              <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <img
+                  src={imageUrl}
+                  alt="Pré-visualização do produto"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductFormActions.tsx
+
+```tsx
+import { Link } from "react-router-dom";
+
+type ProductFormActionsProps = {
+  loading: boolean;
+  isEditing: boolean;
+};
+
+export function ProductFormActions({
+  loading,
+  isEditing,
+}: ProductFormActionsProps) {
+  return (
+    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <Link
+        to="/admin/products"
+        className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+      >
+        Cancelar
+      </Link>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="rounded-lg bg-blue px-4 py-2 text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {loading
+          ? isEditing
+            ? "Salvando..."
+            : "Cadastrando..."
+          : isEditing
+            ? "Salvar alterações"
+            : "Cadastrar produto"}
+      </button>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductGallery.tsx
+
+```tsx
+import type { ProductImageForm } from "./types";
+
+type ProductGalleryProps = {
+  galleryImages: ProductImageForm[];
+  loading: boolean;
+  onAdd: () => void;
+  onChange: (id: string, value: string) => void;
+  onRemove: (id: string) => void;
+};
+
+export function ProductGallery({
+  galleryImages,
+  loading,
+  onAdd,
+  onChange,
+  onRemove,
+}: ProductGalleryProps) {
+  return (
+    <div className="border-t border-gray-100 pt-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">
+            Galeria de imagens
+          </h3>
+
+          <p className="mt-1 text-xs text-gray-500">
+            Adicione imagens adicionais para exibir na página do produto.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={loading}
+          className="inline-flex items-center justify-center rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          + Adicionar imagem
+        </button>
+      </div>
+
+      {galleryImages.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center">
+          <p className="text-sm text-gray-500">
+            Nenhuma imagem adicional adicionada.
+          </p>
+
+          <p className="mt-1 text-xs text-gray-400">
+            A imagem principal continuará sendo utilizada normalmente.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {galleryImages.map((image) => (
+            <div
+              key={image.id}
+              className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    Imagem {image.sortOrder + 1}
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Ordem: {image.sortOrder + 1}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onRemove(image.id)}
+                  disabled={loading}
+                  className="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Remover
+                </button>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
+                <div>
+                  <label
+                    htmlFor={`gallery-image-${image.id}`}
+                    className="mb-2 block text-xs font-semibold text-gray-600"
+                  >
+                    URL da imagem
+                  </label>
+
+                  <input
+                    id={`gallery-image-${image.id}`}
+                    type="url"
+                    value={image.imageUrl}
+                    onChange={(event) => onChange(image.id, event.target.value)}
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    disabled={loading}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+                  />
+                </div>
+
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
+                  {image.imageUrl.trim() ? (
+                    <img
+                      src={image.imageUrl}
+                      alt={`Pré-visualização da imagem ${image.sortOrder + 1}`}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <span className="px-2 text-center text-xs text-gray-400">
+                      Sem imagem
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductPricing.tsx
+
+```tsx
+import { formatCurrencyInput } from "../../../utils/formatCurrency";
+
+type ProductPricingProps = {
+  price: string;
+  originalPrice: string;
+  currency: string;
+  rating: string;
+  reviewsCount: string;
+  loading: boolean;
+  onPriceChange: (value: string) => void;
+  onOriginalPriceChange: (value: string) => void;
+  onCurrencyChange: (value: string) => void;
+  onRatingChange: (value: string) => void;
+  onReviewsCountChange: (value: string) => void;
+};
+
+export function ProductPricing({
+  price,
+  originalPrice,
+  currency,
+  rating,
+  reviewsCount,
+  loading,
+  onPriceChange,
+  onOriginalPriceChange,
+  onCurrencyChange,
+  onRatingChange,
+  onReviewsCountChange,
+}: ProductPricingProps) {
+  function handlePriceChange(value: string) {
+    onPriceChange(formatCurrencyInput(value));
+  }
+
+  function handleOriginalPriceChange(value: string) {
+    onOriginalPriceChange(formatCurrencyInput(value));
+  }
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Preço e avaliações
+      </h2>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="price"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Preço *
+          </label>
+
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">
+              R$
+            </span>
+
+            <input
+              id="price"
+              type="text"
+              inputMode="decimal"
+              value={price}
+              onChange={(event) => handlePriceChange(event.target.value)}
+              placeholder="0,00"
+              required
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 py-3 pl-12 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            />
+          </div>
+
+          <p className="mt-2 text-xs text-gray-500">
+            Digite o valor no formato brasileiro. Ex.: 38,99
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="originalPrice"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Preço original
+          </label>
+
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">
+              R$
+            </span>
+
+            <input
+              id="originalPrice"
+              type="text"
+              inputMode="decimal"
+              value={originalPrice}
+              onChange={(event) =>
+                handleOriginalPriceChange(event.target.value)
+              }
+              placeholder="0,00"
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 py-3 pl-12 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            />
+          </div>
+
+          <p className="mt-2 text-xs text-gray-500">Opcional. Ex.: 49,90</p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="currency"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Moeda
+          </label>
+
+          <input
+            id="currency"
+            type="text"
+            value={currency}
+            onChange={(event) =>
+              onCurrencyChange(event.target.value.toUpperCase())
+            }
+            maxLength={3}
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="rating"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Avaliação
+          </label>
+
+          <input
+            id="rating"
+            type="number"
+            min="0"
+            max="5"
+            step="0.1"
+            value={rating}
+            onChange={(event) => onRatingChange(event.target.value)}
+            placeholder="Ex.: 4.8"
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="reviewsCount"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Quantidade de avaliações
+          </label>
+
+          <input
+            id="reviewsCount"
+            type="number"
+            min="0"
+            step="1"
+            value={reviewsCount}
+            onChange={(event) => onReviewsCountChange(event.target.value)}
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductRelationships.tsx
+
+```tsx
+type Subcategory = {
+  id: string;
+  name: string;
+  category?: {
+    name: string;
+  } | null;
+};
+
+type Marketplace = {
+  id: string;
+  name: string;
+};
+
+type ProductRelationshipsProps = {
+  subcategories: Subcategory[];
+  marketplaces: Marketplace[];
+  subcategoryId: string;
+  marketplaceId: string;
+  affiliateUrl: string;
+  loading: boolean;
+  onSubcategoryChange: (value: string) => void;
+  onMarketplaceChange: (value: string) => void;
+  onAffiliateUrlChange: (value: string) => void;
+};
+
+export function ProductRelationships({
+  subcategories,
+  marketplaces,
+  subcategoryId,
+  marketplaceId,
+  affiliateUrl,
+  loading,
+  onSubcategoryChange,
+  onMarketplaceChange,
+  onAffiliateUrlChange,
+}: ProductRelationshipsProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Classificação e marketplace
+      </h2>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="subcategoryId"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Subcategoria *
+          </label>
+
+          <select
+            id="subcategoryId"
+            value={subcategoryId}
+            onChange={(event) => onSubcategoryChange(event.target.value)}
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          >
+            <option value="">Selecione uma subcategoria</option>
+
+            {subcategories.map((subcategory) => (
+              <option key={subcategory.id} value={subcategory.id}>
+                {subcategory.category?.name
+                  ? `${subcategory.category.name} → ${subcategory.name}`
+                  : subcategory.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="marketplaceId"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Marketplace *
+          </label>
+
+          <select
+            id="marketplaceId"
+            value={marketplaceId}
+            onChange={(event) => onMarketplaceChange(event.target.value)}
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          >
+            <option value="">Selecione um marketplace</option>
+
+            {marketplaces.map((marketplace) => (
+              <option key={marketplace.id} value={marketplace.id}>
+                {marketplace.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="affiliateUrl"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Link de afiliado *
+          </label>
+
+          <input
+            id="affiliateUrl"
+            type="url"
+            value={affiliateUrl}
+            onChange={(event) => onAffiliateUrlChange(event.target.value)}
+            placeholder="https://..."
+            required
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+
+          <p className="mt-2 text-xs text-gray-500">
+            Este será o link utilizado pelo botão de compra/afiliado.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductSeo.tsx
+
+```tsx
+type ProductSeoProps = {
+  seoTitle: string;
+  seoDescription: string;
+  loading: boolean;
+  onSeoTitleChange: (value: string) => void;
+  onSeoDescriptionChange: (value: string) => void;
+};
+
+export function ProductSeo({
+  seoTitle,
+  seoDescription,
+  loading,
+  onSeoTitleChange,
+  onSeoDescriptionChange,
+}: ProductSeoProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
+
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <label
+            htmlFor="seoTitle"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            SEO Title
+          </label>
+
+          <input
+            id="seoTitle"
+            type="text"
+            value={seoTitle}
+            onChange={(event) => onSeoTitleChange(event.target.value)}
+            placeholder="Título otimizado para buscadores"
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="seoDescription"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            SEO Description
+          </label>
+
+          <textarea
+            id="seoDescription"
+            value={seoDescription}
+            onChange={(event) => onSeoDescriptionChange(event.target.value)}
+            rows={4}
+            placeholder="Descrição otimizada para mecanismos de busca"
+            disabled={loading}
+            className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\ProductStatus.tsx
+
+```tsx
+type ProductStatusProps = {
+  featured: boolean;
+  available: boolean;
+  active: boolean;
+  loading: boolean;
+  onFeaturedChange: (value: boolean) => void;
+  onAvailableChange: (value: boolean) => void;
+  onActiveChange: (value: boolean) => void;
+};
+
+export function ProductStatus({
+  featured,
+  available,
+  active,
+  loading,
+  onFeaturedChange,
+  onAvailableChange,
+  onActiveChange,
+}: ProductStatusProps) {
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm">
+      <h2 className="mb-5 text-lg font-semibold text-gray-900">
+        Status do produto
+      </h2>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(event) => onFeaturedChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Destaque
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir como produto destacado.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={available}
+            onChange={(event) => onAvailableChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Disponível
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Produto disponível no catálogo.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={active}
+            onChange={(event) => onActiveChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Ativo
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Produto ativo no sistema.
+            </span>
+          </span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+```
+
+## src\components\admin\products\types.ts
+
+```ts
+export type ProductImageForm = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+```
+
+## src\components\admin\RichTextEditor.tsx
+
+```tsx
+import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useEffect } from "react";
+
+interface RichTextEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+export function RichTextEditor({
+  value,
+  onChange,
+  disabled = false,
+  placeholder = "Escreva a descrição completa do produto...",
+}: RichTextEditorProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+      }),
+    ],
+
+    content: value,
+
+    editable: !disabled,
+
+    editorProps: {
+      attributes: {
+        class:
+          "min-h-[260px] w-full px-4 py-4 text-sm leading-7 text-gray-700 outline-none",
+        "data-placeholder": placeholder,
+      },
+    },
+
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    editor.setEditable(!disabled);
+  }, [editor, disabled]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const currentHtml = editor.getHTML();
+
+    if (value !== currentHtml && value !== "") {
+      editor.commands.setContent(value, {
+        emitUpdate: false,
+      });
+    }
+
+    if (value === "" && !editor.isEmpty) {
+      editor.commands.clearContent();
+    }
+  }, [editor, value]);
+
+  if (!editor) {
+    return (
+      <div className="rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-500">
+        Carregando editor...
+      </div>
+    );
+  }
+
+  function setLink() {
+    const previousUrl = editor.getAttributes("link").href;
+
+    const url = window.prompt(
+      "Informe a URL do link:",
+      previousUrl || "https://",
+    );
+
+    if (url === null) {
+      return;
+    }
+
+    if (url.trim() === "") {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({
+        href: url.trim(),
+        target: "_blank",
+      })
+      .run();
+  }
+
+  return (
+    <div
+      className={`overflow-hidden rounded-lg border border-gray-300 bg-white ${
+        disabled ? "opacity-60" : ""
+      }`}
+    >
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 p-2">
+        {/* Parágrafo */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setParagraph().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("paragraph")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Parágrafo"
+        >
+          P
+        </button>
+
+        {/* Título 2 */}
+        <button
+          type="button"
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-bold transition ${
+            editor.isActive("heading", { level: 2 })
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Título 2"
+        >
+          H2
+        </button>
+
+        {/* Título 3 */}
+        <button
+          type="button"
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-bold transition ${
+            editor.isActive("heading", { level: 3 })
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Título 3"
+        >
+          H3
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Negrito */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-sm font-bold transition ${
+            editor.isActive("bold")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Negrito"
+        >
+          B
+        </button>
+
+        {/* Itálico */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-sm italic transition ${
+            editor.isActive("italic")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Itálico"
+        >
+          I
+        </button>
+
+        {/* Sublinhado */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-sm underline transition ${
+            editor.isActive("underline")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Sublinhado"
+        >
+          U
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Lista */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("bulletList")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Lista com marcadores"
+        >
+          • Lista
+        </button>
+
+        {/* Lista numerada */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("orderedList")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Lista numerada"
+        >
+          1. Lista
+        </button>
+
+        {/* Citação */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("blockquote")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Citação"
+        >
+          “ Citação
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Link */}
+        <button
+          type="button"
+          onClick={setLink}
+          disabled={disabled}
+          className={`rounded px-3 py-2 text-xs font-semibold transition ${
+            editor.isActive("link")
+              ? "bg-blue text-white"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+          title="Adicionar link"
+        >
+          Link
+        </button>
+
+        {/* Remover link */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          disabled={disabled || !editor.isActive("link")}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Remover link"
+        >
+          Remover link
+        </button>
+
+        <span className="mx-1 h-6 w-px bg-gray-300" />
+
+        {/* Separador */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          disabled={disabled}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200"
+          title="Separador"
+        >
+          ―
+        </button>
+
+        {/* Desfazer */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={disabled || !editor.can().undo()}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Desfazer"
+        >
+          ↶
+        </button>
+
+        {/* Refazer */}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={disabled || !editor.can().redo()}
+          className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Refazer"
+        >
+          ↷
+        </button>
+      </div>
+
+      {/* Área de edição */}
+      <EditorContent editor={editor} />
+    </div>
   );
 }
 
@@ -9646,14 +13767,16 @@ export function Footer() {
 ```tsx
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+
 import MenuIcon from "../../assets/Icons/menuIcon.svg?react";
 import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+
 import { useAuth } from "../../contexts/useAuth";
+
 import { Icon } from "../Icon";
-import { InputText } from "../InputText";
 import { Logo } from "../Logo";
 import { Menu } from "../Menu";
-import { menuItems } from "../Menu/items";
+import { SearchBar } from "../SearchBar";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -9664,6 +13787,11 @@ export function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  /*
+   * ============================================================
+   * FECHAR PESQUISA AO CLICAR FORA
+   * ============================================================
+   */
   useEffect(() => {
     if (!isSearchOpen) return;
 
@@ -9683,6 +13811,11 @@ export function Header() {
     };
   }, [isSearchOpen]);
 
+  /*
+   * ============================================================
+   * FECHAR MENU MOBILE AO CLICAR FORA
+   * ============================================================
+   */
   useEffect(() => {
     if (!isMenuOpen) return;
 
@@ -9702,7 +13835,15 @@ export function Header() {
   return (
     <div className="w-full border-b-2 border-blue/20">
       <header className="relative mx-auto w-full px-6 py-10 md:max-w-[1200px] md:py-5">
+        {/* ======================================================
+            HEADER PRINCIPAL
+        ====================================================== */}
+
         <div className="flex items-center justify-between md:min-h-[60px] md:gap-6">
+          {/* ====================================================
+              BOTÃO MENU MOBILE
+          ==================================================== */}
+
           <button
             type="button"
             aria-label="Abrir menu"
@@ -9716,6 +13857,10 @@ export function Header() {
             <Icon svg={MenuIcon} size="md" />
           </button>
 
+          {/* ====================================================
+              LOGO
+          ==================================================== */}
+
           <Link
             to="/"
             className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 md:flex md:items-center"
@@ -9724,6 +13869,10 @@ export function Header() {
           >
             <Logo />
           </Link>
+
+          {/* ====================================================
+              BOTÃO PESQUISA MOBILE
+          ==================================================== */}
 
           {!isSearchOpen && (
             <button
@@ -9740,15 +13889,18 @@ export function Header() {
             </button>
           )}
 
+          {/* ====================================================
+              ÁREA DESKTOP
+          ==================================================== */}
+
           <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
-            <div className="w-full">
-              <InputText
-                className="h-12 w-full min-w-0"
-                iconPosition="right"
-                placeholder="Buscar produtos, categorias ou artigos"
-                icon={<Icon svg={SearchIcon} />}
-              />
-            </div>
+            {/* Pesquisa */}
+
+            <SearchBar className="w-full" />
+
+            {/* ==================================================
+                AUTENTICAÇÃO
+            ================================================== */}
 
             {user ? (
               <div className="flex shrink-0 items-center gap-3">
@@ -9763,7 +13915,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={signOut}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-navy transition bg-gray-100 hover:bg-gray-50"
+                  className="rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold text-navy transition hover:bg-gray-50"
                 >
                   Sair
                 </button>
@@ -9779,23 +13931,24 @@ export function Header() {
           </div>
         </div>
 
+        {/* ======================================================
+            MENU DESKTOP
+        ====================================================== */}
+
         <div className="mt-3 hidden md:block">
           <Menu variant="header" />
         </div>
+
+        {/* ======================================================
+            PESQUISA MOBILE
+        ====================================================== */}
 
         {isSearchOpen && (
           <div
             ref={searchRef}
             className="mt-10 flex items-center gap-2 md:hidden"
           >
-            <div className="flex-1">
-              <InputText
-                className="w-full"
-                iconPosition="right"
-                placeholder="Buscar produtos, categorias ou artigos"
-                icon={<Icon svg={SearchIcon} />}
-              />
-            </div>
+            <SearchBar className="flex-1" />
 
             <button
               type="button"
@@ -9808,12 +13961,20 @@ export function Header() {
           </div>
         )}
 
+        {/* ======================================================
+            MENU MOBILE
+        ====================================================== */}
+
         {isMenuOpen && (
           <div className="fixed inset-0 z-40 bg-[#071a2f]/60 md:hidden">
             <div
               ref={menuRef}
-              className="h-full w-[85%] max-w-[360px] bg-[#071a2f] px-5 py-6 text-white"
+              className="h-full w-[85%] max-w-[360px] overflow-y-auto bg-[#071a2f] px-5 py-6 text-white"
             >
+              {/* ==================================================
+                  CABEÇALHO DO MENU MOBILE
+              ================================================== */}
+
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
@@ -9822,6 +13983,7 @@ export function Header() {
 
                   <div>
                     <p className="text-xl font-bold leading-none">WORLD</p>
+
                     <p className="text-lg font-bold leading-none">MIX 360</p>
                   </div>
                 </div>
@@ -9836,15 +13998,20 @@ export function Header() {
                 </button>
               </div>
 
-              <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
-                <span className="text-lg">⌕</span>
+              {/* ==================================================
+                  PESQUISA MOBILE DO MENU
+              ================================================== */}
 
-                <input
-                  type="text"
-                  placeholder="Buscar"
-                  className="w-full border-0 bg-transparent text-sm text-white placeholder:text-white/60 outline-none"
+              <div className="mb-5">
+                <SearchBar
+                  className="[&_input]:border-white/10 [&_input]:bg-white/5 [&_input]:text-white [&_input]:placeholder:text-white/60"
+                  onSearch={() => setIsMenuOpen(false)}
                 />
               </div>
+
+              {/* ==================================================
+                  AUTENTICAÇÃO MOBILE
+              ================================================== */}
 
               <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
                 {user ? (
@@ -9877,26 +14044,17 @@ export function Header() {
                 )}
               </div>
 
-              <nav className="flex flex-col gap-2">
-                {menuItems.map(({ label, icon: Icon, href }) => (
-                  <Link
-                    key={label}
-                    to={href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center justify-between rounded-lg px-3 py-3 text-left text-base font-medium text-white/90 transition hover:bg-white/5"
-                  >
-                    <span className="flex items-center gap-3">
-                      <span className="inline-flex h-5 w-5 items-center justify-center text-sm">
-                        <Icon className="text-base" />
-                      </span>
+              {/* ==================================================
+                  MENU DINÂMICO
 
-                      {label}
-                    </span>
+                  Agora categorias e subcategorias vêm da API.
+              ================================================== */}
 
-                    {label !== "Blog" && <span className="text-lg">›</span>}
-                  </Link>
-                ))}
-              </nav>
+              <Menu variant="mobile" onNavigate={() => setIsMenuOpen(false)} />
+
+              {/* ==================================================
+                  LINKS INSTITUCIONAIS
+              ================================================== */}
 
               <div className="mt-8 border-t border-white/10 pt-5 text-sm text-white/70">
                 <Link
@@ -10352,47 +14510,349 @@ export function Logo({ location = "header" }: LogoProps) {
 ## src\components\Menu\index.tsx
 
 ```tsx
+import { useEffect, useMemo, useState } from "react";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import { menuItems } from "./items";
+import { useCategories } from "../../contexts/useCategories";
+import { useSubcategories } from "../../contexts/useSubcategories";
+import { getCategoryIcon } from "./items";
 
-type MenuVariant = "header" | "footer";
+type MenuVariant = "header" | "footer" | "mobile";
 
 interface MenuProps {
   variant?: MenuVariant;
   className?: string;
+  onNavigate?: () => void;
 }
 
-export function Menu({ variant = "header", className = "" }: MenuProps) {
+export function Menu({
+  variant = "header",
+  className = "",
+  onNavigate,
+}: MenuProps) {
   const isHeader = variant === "header";
+  const isMobile = variant === "mobile";
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    fetchCategories,
+  } = useCategories();
+
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    fetchSubcategories,
+  } = useSubcategories();
+
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+
+  /*
+   * ============================================================
+   * CARREGAMENTO DAS CATEGORIAS
+   * ============================================================
+   */
+
+  useEffect(() => {
+    if (categories.length === 0) {
+      void fetchCategories();
+    }
+  }, [categories.length, fetchCategories]);
+
+  /*
+   * ============================================================
+   * CARREGAMENTO DAS SUBCATEGORIAS
+   * ============================================================
+   */
+
+  useEffect(() => {
+    if (subcategories.length === 0) {
+      void fetchSubcategories();
+    }
+  }, [subcategories.length, fetchSubcategories]);
+
+  /*
+   * ============================================================
+   * ESTRUTURA DINÂMICA DO MENU
+   * ============================================================
+   *
+   * Categoria
+   *   ├── Subcategoria
+   *   ├── Subcategoria
+   *   └── Subcategoria
+   *
+   * Somente categorias e subcategorias ativas são exibidas.
+   */
+
+  const menuCategories = useMemo(() => {
+    return categories
+      .filter((category) => category.active)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((category) => ({
+        id: category.id,
+        label: category.name,
+        slug: category.slug,
+        icon: getCategoryIcon(category.slug),
+        href: `/categoria/${category.slug}`,
+
+        subcategories: subcategories
+          .filter(
+            (subcategory) =>
+              subcategory.categoryId === category.id && subcategory.active,
+          )
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((subcategory) => ({
+            id: subcategory.id,
+            label: subcategory.name,
+            href: `/categoria/${category.slug}/${subcategory.slug}`,
+          })),
+      }));
+  }, [categories, subcategories]);
+
+  /*
+   * ============================================================
+   * FOOTER
+   * ============================================================
+   */
+
+  if (variant === "footer") {
+    return (
+      <nav
+        className={["mt-0 flex flex-col gap-1 text-sm text-white/80", className]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {menuCategories.map((category) => (
+          <Link
+            key={category.id}
+            to={category.href}
+            className="block text-left text-sm transition hover:text-white"
+          >
+            {category.label}
+          </Link>
+        ))}
+      </nav>
+    );
+  }
+
+  /*
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
+
+  if (categoriesLoading || subcategoriesLoading) {
+    /*
+     * Loading mobile
+     */
+
+    if (isMobile) {
+      return (
+        <nav
+          className={["flex flex-col gap-2", className]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+        </nav>
+      );
+    }
+
+    /*
+     * Loading desktop
+     */
+
+    return (
+      <nav
+        className={[
+          "hidden md:flex md:items-center md:justify-start md:gap-2",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <span className="h-8 w-24 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-32 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-20 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-20 animate-pulse rounded-full bg-slate-100" />
+      </nav>
+    );
+  }
+
+  /*
+   * ============================================================
+   * MENU MOBILE
+   * ============================================================
+   */
+
+  if (isMobile) {
+    return (
+      <nav
+        className={["flex flex-col gap-2", className].filter(Boolean).join(" ")}
+      >
+        {menuCategories.map((category) => {
+          const Icon = category.icon;
+
+          const isOpen = openCategory === category.id;
+
+          const hasSubcategories = category.subcategories.length > 0;
+
+          return (
+            <div key={category.id}>
+              {/* Categoria principal */}
+
+              <div className="flex items-center rounded-lg transition hover:bg-white/5">
+                <Link
+                  to={category.href}
+                  onClick={onNavigate}
+                  className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left text-base font-medium text-white/90"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
+                    <Icon className="text-base" />
+                  </span>
+
+                  <span className="truncate">{category.label}</span>
+                </Link>
+
+                {/* Botão das subcategorias */}
+
+                {hasSubcategories && (
+                  <button
+                    type="button"
+                    aria-label={
+                      isOpen
+                        ? `Recolher ${category.label}`
+                        : `Expandir ${category.label}`
+                    }
+                    aria-expanded={isOpen}
+                    onClick={() =>
+                      setOpenCategory((current) =>
+                        current === category.id ? null : category.id,
+                      )
+                    }
+                    className="flex h-11 w-11 shrink-0 items-center justify-center text-white/70 transition hover:text-white"
+                  >
+                    {isOpen ? <FiChevronDown /> : <FiChevronRight />}
+                  </button>
+                )}
+              </div>
+
+              {/* Subcategorias */}
+
+              {isOpen && hasSubcategories && (
+                <div className="ml-8 border-l border-white/10 pl-3">
+                  {category.subcategories.map((subcategory) => (
+                    <Link
+                      key={subcategory.id}
+                      to={subcategory.href}
+                      onClick={onNavigate}
+                      className="block rounded-lg px-3 py-2.5 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                    >
+                      {subcategory.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+    );
+  }
+
+  /*
+   * ============================================================
+   * MENU DESKTOP
+   * ============================================================
+   *
+   * O submenu usa Tailwind group-hover.
+   *
+   * Isso evita onMouseEnter/onMouseLeave em elementos
+   * estáticos e elimina o aviso do Biome:
+   *
+   * a11y/noStaticElementInteractions
+   */
 
   return (
     <nav
       className={[
         isHeader
-          ? "hidden md:flex md:items-center md:justify-between md:gap-2 md:px-0 md:py-0 md:bg-transparent"
-          : "mt-0 flex flex-col gap-1 text-sm text-white/80",
+          ? "hidden md:flex md:items-center md:justify-start md:gap-2 md:px-0 md:py-0 md:bg-transparent"
+          : "flex flex-col gap-1 text-sm",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {menuItems.map(({ label, icon: Icon, href }) => (
-        <Link
-          key={label}
-          to={href}
-          className={[
-            isHeader
-              ? "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-[#071a2f] transition hover:text-[#0b3d66]"
-              : "block text-left text-sm transition hover:text-white",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {!isHeader && <Icon className="hidden" />}
-          <span>{label}</span>
-        </Link>
-      ))}
+      {menuCategories.map((category) => {
+        const Icon = category.icon;
+
+        const hasSubcategories = category.subcategories.length > 0;
+
+        return (
+          <div key={category.id} className="group relative">
+            {/* Categoria principal */}
+
+            <Link
+              to={category.href}
+              className={[
+                isHeader
+                  ? "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#071a2f] transition hover:bg-slate-50 hover:text-[#0b3d66]"
+                  : "block text-left text-sm transition hover:text-white",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {variant !== "header" && <Icon className="mr-2 inline-block" />}
+
+              <span>{category.label}</span>
+
+              {hasSubcategories && isHeader && (
+                <FiChevronDown className="text-xs transition-transform group-hover:rotate-180" />
+              )}
+            </Link>
+
+            {/* ==================================================
+                SUBMENU DESKTOP
+            ================================================== */}
+
+            {isHeader && hasSubcategories && (
+              <div className="absolute left-1/2 top-full z-50 hidden min-w-[250px] -translate-x-1/2 pt-3 group-hover:block">
+                <div className="overflow-hidden rounded-2xl border border-[#e7edf5] bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+                  {/* Link para a categoria */}
+
+                  <Link
+                    to={category.href}
+                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                  >
+                    Ver {category.label}
+                  </Link>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  {/* Subcategorias */}
+
+                  {category.subcategories.map((subcategory) => (
+                    <Link
+                      key={subcategory.id}
+                      to={subcategory.href}
+                      className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-950"
+                    >
+                      <span>{subcategory.label}</span>
+
+                      <FiChevronRight className="text-xs text-slate-400" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 }
@@ -10413,21 +14873,63 @@ import {
   FiTool,
 } from "react-icons/fi";
 
-export type MenuItem = {
+export type MenuCategory = {
   label: string;
   icon: IconType;
   href: string;
+  slug: string;
 };
 
-export const menuItems: MenuItem[] = [
-  { label: "Tecnologia", icon: FiMonitor, href: "/tecnologia" },
-  { label: "Casa & Utilidades", icon: FiTool, href: "/casa-utilidades" },
-  { label: "Moda", icon: FiShoppingBag, href: "/moda" },
-  { label: "Pets", icon: FiHeart, href: "/pets" },
-  { label: "Produtos Digitais", icon: FiGrid, href: "/produtos-digitais" },
-  { label: "Ofertas", icon: FiTag, href: "/ofertas" },
-  { label: "Blog", icon: FiBookOpen, href: "/blog" },
-];
+export type MenuItem = MenuCategory & {
+  subcategories: Array<{
+    id: string;
+    label: string;
+    href: string;
+  }>;
+};
+
+/**
+ * Ícone padrão para categorias.
+ *
+ * O slug é usado para manter os ícones atuais
+ * mesmo com as categorias vindo da API.
+ */
+export function getCategoryIcon(slug: string): IconType {
+  const normalizedSlug = slug.toLowerCase();
+
+  if (normalizedSlug.includes("tecnologia")) {
+    return FiMonitor;
+  }
+
+  if (normalizedSlug.includes("casa") || normalizedSlug.includes("utilidade")) {
+    return FiTool;
+  }
+
+  if (normalizedSlug.includes("moda")) {
+    return FiShoppingBag;
+  }
+
+  if (normalizedSlug.includes("pet")) {
+    return FiHeart;
+  }
+
+  if (
+    normalizedSlug.includes("digital") ||
+    normalizedSlug.includes("produto-digital")
+  ) {
+    return FiGrid;
+  }
+
+  if (normalizedSlug.includes("oferta")) {
+    return FiTag;
+  }
+
+  if (normalizedSlug.includes("blog")) {
+    return FiBookOpen;
+  }
+
+  return FiGrid;
+}
 
 ```
 
@@ -10511,41 +15013,534 @@ export function OffersBanner() {
 
 ```
 
+## src\components\product\ProductBreadcrumb.tsx
+
+```tsx
+import { Link } from "react-router-dom";
+
+export function ProductBreadcrumb() {
+  return (
+    <nav className="mb-6 text-sm text-[#52657c]" aria-label="Breadcrumb">
+      <Link to="/" className="transition hover:text-[#1769e0]">
+        Início
+      </Link>
+
+      <span className="px-2">/</span>
+
+      <span>Detalhes do produto</span>
+    </nav>
+  );
+}
+
+```
+
+## src\components\product\ProductDescription.tsx
+
+```tsx
+import DOMPurify from "dompurify";
+import type { ReactNode } from "react";
+
+import type { Product } from "../../contexts/ProductsContext";
+
+type ProductDescriptionProps = {
+  product: Product;
+};
+
+function decodeHtmlEntities(value: string): string {
+  const textarea = document.createElement("textarea");
+
+  textarea.innerHTML = value;
+
+  return textarea.value;
+}
+
+function normalizeDescription(value: string): string {
+  if (!value.trim()) {
+    return "";
+  }
+
+  let normalized = value.trim();
+
+  if (
+    normalized.includes("&lt;") ||
+    normalized.includes("&gt;") ||
+    normalized.includes("&amp;lt;") ||
+    normalized.includes("&amp;gt;")
+  ) {
+    normalized = decodeHtmlEntities(normalized);
+
+    if (normalized.includes("&lt;") || normalized.includes("&gt;")) {
+      normalized = decodeHtmlEntities(normalized);
+    }
+  }
+
+  return normalized;
+}
+
+function renderDescriptionHtml(html: string): ReactNode {
+  if (!html.trim()) {
+    return null;
+  }
+
+  const parser = new DOMParser();
+  const parsedDocument = parser.parseFromString(html, "text/html");
+
+  function renderNode(node: ChildNode, key: string): ReactNode {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return null;
+    }
+
+    const element = node as HTMLElement;
+
+    const children = Array.from(element.childNodes).map((child, index) =>
+      renderNode(child, `${key}-${index}`),
+    );
+
+    switch (element.tagName.toLowerCase()) {
+      case "p":
+        return <p key={key}>{children}</p>;
+
+      case "br":
+        return <br key={key} />;
+
+      case "strong":
+        return <strong key={key}>{children}</strong>;
+
+      case "b":
+        return <b key={key}>{children}</b>;
+
+      case "em":
+        return <em key={key}>{children}</em>;
+
+      case "i":
+        return <i key={key}>{children}</i>;
+
+      case "u":
+        return <u key={key}>{children}</u>;
+
+      case "h2":
+        return <h2 key={key}>{children}</h2>;
+
+      case "h3":
+        return <h3 key={key}>{children}</h3>;
+
+      case "h4":
+        return <h4 key={key}>{children}</h4>;
+
+      case "ul":
+        return <ul key={key}>{children}</ul>;
+
+      case "ol":
+        return <ol key={key}>{children}</ol>;
+
+      case "li":
+        return <li key={key}>{children}</li>;
+
+      case "blockquote":
+        return <blockquote key={key}>{children}</blockquote>;
+
+      case "hr":
+        return <hr key={key} />;
+
+      case "a": {
+        const href = element.getAttribute("href");
+
+        if (!href) {
+          return <span key={key}>{children}</span>;
+        }
+
+        return (
+          <a key={key} href={href} target="_blank" rel="noopener noreferrer">
+            {children}
+          </a>
+        );
+      }
+
+      default:
+        return <span key={key}>{children}</span>;
+    }
+  }
+
+  return Array.from(parsedDocument.body.childNodes).map((node, index) =>
+    renderNode(node, `description-${index}`),
+  );
+}
+
+export function ProductDescription({ product }: ProductDescriptionProps) {
+  const normalizedDescription = normalizeDescription(product.description || "");
+
+  const safeDescription = DOMPurify.sanitize(normalizedDescription, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "h2",
+      "h3",
+      "h4",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "hr",
+      "a",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel"],
+  });
+
+  if (!safeDescription) {
+    return null;
+  }
+
+  const renderedDescription = renderDescriptionHtml(safeDescription);
+
+  return (
+    <section
+      className="mt-10 rounded-[28px] border border-[#e7edf5] bg-white p-8 shadow-[0_12px_35px_rgba(15,23,42,0.05)] md:p-10"
+      aria-labelledby="product-description-title"
+    >
+      <h2
+        id="product-description-title"
+        className="mb-6 text-2xl font-black text-[#071a2f]"
+      >
+        Descrição do produto
+      </h2>
+
+      <div
+        className="
+          product-description
+          text-[15px]
+          leading-7
+          text-[#52657c]
+
+          [&_h2]:mb-4
+          [&_h2]:mt-8
+          [&_h2]:text-2xl
+          [&_h2]:font-black
+          [&_h2]:leading-tight
+          [&_h2]:text-[#071a2f]
+
+          [&_h3]:mb-3
+          [&_h3]:mt-7
+          [&_h3]:text-xl
+          [&_h3]:font-bold
+          [&_h3]:text-[#071a2f]
+
+          [&_h4]:mb-2
+          [&_h4]:mt-6
+          [&_h4]:text-lg
+          [&_h4]:font-bold
+          [&_h4]:text-[#071a2f]
+
+          [&_p]:mb-4
+
+          [&_ul]:mb-5
+          [&_ul]:list-disc
+          [&_ul]:pl-6
+
+          [&_ol]:mb-5
+          [&_ol]:list-decimal
+          [&_ol]:pl-6
+
+          [&_li]:mb-2
+
+          [&_strong]:font-bold
+          [&_strong]:text-[#071a2f]
+
+          [&_b]:font-bold
+          [&_b]:text-[#071a2f]
+
+          [&_em]:italic
+
+          [&_u]:underline
+          [&_u]:underline-offset-2
+
+          [&_a]:font-semibold
+          [&_a]:text-[#1769e0]
+          [&_a]:underline
+          [&_a]:underline-offset-2
+
+          [&_blockquote]:my-5
+          [&_blockquote]:border-l-4
+          [&_blockquote]:border-[#1769e0]
+          [&_blockquote]:bg-[#f7f9fc]
+          [&_blockquote]:px-5
+          [&_blockquote]:py-4
+          [&_blockquote]:italic
+          [&_blockquote]:text-[#52657c]
+
+          [&_hr]:my-7
+          [&_hr]:border-[#e7edf5]
+        "
+      >
+        {renderedDescription}
+      </div>
+    </section>
+  );
+}
+
+```
+
+## src\components\product\ProductGallery.tsx
+
+```tsx
+import { useState } from "react";
+
+import type { Product } from "../../contexts/ProductsContext";
+
+type ProductGalleryProps = {
+  product: Product;
+};
+
+type GalleryImage = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+export function ProductGallery({ product }: ProductGalleryProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const productImages: GalleryImage[] = [
+    {
+      id: "primary",
+      imageUrl: product.imageUrl,
+      sortOrder: -1,
+    },
+    ...(Array.isArray(product.images)
+      ? product.images.map((image) => ({
+          id: image.id,
+          imageUrl: image.imageUrl,
+          sortOrder: image.sortOrder,
+        }))
+      : []),
+  ]
+    .filter((image) => image.imageUrl.trim())
+    .filter(
+      (image, index, array) =>
+        array.findIndex(
+          (item) => item.imageUrl.trim() === image.imageUrl.trim(),
+        ) === index,
+    )
+    .sort((a, b) => {
+      if (a.id === "primary") {
+        return -1;
+      }
+
+      if (b.id === "primary") {
+        return 1;
+      }
+
+      return a.sortOrder - b.sortOrder;
+    });
+
+  const safeSelectedImageIndex =
+    selectedImageIndex >= productImages.length ? 0 : selectedImageIndex;
+
+  const selectedImage =
+    productImages[safeSelectedImageIndex]?.imageUrl || product.imageUrl;
+
+  return (
+    <div className="bg-[#f7f9fc] p-6 md:p-8">
+      <div className="flex min-h-[340px] items-center justify-center md:min-h-[470px]">
+        <img
+          src={selectedImage}
+          alt={product.title}
+          className="max-h-[420px] w-full object-contain"
+        />
+      </div>
+
+      {productImages.length > 1 && (
+        <div className="mt-6">
+          <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-5">
+            {productImages.map((image, index) => {
+              const isSelected = index === safeSelectedImageIndex;
+
+              return (
+                <button
+                  key={image.id}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(index)}
+                  aria-label={`Exibir imagem ${index + 1}`}
+                  aria-pressed={isSelected}
+                  className={`flex aspect-square items-center justify-center overflow-hidden rounded-xl border-2 bg-white p-2 transition ${
+                    isSelected
+                      ? "border-[#1769e0] shadow-[0_0_0_2px_rgba(23,105,224,0.12)]"
+                      : "border-transparent hover:border-[#b9c9dc]"
+                  }`}
+                >
+                  <img
+                    src={image.imageUrl}
+                    alt={`${product.title} - imagem ${index + 1}`}
+                    className="h-full w-full object-contain"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+```
+
+## src\components\product\ProductInfo.tsx
+
+```tsx
+import type { Product } from "../../contexts/ProductsContext";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { ProductRating } from "./ProductRating";
+
+type ProductInfoProps = {
+  product: Product;
+};
+
+export function ProductInfo({ product }: ProductInfoProps) {
+  const price = formatCurrencyBRL(product.price);
+  const originalPrice = product.originalPrice
+    ? formatCurrencyBRL(product.originalPrice)
+    : null;
+
+  return (
+    <div className="flex flex-col justify-center p-8 md:p-12">
+      {product.category && (
+        <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
+          {product.category}
+        </span>
+      )}
+
+      <h1 className="text-3xl font-black leading-tight text-[#071a2f] md:text-4xl">
+        {product.title}
+      </h1>
+
+      <ProductRating
+        rating={product.rating}
+        reviewsCount={product.reviewsCount}
+      />
+
+      {product.shortDescription && (
+        <p className="mt-5 text-sm leading-6 text-[#52657c]">
+          {product.shortDescription}
+        </p>
+      )}
+
+      <div className="mt-8 border-y border-[#edf2f7] py-6">
+        <p className="text-sm text-[#667085]">
+          Preço apresentado no momento da consulta
+        </p>
+
+        {originalPrice && (
+          <p className="mt-2 text-sm text-gray-500 line-through">
+            {originalPrice}
+          </p>
+        )}
+
+        <p className="mt-1 text-3xl font-black text-[#071a2f]">{price}</p>
+      </div>
+
+      <p className="mt-6 text-sm leading-6 text-[#52657c]">
+        Você será direcionado ao site do parceiro para conferir disponibilidade,
+        frete, avaliações e finalizar a compra.
+      </p>
+
+      <a
+        href={product.affiliateUrl}
+        target="_blank"
+        rel="sponsored noopener noreferrer"
+        className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-[#20b35b] px-6 font-bold text-white transition hover:bg-[#159447]"
+      >
+        Ver oferta
+      </a>
+
+      <p className="mt-4 text-xs text-[#667085]">
+        Este é um link de afiliado. A compra é realizada diretamente no site do
+        parceiro.
+      </p>
+    </div>
+  );
+}
+
+```
+
+## src\components\product\ProductRating.tsx
+
+```tsx
+type ProductRatingProps = {
+  rating?: number | null;
+  reviewsCount: number;
+};
+
+export function ProductRating({ rating, reviewsCount }: ProductRatingProps) {
+  if (rating === null || rating === undefined || reviewsCount <= 0) {
+    return null;
+  }
+
+  const normalizedRating = Number(rating);
+  const roundedRating = Math.round(normalizedRating);
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span
+            key={`star-${star}`}
+            className={star <= roundedRating ? "text-yellow" : "text-gray-500"}
+            aria-hidden="true"
+          >
+            ★
+          </span>
+        ))}
+      </div>
+
+      <span className="text-sm font-bold text-[#071a2f]">
+        {normalizedRating.toFixed(1)}
+      </span>
+
+      <span className="text-sm text-[#667085]">
+        ({reviewsCount.toLocaleString("pt-BR")} avaliações)
+      </span>
+    </div>
+  );
+}
+
+```
+
 ## src\components\ProductCard\index.tsx
 
 ```tsx
-import { FaRegStar, FaStar, FaStarHalfAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 import type { Product } from "../../contexts/ProductsContext";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+import { ProductRating } from "../product/ProductRating";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const rating = Math.min(Math.max(product.rating ?? 0, 0), 5);
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 !== 0;
-  const emptyStars = 5 - Math.ceil(rating);
+  console.log("PRODUTO DO CARD:", product);
+  const formattedPrice = formatCurrencyBRL(product.price);
 
-  const formattedPrice = product.price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: product.currency || "BRL",
-  });
-
-  const formattedOriginalPrice = product.originalPrice?.toLocaleString(
-    "pt-BR",
-    {
-      style: "currency",
-      currency: product.currency || "BRL",
-    },
-  );
-
-  const starPositions = [1, 2, 3, 4, 5];
+  const formattedOriginalPrice = product.originalPrice
+    ? formatCurrencyBRL(product.originalPrice)
+    : null;
 
   return (
-    <div className="flex h-[420px] w-full flex-col items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg">
+    <div
+      className={`
+    flex h-[420px] w-full flex-col 
+    items-center rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-md transition-shadow hover:bg-gray-50 hover:shadow-lg`}
+    >
       <Link
         to={`/produto/${encodeURIComponent(product.slug)}`}
         className="mb-3 flex h-40 w-full shrink-0 items-center justify-center rounded-xl bg-[#f8fafc] p-2"
@@ -10565,22 +15560,10 @@ export function ProductCard({ product }: ProductCardProps) {
         </p>
       )}
 
-      <div className="mb-1 flex h-5 shrink-0 items-center justify-center">
-        {starPositions.slice(0, fullStars).map((star) => (
-          <FaStar key={`${product.id}-full-${star}`} className="text-yellow" />
-        ))}
-
-        {hasHalfStar && (
-          <FaStarHalfAlt key={`${product.id}-half`} className="text-yellow" />
-        )}
-
-        {starPositions.slice(0, emptyStars).map((star) => (
-          <FaRegStar
-            key={`${product.id}-empty-${star}`}
-            className="text-yellow"
-          />
-        ))}
-      </div>
+      <ProductRating
+        rating={product.rating}
+        reviewsCount={product.reviewsCount}
+      />
 
       <Link
         to={`/produto/${encodeURIComponent(product.slug)}`}
@@ -10605,6 +15588,74 @@ export function ProductCard({ product }: ProductCardProps) {
       >
         VER DETALHES
       </Link>
+    </div>
+  );
+}
+
+```
+
+## src\components\SearchBar\index.tsx
+
+```tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
+
+import { Icon } from "../Icon";
+import { InputText } from "../InputText";
+
+interface SearchBarProps {
+  className?: string;
+  onSearch?: () => void;
+}
+
+export function SearchBar({ className = "", onSearch }: SearchBarProps) {
+  const navigate = useNavigate();
+
+  const [search, setSearch] = useState("");
+
+  function handleSearch() {
+    const value = search.trim();
+
+    if (!value) {
+      return;
+    }
+
+    navigate(`/produtos?search=${encodeURIComponent(value)}`);
+
+    setSearch("");
+
+    onSearch?.();
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSearch();
+    }
+  }
+
+  return (
+    <div className={className}>
+      <InputText
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        onKeyDown={handleKeyDown}
+        className="h-12 w-full min-w-0"
+        iconPosition="right"
+        placeholder="Buscar produtos, categorias ou artigos"
+        icon={
+          <button
+            type="button"
+            onClick={handleSearch}
+            aria-label="Pesquisar"
+            className="flex items-center justify-center"
+          >
+            <Icon svg={SearchIcon} />
+          </button>
+        }
+      />
     </div>
   );
 }
@@ -11569,6 +16620,17 @@ export function MercadoLivreProvider({ children }: { children: ReactNode }) {
 ```ts
 import { createContext } from "react";
 
+export type ProductImage = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+export type ProductImageFormData = {
+  imageUrl: string;
+  sortOrder?: number;
+};
+
 export type Product = {
   id: string;
   title: string;
@@ -11578,6 +16640,8 @@ export type Product = {
   shortDescription?: string | null;
 
   imageUrl: string;
+
+  images?: ProductImage[];
 
   price: number;
   originalPrice?: number | null;
@@ -11609,6 +16673,8 @@ export type ProductFormData = {
 
   imageUrl: string;
 
+  images?: ProductImageFormData[];
+
   price: number;
   originalPrice?: number;
 
@@ -11636,6 +16702,8 @@ export type ProductUpdateData = {
   shortDescription?: string;
 
   imageUrl?: string;
+
+  images?: ProductImageFormData[];
 
   price?: number;
   originalPrice?: number;
@@ -11669,7 +16737,7 @@ export type ProductsContextValue = {
   loading: boolean;
   error: string | null;
 
-  fetchProducts: (category?: string) => Promise<void>;
+  fetchProducts: (category?: string, search?: string) => Promise<void>;
 
   fetchAdminProducts: (
     token: string,
@@ -11712,6 +16780,7 @@ export const ProductsContext = createContext<ProductsContextValue | undefined>(
 
 ```tsx
 import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import {
   type Product,
   type ProductFormData,
@@ -11727,29 +16796,52 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Listagem
-  const fetchProducts = useCallback(async (category?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (category) params.set("category", category);
+  // Listagem pública
+  const fetchProducts = useCallback(
+    async (category?: string, search?: string) => {
+      setLoading(true);
+      setError(null);
 
-      const response = await fetch(`${apiUrl}/products?${params.toString()}`);
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error("Não foi possível carregar os produtos.");
-      setProducts(data.products ?? []);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao carregar produtos.",
-      );
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const params = new URLSearchParams();
 
+        if (category) {
+          params.set("category", category);
+        }
+
+        if (search) {
+          params.set("search", search);
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar os produtos.",
+          );
+        }
+
+        setProducts(data.products ?? []);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar produtos.",
+        );
+
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Listagem administrativa
   const fetchAdminProducts = useCallback(
     async (
       token: string,
@@ -11825,17 +16917,24 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Detalhe
+  // Detalhe por slug
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
       try {
         const response = await fetch(
           `${apiUrl}/products/${encodeURIComponent(slug)}`,
         );
-        if (response.status === 404) return null;
+
+        if (response.status === 404) {
+          return null;
+        }
+
         const data = await response.json();
-        if (!response.ok)
+
+        if (!response.ok) {
           throw new Error("Não foi possível carregar o produto.");
+        }
+
         return data.product;
       } catch {
         return null;
@@ -11844,6 +16943,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Detalhe por ID
   const getProductById = useCallback(
     async (id: string, token: string): Promise<Product | null> => {
       try {
@@ -12640,15 +17740,15 @@ export function AboutPage() {
 
 ```
 
-## src\pages\AdminCategoriesFormPage.tsx
+## src\pages\admin\AdminCategoriesFormPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import type { CategoryFormData } from "../contexts/CategoriesContext";
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
+import type { CategoryFormData } from "../../contexts/CategoriesContext";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
 
 export function AdminCategoryFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -12931,6 +18031,493 @@ export function AdminCategoryFormPage() {
 
 ```
 
+## src\pages\admin\AdminProductsFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
+import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
+import { ProductGallery } from "../../components/admin/products/ProductGallery";
+import { ProductPricing } from "../../components/admin/products/ProductPricing";
+import { ProductRelationships } from "../../components/admin/products/ProductRelationships";
+import { ProductSeo } from "../../components/admin/products/ProductSeo";
+import { ProductStatus } from "../../components/admin/products/ProductStatus";
+import type { ProductImageForm } from "../../components/admin/products/types";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
+import { parseCurrencyBRL } from "../../utils/formatCurrency";
+
+export function AdminProductsFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getProductById, createProduct, updateProduct } = useProducts();
+
+  const { subcategories, fetchSubcategories } = useSubcategories();
+
+  const { marketplaces, fetchMarketplaces } = useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
+
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+
+  const [currency, setCurrency] = useState("BRL");
+
+  const [rating, setRating] = useState("");
+  const [reviewsCount, setReviewsCount] = useState("0");
+
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [marketplaceId, setMarketplaceId] = useState("");
+
+  const [featured, setFeatured] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [active, setActive] = useState(true);
+
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchSubcategories();
+    void fetchMarketplaces();
+  }, [fetchSubcategories, fetchMarketplaces]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const productId = id;
+    const authToken = token;
+
+    let isMounted = true;
+
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId, authToken);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!product) {
+          setError("Produto não encontrado.");
+          setLoadingData(false);
+          return;
+        }
+
+        setTitle(product.title ?? "");
+        setDescription(product.description ?? "");
+        setShortDescription(product.shortDescription ?? "");
+        setImageUrl(product.imageUrl ?? "");
+
+        setGalleryImages(
+          Array.isArray(product.images)
+            ? product.images
+                .map((image, index) => ({
+                  id: image.id ?? crypto.randomUUID(),
+                  imageUrl: image.imageUrl ?? "",
+                  sortOrder:
+                    typeof image.sortOrder === "number"
+                      ? image.sortOrder
+                      : index,
+                }))
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+            : [],
+        );
+
+        setPrice(
+          product.price !== null && product.price !== undefined
+            ? Number(product.price).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setOriginalPrice(
+          product.originalPrice !== null && product.originalPrice !== undefined
+            ? Number(product.originalPrice).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setCurrency(product.currency ?? "BRL");
+
+        setRating(
+          product.rating !== null && product.rating !== undefined
+            ? String(product.rating)
+            : "",
+        );
+
+        setReviewsCount(String(product.reviewsCount ?? 0));
+
+        setAffiliateUrl(product.affiliateUrl ?? "");
+
+        setSubcategoryId(product.subcategoryId ?? "");
+        setMarketplaceId(product.marketplaceId ?? "");
+
+        setFeatured(Boolean(product.featured));
+        setAvailable(Boolean(product.available));
+        setActive(Boolean(product.active));
+
+        setSeoTitle(product.seoTitle ?? "");
+        setSeoDescription(product.seoDescription ?? "");
+      } catch {
+        if (isMounted) {
+          setError("Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, token, getProductById]);
+
+  function handleAddGalleryImage() {
+    setGalleryImages((currentImages) => [
+      ...currentImages,
+      {
+        id: crypto.randomUUID(),
+        imageUrl: "",
+        sortOrder: currentImages.length,
+      },
+    ]);
+  }
+
+  function handleGalleryImageChange(id: string, value: string) {
+    setGalleryImages((currentImages) =>
+      currentImages.map((image) =>
+        image.id === id
+          ? {
+              ...image,
+              imageUrl: value,
+            }
+          : image,
+      ),
+    );
+  }
+
+  function handleRemoveGalleryImage(id: string) {
+    setGalleryImages((currentImages) =>
+      currentImages
+        .filter((image) => image.id !== id)
+        .map((image, index) => ({
+          ...image,
+          sortOrder: index,
+        })),
+    );
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria.");
+      return;
+    }
+
+    if (!marketplaceId) {
+      setError("Selecione um marketplace.");
+      return;
+    }
+
+    const parsedPrice = parseCurrencyBRL(price);
+
+    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        setError("Informe um preço original válido.");
+        return;
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        setError("A avaliação deve estar entre 0 e 5.");
+        return;
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      setError("A quantidade de avaliações deve ser um número inteiro.");
+      return;
+    }
+
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para a imagem.");
+      return;
+    }
+
+    try {
+      new URL(affiliateUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para o link de afiliado.");
+      return;
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    for (const image of cleanGalleryImages) {
+      try {
+        new URL(image.imageUrl);
+      } catch {
+        setError(
+          `Informe uma URL válida para a imagem da galeria na posição ${
+            image.sortOrder + 1
+          }.`,
+        );
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      const cleanDescription =
+        description === "<p></p>" ? undefined : description.trim();
+
+      const productData = {
+        title: title.trim(),
+        description: cleanDescription,
+        shortDescription: shortDescription.trim() || undefined,
+
+        imageUrl: imageUrl.trim(),
+
+        images: cleanGalleryImages,
+
+        price: parsedPrice,
+        originalPrice: parsedOriginalPrice,
+
+        currency: currency.trim().toUpperCase() || "BRL",
+
+        rating: parsedRating,
+        reviewsCount: parsedReviewsCount,
+
+        affiliateUrl: affiliateUrl.trim(),
+
+        subcategoryId,
+        marketplaceId,
+
+        featured,
+        available,
+        active,
+
+        seoTitle: seoTitle.trim() || undefined,
+        seoDescription: seoDescription.trim() || undefined,
+      };
+
+      if (isEditing && id) {
+        await updateProduct(id, productData, token);
+      } else {
+        await createProduct(productData, token);
+      }
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o produto."
+            : "Não foi possível criar o produto.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando produto...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/products"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para produtos
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar produto" : "Novo produto"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do produto."
+            : "Cadastre um novo produto no catálogo do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <ProductBasicInfo
+          title={title}
+          description={description}
+          shortDescription={shortDescription}
+          imageUrl={imageUrl}
+          loading={loading}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onShortDescriptionChange={setShortDescription}
+          onImageUrlChange={setImageUrl}
+        />
+
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <ProductGallery
+            galleryImages={galleryImages}
+            loading={loading}
+            onAdd={handleAddGalleryImage}
+            onChange={handleGalleryImageChange}
+            onRemove={handleRemoveGalleryImage}
+          />
+        </div>
+
+        <ProductPricing
+          price={price}
+          originalPrice={originalPrice}
+          currency={currency}
+          rating={rating}
+          reviewsCount={reviewsCount}
+          loading={loading}
+          onPriceChange={setPrice}
+          onOriginalPriceChange={setOriginalPrice}
+          onCurrencyChange={setCurrency}
+          onRatingChange={setRating}
+          onReviewsCountChange={setReviewsCount}
+        />
+
+        <ProductRelationships
+          subcategories={subcategories}
+          marketplaces={marketplaces}
+          subcategoryId={subcategoryId}
+          marketplaceId={marketplaceId}
+          affiliateUrl={affiliateUrl}
+          loading={loading}
+          onSubcategoryChange={setSubcategoryId}
+          onMarketplaceChange={setMarketplaceId}
+          onAffiliateUrlChange={setAffiliateUrl}
+        />
+
+        <ProductStatus
+          featured={featured}
+          available={available}
+          active={active}
+          loading={loading}
+          onFeaturedChange={setFeatured}
+          onAvailableChange={setAvailable}
+          onActiveChange={setActive}
+        />
+
+        <ProductSeo
+          seoTitle={seoTitle}
+          seoDescription={seoDescription}
+          loading={loading}
+          onSeoTitleChange={setSeoTitle}
+          onSeoDescriptionChange={setSeoDescription}
+        />
+
+        <ProductFormActions loading={loading} isEditing={isEditing} />
+      </form>
+    </section>
+  );
+}
+
+```
+
 ## src\pages\AdminCategoriesPage.tsx
 
 ```tsx
@@ -13073,7 +18660,7 @@ export function AdminCategoriesPage() {
                             />
                           ) : (
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-400">
-                              WM
+                              WM360
                             </div>
                           )}
 
@@ -13246,63 +18833,527 @@ export function AdminCategoriesPage() {
 // src/pages/admin/AdminDashboardPage.tsx
 
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+
 import { useAuth } from "../contexts/useAuth";
+import { useCategories } from "../contexts/useCategories";
+import { useMarketplaces } from "../contexts/useMarketplaces";
 import { useProducts } from "../contexts/useProducts";
+import { useSubcategories } from "../contexts/useSubcategories";
 
 export default function AdminDashboardPage() {
-  const { products, fetchAdminProducts, loading, error } = useProducts();
   const { token } = useAuth();
 
+  const {
+    products,
+    fetchAdminProducts,
+    loading: productsLoading,
+    error: productsError,
+  } = useProducts();
+
+  const {
+    categories,
+    fetchCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+
+  const {
+    subcategories,
+    fetchSubcategories,
+    loading: subcategoriesLoading,
+    error: subcategoriesError,
+  } = useSubcategories();
+
+  const {
+    marketplaces,
+    fetchMarketplaces,
+    loading: marketplacesLoading,
+    error: marketplacesError,
+  } = useMarketplaces();
+
+  /**
+   * Carrega os dados necessários para o Dashboard.
+   *
+   * Produtos administrativos precisam do token.
+   * Categorias, subcategorias e marketplaces possuem
+   * endpoints públicos de leitura.
+   */
   useEffect(() => {
     if (!token) {
       return;
     }
 
-    void fetchAdminProducts(token);
-  }, [token, fetchAdminProducts]);
+    void Promise.all([
+      fetchAdminProducts(token),
+      fetchCategories(),
+      fetchSubcategories(),
+      fetchMarketplaces(),
+    ]);
+  }, [
+    token,
+    fetchAdminProducts,
+    fetchCategories,
+    fetchSubcategories,
+    fetchMarketplaces,
+  ]);
+
+  // ================================
+  // Estatísticas de produtos
+  // ================================
 
   const totalProducts = products.length;
 
-  const activeProducts = products.filter((p) => p.active).length;
+  const activeProducts = products.filter((product) => product.active).length;
 
-  const featuredProducts = products.filter((p) => p.featured).length;
+  const availableProducts = products.filter(
+    (product) => product.available,
+  ).length;
+
+  const featuredProducts = products.filter(
+    (product) => product.featured,
+  ).length;
+
+  // ================================
+  // Estatísticas de categorias
+  // ================================
+
+  const totalCategories = categories.length;
+
+  const activeCategories = categories.filter(
+    (category) => category.active,
+  ).length;
+
+  // ================================
+  // Estatísticas de subcategorias
+  // ================================
+
+  const totalSubcategories = subcategories.length;
+
+  const activeSubcategories = subcategories.filter(
+    (subcategory) => subcategory.active,
+  ).length;
+
+  // ================================
+  // Estatísticas de marketplaces
+  // ================================
+
+  const totalMarketplaces = marketplaces.length;
+
+  const activeMarketplaces = marketplaces.filter(
+    (marketplace) => marketplace.active,
+  ).length;
+
+  const isLoading =
+    productsLoading ||
+    categoriesLoading ||
+    subcategoriesLoading ||
+    marketplacesLoading;
+
+  const errors = [
+    productsError,
+    categoriesError,
+    subcategoriesError,
+    marketplacesError,
+  ].filter(Boolean);
 
   return (
-    <section className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Dashboard Administrativo</h1>
+    <section className="min-h-full bg-gray-50 p-4 sm:p-6 lg:p-8">
+      {/* ========================================
+          CABEÇALHO
+      ======================================== */}
 
-      {loading ? (
-        <p className="text-gray-600 mb-6">Carregando estatísticas...</p>
-      ) : error ? (
-        <p className="text-red-600 mb-6">Erro ao carregar produtos: {error}</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-lg bg-white shadow p-6">
-            <h2 className="text-lg font-semibold">Total de Produtos</h2>
+      <header className="mb-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="mb-1 text-sm font-semibold text-blue">WorldMix360</p>
 
-            <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+            <h1 className="text-2xl font-bold text-navy sm:text-3xl">
+              Dashboard Administrativo
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-500 sm:text-base">
+              Visão geral do catálogo e das principais áreas do sistema.
+            </p>
           </div>
 
-          <div className="rounded-lg bg-white shadow p-6">
-            <h2 className="text-lg font-semibold">Produtos Ativos</h2>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/admin/products/new"
+              className="inline-flex items-center justify-center rounded-lg bg-blue px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue/90"
+            >
+              + Novo produto
+            </Link>
 
-            <p className="text-3xl font-bold mt-2">{activeProducts}</p>
+            <Link
+              to="/admin/categories/new"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              + Nova categoria
+            </Link>
           </div>
+        </div>
+      </header>
 
-          <div className="rounded-lg bg-white shadow p-6">
-            <h2 className="text-lg font-semibold">Produtos em Destaque</h2>
+      {/* ========================================
+          CARREGAMENTO
+      ======================================== */}
 
-            <p className="text-3xl font-bold mt-2">{featuredProducts}</p>
-          </div>
+      {isLoading && (
+        <div className="mb-6 rounded-xl border border-blue-light bg-blue-light px-5 py-4">
+          <p className="text-sm font-medium text-blue">
+            Atualizando informações do painel...
+          </p>
         </div>
       )}
 
-      <div className="mt-8">
-        <p className="text-gray-600">
-          Bem-vindo ao painel administrativo. Aqui você pode gerenciar produtos,
-          categorias, usuários e acompanhar estatísticas do sistema.
-        </p>
+      {/* ========================================
+          ERROS
+      ======================================== */}
+
+      {errors.length > 0 && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+          <p className="font-semibold text-red-700">
+            Algumas informações não puderam ser carregadas.
+          </p>
+
+          <p className="mt-1 text-sm text-red-600">
+            Verifique a conexão com a API e tente novamente.
+          </p>
+        </div>
+      )}
+
+      {/* ========================================
+          CARDS PRINCIPAIS
+      ======================================== */}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Produtos */}
+
+        <Link
+          to="/admin/products"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Produtos</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalProducts}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📦
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeProducts} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Categorias */}
+
+        <Link
+          to="/admin/categories"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Categorias</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalCategories}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              🗂️
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeCategories} ativas</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Subcategorias */}
+
+        <Link
+          to="/admin/subcategories"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Subcategorias</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalSubcategories}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📁
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeSubcategories} ativas</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Marketplaces */}
+
+        <Link
+          to="/admin/marketplaces"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Marketplaces</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">
+                {totalMarketplaces}
+              </p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              🛒
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{activeMarketplaces} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
       </div>
+
+      {/* ========================================
+          RESUMO DO CATÁLOGO
+      ======================================== */}
+
+      <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* Resumo dos produtos */}
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-navy">
+                Resumo dos produtos
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Situação atual do catálogo de produtos.
+              </p>
+            </div>
+
+            <Link
+              to="/admin/products"
+              className="text-sm font-semibold text-blue hover:underline"
+            >
+              Ver produtos
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Total</p>
+
+              <p className="mt-1 text-2xl font-bold text-navy">
+                {totalProducts}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Ativos</p>
+
+              <p className="mt-1 text-2xl font-bold text-green">
+                {activeProducts}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Disponíveis</p>
+
+              <p className="mt-1 text-2xl font-bold text-blue">
+                {availableProducts}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500">Destaques</p>
+
+              <p className="mt-1 text-2xl font-bold text-yellow">
+                {featuredProducts}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Resumo do catálogo */}
+
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-navy">
+              Estrutura do catálogo
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Organização atual das categorias e canais de venda.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Link
+              to="/admin/categories"
+              className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition hover:border-blue-light hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-light">
+                  🗂️
+                </span>
+
+                <div>
+                  <p className="font-semibold text-navy">Categorias</p>
+
+                  <p className="text-xs text-gray-500">
+                    {activeCategories} ativas de {totalCategories}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-blue">→</span>
+            </Link>
+
+            <Link
+              to="/admin/subcategories"
+              className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition hover:border-blue-light hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-light">
+                  📁
+                </span>
+
+                <div>
+                  <p className="font-semibold text-navy">Subcategorias</p>
+
+                  <p className="text-xs text-gray-500">
+                    {activeSubcategories} ativas de {totalSubcategories}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-blue">→</span>
+            </Link>
+
+            <Link
+              to="/admin/marketplaces"
+              className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition hover:border-blue-light hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-light">
+                  🛒
+                </span>
+
+                <div>
+                  <p className="font-semibold text-navy">Marketplaces</p>
+
+                  <p className="text-xs text-gray-500">
+                    {activeMarketplaces} ativos de {totalMarketplaces}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-blue">→</span>
+            </Link>
+          </div>
+        </section>
+      </div>
+
+      {/* ========================================
+          AÇÕES RÁPIDAS
+      ======================================== */}
+
+      <section className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-navy">Ações rápidas</h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Acesse rapidamente as principais áreas de gerenciamento.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link
+            to="/admin/products/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📦</span>
+
+            <p className="mt-2 font-semibold text-navy">Cadastrar produto</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Adicionar um novo produto ao catálogo.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/categories/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">🗂️</span>
+
+            <p className="mt-2 font-semibold text-navy">Nova categoria</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Criar uma nova categoria.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/subcategories/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📁</span>
+
+            <p className="mt-2 font-semibold text-navy">Nova subcategoria</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Organizar melhor o catálogo.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/marketplaces/new"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">🛒</span>
+
+            <p className="mt-2 font-semibold text-navy">Novo marketplace</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Adicionar um canal de venda.
+            </p>
+          </Link>
+        </div>
+      </section>
     </section>
   );
 }
@@ -14077,777 +20128,6 @@ export function AdminMarketplacesPage() {
           </div>
         </>
       )}
-    </section>
-  );
-}
-
-```
-
-## src\pages\AdminProductsFormPage.tsx
-
-```tsx
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
-import { useProducts } from "../contexts/useProducts";
-import { useSubcategories } from "../contexts/useSubcategories";
-
-export function AdminProductsFormPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const { token } = useAuth();
-
-  const { getProductById, createProduct, updateProduct } = useProducts();
-
-  const { subcategories, fetchSubcategories } = useSubcategories();
-
-  const { marketplaces, fetchMarketplaces } = useMarketplaces();
-
-  const isEditing = Boolean(id);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-
-  const [imageUrl, setImageUrl] = useState("");
-
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-
-  const [currency, setCurrency] = useState("BRL");
-
-  const [rating, setRating] = useState("");
-  const [reviewsCount, setReviewsCount] = useState("0");
-
-  const [affiliateUrl, setAffiliateUrl] = useState("");
-
-  const [subcategoryId, setSubcategoryId] = useState("");
-  const [marketplaceId, setMarketplaceId] = useState("");
-
-  const [featured, setFeatured] = useState(false);
-  const [available, setAvailable] = useState(true);
-  const [active, setActive] = useState(true);
-
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDescription, setSeoDescription] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(isEditing);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchSubcategories();
-    void fetchMarketplaces();
-  }, [fetchSubcategories, fetchMarketplaces]);
-
-  useEffect(() => {
-    if (!id || !token) {
-      return;
-    }
-
-    const productId = id;
-    const authToken = token;
-
-    let isMounted = true;
-
-    async function loadProduct() {
-      try {
-        const product = await getProductById(productId, authToken);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (!product) {
-          setError("Produto não encontrado.");
-          return;
-        }
-
-        setTitle(product.title ?? "");
-
-        setDescription(product.description ?? "");
-
-        setShortDescription(product.shortDescription ?? "");
-
-        setImageUrl(product.imageUrl ?? "");
-
-        setPrice(String(product.price ?? ""));
-
-        setOriginalPrice(
-          product.originalPrice !== null && product.originalPrice !== undefined
-            ? String(product.originalPrice)
-            : "",
-        );
-
-        setCurrency(product.currency ?? "BRL");
-
-        setRating(
-          product.rating !== null && product.rating !== undefined
-            ? String(product.rating)
-            : "",
-        );
-
-        setReviewsCount(String(product.reviewsCount ?? 0));
-
-        setAffiliateUrl(product.affiliateUrl ?? "");
-
-        setSubcategoryId(product.subcategoryId ?? "");
-
-        setMarketplaceId(product.marketplaceId ?? "");
-
-        setFeatured(Boolean(product.featured));
-
-        setAvailable(Boolean(product.available));
-
-        setActive(Boolean(product.active));
-
-        setSeoTitle(product.seoTitle ?? "");
-
-        setSeoDescription(product.seoDescription ?? "");
-      } catch {
-        if (isMounted) {
-          setError("Não foi possível carregar o produto.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingData(false);
-        }
-      }
-    }
-
-    void loadProduct();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [id, token, getProductById]);
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setError(null);
-
-    if (!token) {
-      setError("Sua sessão não está autenticada.");
-      return;
-    }
-
-    if (!title.trim()) {
-      setError("Informe o título do produto.");
-      return;
-    }
-
-    if (!imageUrl.trim()) {
-      setError("Informe a URL da imagem.");
-      return;
-    }
-
-    if (!affiliateUrl.trim()) {
-      setError("Informe o link de afiliado.");
-      return;
-    }
-
-    if (!subcategoryId) {
-      setError("Selecione uma subcategoria.");
-      return;
-    }
-
-    if (!marketplaceId) {
-      setError("Selecione um marketplace.");
-      return;
-    }
-
-    const parsedPrice = Number(price);
-
-    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      setError("Informe um preço válido.");
-      return;
-    }
-
-    let parsedOriginalPrice: number | undefined;
-
-    if (originalPrice.trim()) {
-      parsedOriginalPrice = Number(originalPrice);
-
-      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
-        setError("Informe um preço original válido.");
-        return;
-      }
-    }
-
-    let parsedRating: number | undefined;
-
-    if (rating.trim()) {
-      parsedRating = Number(rating);
-
-      if (
-        !Number.isFinite(parsedRating) ||
-        parsedRating < 0 ||
-        parsedRating > 5
-      ) {
-        setError("A avaliação deve estar entre 0 e 5.");
-        return;
-      }
-    }
-
-    const parsedReviewsCount = Number(reviewsCount);
-
-    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
-      setError("A quantidade de avaliações deve ser um número inteiro.");
-      return;
-    }
-
-    try {
-      new URL(imageUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para a imagem.");
-      return;
-    }
-
-    try {
-      new URL(affiliateUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para o link de afiliado.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const productData = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        shortDescription: shortDescription.trim() || undefined,
-
-        imageUrl: imageUrl.trim(),
-
-        price: parsedPrice,
-        originalPrice: parsedOriginalPrice,
-
-        currency: currency.trim() || "BRL",
-
-        rating: parsedRating,
-        reviewsCount: parsedReviewsCount,
-
-        affiliateUrl: affiliateUrl.trim(),
-
-        subcategoryId,
-        marketplaceId,
-
-        featured,
-        available,
-        active,
-
-        seoTitle: seoTitle.trim() || undefined,
-        seoDescription: seoDescription.trim() || undefined,
-      };
-
-      if (isEditing && id) {
-        await updateProduct(id, productData, token);
-      } else {
-        await createProduct(productData, token);
-      }
-
-      navigate("/admin/products");
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : isEditing
-            ? "Não foi possível atualizar o produto."
-            : "Não foi possível criar o produto.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loadingData) {
-    return (
-      <section className="mx-auto w-full max-w-5xl">
-        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">Carregando produto...</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="mx-auto w-full max-w-5xl">
-      <div className="mb-6">
-        <Link
-          to="/admin/products"
-          className="text-sm font-semibold text-blue hover:underline"
-        >
-          ← Voltar para produtos
-        </Link>
-
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          {isEditing ? "Editar produto" : "Novo produto"}
-        </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
-          {isEditing
-            ? "Atualize os dados do produto."
-            : "Cadastre um novo produto no catálogo do WorldMix360."}
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <form
-        onSubmit={(event) => void handleSubmit(event)}
-        className="space-y-6"
-      >
-        {/* Informações principais */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Informações do produto
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label
-                htmlFor="title"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Título *
-              </label>
-
-              <input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Ex.: Smartphone Samsung Galaxy"
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-
-              <p className="mt-2 text-xs text-gray-500">
-                O slug será gerado automaticamente pela API.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="shortDescription"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Descrição curta
-              </label>
-
-              <input
-                id="shortDescription"
-                type="text"
-                value={shortDescription}
-                onChange={(event) => setShortDescription(event.target.value)}
-                placeholder="Resumo rápido do produto"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Descrição
-              </label>
-
-              <textarea
-                id="description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={5}
-                placeholder="Descrição completa do produto..."
-                disabled={loading}
-                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="imageUrl"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                URL da imagem *
-              </label>
-
-              <input
-                id="imageUrl"
-                type="url"
-                value={imageUrl}
-                onChange={(event) => setImageUrl(event.target.value)}
-                placeholder="https://exemplo.com/produto.jpg"
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-
-              {imageUrl.trim() && (
-                <div className="mt-4">
-                  <p className="mb-2 text-xs font-semibold text-gray-500">
-                    Pré-visualização
-                  </p>
-
-                  <div className="flex h-40 w-40 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-3">
-                    <img
-                      src={imageUrl}
-                      alt="Pré-visualização do produto"
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Preço e avaliações */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Preço e avaliações
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="price"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Preço *
-              </label>
-
-              <input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                placeholder="0,00"
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="originalPrice"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Preço original
-              </label>
-
-              <input
-                id="originalPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                value={originalPrice}
-                onChange={(event) => setOriginalPrice(event.target.value)}
-                placeholder="0,00"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="currency"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Moeda
-              </label>
-
-              <input
-                id="currency"
-                type="text"
-                value={currency}
-                onChange={(event) => setCurrency(event.target.value)}
-                maxLength={3}
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="rating"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Avaliação
-              </label>
-
-              <input
-                id="rating"
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                value={rating}
-                onChange={(event) => setRating(event.target.value)}
-                placeholder="Ex.: 4.8"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="reviewsCount"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Quantidade de avaliações
-              </label>
-
-              <input
-                id="reviewsCount"
-                type="number"
-                min="0"
-                step="1"
-                value={reviewsCount}
-                onChange={(event) => setReviewsCount(event.target.value)}
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Relacionamentos */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Classificação e marketplace
-          </h2>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="subcategoryId"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Subcategoria *
-              </label>
-
-              <select
-                id="subcategoryId"
-                value={subcategoryId}
-                onChange={(event) => setSubcategoryId(event.target.value)}
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              >
-                <option value="">Selecione uma subcategoria</option>
-
-                {subcategories.map((subcategory) => (
-                  <option key={subcategory.id} value={subcategory.id}>
-                    {subcategory.category?.name
-                      ? `${subcategory.category.name} → ${subcategory.name}`
-                      : subcategory.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="marketplaceId"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Marketplace *
-              </label>
-
-              <select
-                id="marketplaceId"
-                value={marketplaceId}
-                onChange={(event) => setMarketplaceId(event.target.value)}
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              >
-                <option value="">Selecione um marketplace</option>
-
-                {marketplaces.map((marketplace) => (
-                  <option key={marketplace.id} value={marketplace.id}>
-                    {marketplace.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="affiliateUrl"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Link de afiliado *
-              </label>
-
-              <input
-                id="affiliateUrl"
-                type="url"
-                value={affiliateUrl}
-                onChange={(event) => setAffiliateUrl(event.target.value)}
-                placeholder="https://..."
-                required
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-
-              <p className="mt-2 text-xs text-gray-500">
-                Este será o link utilizado pelo botão de compra/afiliado.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">
-            Status do produto
-          </h2>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-              <input
-                type="checkbox"
-                checked={featured}
-                onChange={(event) => setFeatured(event.target.checked)}
-                disabled={loading}
-                className="h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-semibold text-gray-700">
-                  Destaque
-                </span>
-                <span className="block text-xs text-gray-500">
-                  Exibir como produto destacado.
-                </span>
-              </span>
-            </label>
-
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-              <input
-                type="checkbox"
-                checked={available}
-                onChange={(event) => setAvailable(event.target.checked)}
-                disabled={loading}
-                className="h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-semibold text-gray-700">
-                  Disponível
-                </span>
-                <span className="block text-xs text-gray-500">
-                  Produto disponível no catálogo.
-                </span>
-              </span>
-            </label>
-
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={(event) => setActive(event.target.checked)}
-                disabled={loading}
-                className="h-4 w-4"
-              />
-
-              <span>
-                <span className="block text-sm font-semibold text-gray-700">
-                  Ativo
-                </span>
-                <span className="block text-xs text-gray-500">
-                  Produto ativo no sistema.
-                </span>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        {/* SEO */}
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
-
-          <div className="grid grid-cols-1 gap-6">
-            <div>
-              <label
-                htmlFor="seoTitle"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                SEO Title
-              </label>
-
-              <input
-                id="seoTitle"
-                type="text"
-                value={seoTitle}
-                onChange={(event) => setSeoTitle(event.target.value)}
-                placeholder="Título otimizado para buscadores"
-                disabled={loading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="seoDescription"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                SEO Description
-              </label>
-
-              <textarea
-                id="seoDescription"
-                value={seoDescription}
-                onChange={(event) => setSeoDescription(event.target.value)}
-                rows={4}
-                placeholder="Descrição otimizada para mecanismos de busca"
-                disabled={loading}
-                className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Ações */}
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Link
-            to="/admin/products"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-          >
-            Cancelar
-          </Link>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition"
-          >
-            {loading
-              ? isEditing
-                ? "Salvando..."
-                : "Cadastrando..."
-              : isEditing
-                ? "Salvar alterações"
-                : "Cadastrar produto"}
-          </button>
-        </div>
-      </form>
     </section>
   );
 }
@@ -15868,6 +21148,252 @@ export function BlogPage() {
 
 ```
 
+## src\pages\CategoriesPage.tsx
+
+```tsx
+import { useEffect, useMemo } from "react";
+import { Link, useParams } from "react-router-dom";
+
+import { ProductCard } from "../components/ProductCard";
+import { useCategories } from "../contexts/useCategories";
+import { useProducts } from "../contexts/useProducts";
+import { useSubcategories } from "../contexts/useSubcategories";
+
+export function CategoryPage() {
+  const { slug } = useParams();
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
+
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    error: subcategoriesError,
+    fetchSubcategories,
+  } = useSubcategories();
+
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    fetchProducts,
+  } = useProducts();
+
+  useEffect(() => {
+    void fetchCategories();
+    void fetchSubcategories();
+  }, [fetchCategories, fetchSubcategories]);
+
+  const category = useMemo(() => {
+    if (!slug) return null;
+
+    return (
+      categories.find(
+        (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+      ) ?? null
+    );
+  }, [categories, slug]);
+
+  useEffect(() => {
+    if (!category) return;
+
+    void fetchProducts(category.slug);
+  }, [category, fetchProducts]);
+
+  const categorySubcategories = useMemo(() => {
+    if (!category) return [];
+
+    return subcategories
+      .filter(
+        (subcategory) =>
+          subcategory.categoryId === category.id && subcategory.active,
+      )
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [category, subcategories]);
+
+  const categoryProducts = useMemo(() => {
+    if (!category) return [];
+
+    return products.filter((product) => product.active && product.available);
+  }, [category, products]);
+
+  const loading = categoriesLoading || subcategoriesLoading || productsLoading;
+
+  const error = categoriesError ?? subcategoriesError ?? productsError ?? null;
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-[#52657c]">Carregando categoria...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <h1 className="text-xl font-bold text-red-700">
+            Não foi possível carregar a categoria
+          </h1>
+
+          <p className="mt-2 text-sm text-red-600">{error}</p>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f58c7]"
+          >
+            Voltar para a página inicial
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (!category) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-16">
+        <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-[#071a2f]">
+            Categoria não encontrada
+          </h1>
+
+          <p className="mt-2 text-sm text-[#52657c]">
+            A categoria que você está procurando não existe ou não está
+            disponível.
+          </p>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f58c7]"
+          >
+            Voltar para a página inicial
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-16">
+      {/* Hero da categoria */}
+      <div className="mb-10 overflow-hidden rounded-3xl border border-[#e7edf5] bg-white shadow-sm">
+        <div className="grid min-h-[260px] md:grid-cols-2">
+          <div className="flex flex-col justify-center p-8 md:p-10">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-[#1769e0]">
+              Categoria
+            </p>
+
+            <h1 className="text-3xl font-bold text-[#071a2f] md:text-4xl">
+              {category.name}
+            </h1>
+
+            {category.description && (
+              <p className="mt-4 max-w-2xl text-base leading-7 text-[#52657c]">
+                {category.description}
+              </p>
+            )}
+          </div>
+
+          {category.image && (
+            <div className="min-h-[220px] bg-[#f8fafc]">
+              <img
+                src={category.image}
+                alt={category.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Subcategorias */}
+      {categorySubcategories.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-5">
+            <h2 className="text-2xl font-bold text-[#071a2f]">Subcategorias</h2>
+
+            <p className="mt-1 text-sm text-[#52657c]">
+              Explore os produtos por subcategoria.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {categorySubcategories.map((subcategory) => (
+              <Link
+                key={subcategory.id}
+                to={`/categoria/${encodeURIComponent(
+                  category.slug,
+                )}/${encodeURIComponent(subcategory.slug)}`}
+                className="group rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1769e0] hover:shadow-md"
+              >
+                <h3 className="text-lg font-semibold text-[#071a2f] transition group-hover:text-[#1769e0]">
+                  {subcategory.name}
+                </h3>
+
+                {subcategory.description && (
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#52657c]">
+                    {subcategory.description}
+                  </p>
+                )}
+
+                <span className="mt-4 inline-block text-sm font-semibold text-[#1769e0]">
+                  Ver subcategoria →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Produtos da categoria */}
+      <section>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-[#071a2f]">
+            Produtos de {category.name}
+          </h2>
+
+          <p className="mt-1 text-sm text-[#52657c]">
+            {categoryProducts.length > 0
+              ? `${categoryProducts.length} ${
+                  categoryProducts.length === 1
+                    ? "produto encontrado"
+                    : "produtos encontrados"
+                }`
+              : "Nenhum produto disponível nesta categoria no momento."}
+          </p>
+        </div>
+
+        {categoryProducts.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {categoryProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+            <h3 className="text-lg font-semibold text-[#071a2f]">
+              Nenhum produto disponível
+            </h3>
+
+            <p className="mt-2 text-sm text-[#52657c]">
+              Ainda não existem produtos ativos e disponíveis nesta categoria.
+            </p>
+          </div>
+        )}
+      </section>
+    </section>
+  );
+}
+
+```
+
 ## src\pages\ContactPage.tsx
 
 ```tsx
@@ -16341,36 +21867,64 @@ export function FashionPage() {
 import { useEffect } from "react";
 import {
   FiArrowUpRight,
+  FiBookOpen,
   FiCheckCircle,
+  FiGrid,
+  FiHeart,
   FiSearch,
   FiShield,
+  FiShoppingBag,
   FiStar,
+  FiTool,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Banner } from "../components/Banner";
 import { BlogBanner } from "../components/BlogBanner";
-import { menuItems } from "../components/Menu/items";
 
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
 import { SocialBanner } from "../components/SocialBanner";
+import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 
 export function HomePage() {
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
+
   const { products, loading, error, fetchProducts } = useProducts();
+
+  useEffect(() => {
+    void fetchCategories();
+  }, [fetchCategories]);
 
   useEffect(() => {
     void fetchProducts();
   }, [fetchProducts]);
 
+  const activeCategories = categories
+    .filter((category) => category.active)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const categoryIcons = {
+    tecnologia: FiGrid,
+    "casa-utilidades": FiTool,
+    moda: FiShoppingBag,
+    pets: FiHeart,
+    "produtos-digitais": FiGrid,
+  };
+
   return (
     <>
       <Banner />
 
-      {error && (
+      {(error || categoriesError) && (
         <div className="mx-auto max-w-[1200px] px-6 pb-2 pt-4 text-sm text-red-600">
-          {error}
+          {error ?? categoriesError}
         </div>
       )}
 
@@ -16394,43 +21948,77 @@ export function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
-          {menuItems.map(({ label, icon: Icon, href }) => (
+        {categoriesLoading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+            {[
+              "category-skeleton-1",
+              "category-skeleton-2",
+              "category-skeleton-3",
+              "category-skeleton-4",
+              "category-skeleton-5",
+              "category-skeleton-6",
+              "category-skeleton-7",
+            ].map((skeletonKey) => (
+              <div
+                key={skeletonKey}
+                className="aspect-square animate-pulse rounded-2xl border border-[#e7edf5] bg-[#f7f9fc]"
+              />
+            ))}
+          </div>
+        ) : activeCategories.length === 0 ? (
+          <div className="rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
+            Nenhuma categoria disponível no momento.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+            {activeCategories.map((category) => {
+              const Icon =
+                categoryIcons[category.slug as keyof typeof categoryIcons] ??
+                FiGrid;
+
+              return (
+                <Link
+                  key={category.id}
+                  to={`/categoria/${category.slug}`}
+                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
+                >
+                  <span className="flex h-40 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-30 md:w-full">
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Icon className="text-3xl md:text-4xl" />
+                    )}
+                  </span>
+
+                  <span className="text-sm font-semibold leading-5 text-[#071a2f] my-5">
+                    {category.name}
+                  </span>
+                </Link>
+              );
+            })}
+
             <Link
-              key={label}
-              to={href}
-              className={`group flex aspect-square flex-col items-center justify-between rounded-2xl border p-4 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] ${
-                label === "Blog"
-                  ? "border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)]"
-                  : "border-[#e7edf5] bg-white text-[#071a2f] hover:border-[#b9d6f4]"
-              }`}
+              to="/blog"
+              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-4 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1"
             >
-              <span
-                className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl ${
-                  label === "Blog"
-                    ? "bg-white/15 text-[#9ad7ff]"
-                    : "bg-[#edf5ff] text-[#1769e0] group-hover:bg-[#1769e0] group-hover:text-white"
-                }`}
-              >
-                <Icon />
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl text-[#9ad7ff] transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl">
+                <FiBookOpen />
               </span>
 
-              <span
-                className={`text-sm font-semibold leading-5 ${
-                  label === "Blog" ? "text-white" : "text-[#071a2f]"
-                }`}
-              >
-                {label}
+              <span className="text-sm font-semibold leading-5 text-white">
+                Blog
               </span>
 
-              {label === "Blog" && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
-                  Conteúdos
-                </span>
-              )}
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
+                Conteúdos
+              </span>
             </Link>
-          ))}
-        </div>
+          </div>
+        )}
       </section>
 
       <Session title="Ofertas em destaque">
@@ -16857,9 +22445,11 @@ export function PrivacyPolicyPage() {
 
 ```tsx
 import { useEffect, useState } from "react";
-
 import { Link, useParams } from "react-router-dom";
-
+import { ProductBreadcrumb } from "../components/product/ProductBreadcrumb";
+import { ProductDescription } from "../components/product/ProductDescription";
+import { ProductGallery } from "../components/product/ProductGallery";
+import { ProductInfo } from "../components/product/ProductInfo";
 import type { Product } from "../contexts/ProductsContext";
 import { useProducts } from "../contexts/useProducts";
 
@@ -16883,11 +22473,20 @@ export function ProductPage() {
 
       setLoading(true);
 
-      const data = await getProductBySlug(slug);
+      try {
+        const data = await getProductBySlug(slug);
 
-      if (!cancelled) {
-        setProduct(data);
-        setLoading(false);
+        if (!cancelled) {
+          setProduct(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setProduct(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -16919,7 +22518,7 @@ export function ProductPage() {
 
         <Link
           to="/"
-          className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white"
+          className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white transition hover:bg-[#0f58c7]"
         >
           Voltar para a página inicial
         </Link>
@@ -16927,88 +22526,335 @@ export function ProductPage() {
     );
   }
 
-  const price = product.price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: product.currency || "BRL",
-  });
+  return (
+    <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-16">
+      <ProductBreadcrumb />
 
-  const originalPrice = product.originalPrice?.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: product.currency || "BRL",
-  });
+      <div className="grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.07)] md:grid-cols-[0.9fr_1.1fr]">
+        <ProductGallery product={product} />
+
+        <ProductInfo product={product} />
+      </div>
+
+      <ProductDescription product={product} />
+    </section>
+  );
+}
+
+```
+
+## src\pages\ProductsPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+
+import { ProductCard } from "../components/ProductCard";
+import type { Product } from "../contexts/ProductsContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+type SearchCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+};
+
+type SearchSubcategory = {
+  id: string;
+  categoryId: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+};
+
+type SearchResponse = {
+  query: string;
+  products: Product[];
+  categories: SearchCategory[];
+  subcategories: SearchSubcategory[];
+};
+
+export function ProductsPage() {
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get("search")?.trim() ?? "";
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<SearchCategory[]>([]);
+  const [subcategories, setSubcategories] = useState<SearchSubcategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSearchResults() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (!search) {
+          const response = await fetch(`${apiUrl}/products`);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.message ?? "Não foi possível carregar os produtos.",
+            );
+          }
+
+          if (!cancelled) {
+            setProducts(data.products ?? []);
+            setCategories([]);
+            setSubcategories([]);
+          }
+
+          return;
+        }
+
+        const response = await fetch(
+          `${apiUrl}/search?q=${encodeURIComponent(search)}`,
+        );
+
+        const data: SearchResponse = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            (data as { message?: string }).message ??
+              "Não foi possível realizar a pesquisa.",
+          );
+        }
+
+        if (!cancelled) {
+          setProducts(data.products ?? []);
+          setCategories(data.categories ?? []);
+          setSubcategories(data.subcategories ?? []);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Erro ao realizar a pesquisa.",
+          );
+
+          setProducts([]);
+          setCategories([]);
+          setSubcategories([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadSearchResults();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [search]);
+
+  const hasResults =
+    products.length > 0 || categories.length > 0 || subcategories.length > 0;
 
   return (
     <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-16">
-      <nav className="mb-6 text-sm text-[#52657c]" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-[#1769e0]">
-          Início
-        </Link>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[#071a2f]">
+          {search ? `Resultados para "${search}"` : "Produtos"}
+        </h1>
 
-        <span className="px-2">/</span>
-
-        <span>Detalhes do produto</span>
-      </nav>
-
-      <div className="grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.07)] md:grid-cols-[0.9fr_1.1fr]">
-        <div className="flex min-h-[340px] items-center justify-center bg-[#f7f9fc] p-8 md:min-h-[520px] md:p-12">
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="max-h-[420px] w-full object-contain"
-          />
-        </div>
-
-        <div className="flex flex-col justify-center p-8 md:p-12">
-          {product.category && (
-            <span className="mb-5 w-fit rounded-full bg-[#edf5ff] px-3 py-1 text-xs font-semibold text-[#0b3d66]">
-              {product.category}
-            </span>
-          )}
-
-          <h1 className="text-3xl font-black leading-tight text-[#071a2f] md:text-4xl">
-            {product.title}
-          </h1>
-
-          {product.shortDescription && (
-            <p className="mt-5 text-sm leading-6 text-[#52657c]">
-              {product.description}
-            </p>
-          )}
-
-          <div className="mt-8 border-y border-[#edf2f7] py-6">
-            <p className="text-sm text-[#667085]">
-              Preço apresentado no momento da consulta
-            </p>
-
-            {originalPrice && (
-              <p className="mt-2 text-sm text-gray-500 line-through">
-                {originalPrice}
-              </p>
-            )}
-
-            <p className="mt-1 text-3xl font-black text-[#071a2f]">{price}</p>
-          </div>
-
-          <p className="mt-6 text-sm leading-6 text-[#52657c]">
-            Você será direcionado ao site do parceiro para conferir
-            disponibilidade, frete, avaliações e finalizar a compra.
+        {search && !loading && !error && (
+          <p className="mt-2 text-sm text-[#52657c]">
+            {[
+              categories.length > 0 &&
+                `${categories.length} ${
+                  categories.length === 1 ? "categoria" : "categorias"
+                }`,
+              subcategories.length > 0 &&
+                `${subcategories.length} ${
+                  subcategories.length === 1 ? "subcategoria" : "subcategorias"
+                }`,
+              products.length > 0 &&
+                `${products.length} ${
+                  products.length === 1 ? "produto" : "produtos"
+                }`,
+            ]
+              .filter(Boolean)
+              .join(" • ")}
           </p>
-
-          <a
-            href={product.affiliateUrl}
-            target="_blank"
-            rel="sponsored noopener noreferrer"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-xl bg-[#20b35b] px-6 font-bold text-white transition hover:bg-[#159447]"
-          >
-            Ver oferta
-          </a>
-
-          <p className="mt-4 text-xs text-[#667085]">
-            Este é um link de afiliado. A compra é realizada diretamente no site
-            do parceiro.
-          </p>
-        </div>
+        )}
       </div>
+
+      {loading && (
+        <div className="py-16 text-center">
+          <p className="text-sm text-[#52657c]">
+            {search ? "Pesquisando..." : "Carregando produtos..."}
+          </p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-semibold text-red-700">
+            Não foi possível carregar os resultados.
+          </p>
+
+          <p className="mt-2 text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && !hasResults && (
+        <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
+          <h2 className="text-xl font-semibold text-[#071a2f]">
+            Nenhum resultado encontrado
+          </h2>
+
+          <p className="mt-2 text-sm text-[#52657c]">
+            {search
+              ? `Não encontramos categorias, subcategorias ou produtos para "${search}".`
+              : "Ainda não existem produtos disponíveis no catálogo."}
+          </p>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-lg bg-[#1769e0] px-5 py-3 font-semibold text-white transition hover:bg-[#0f58c7]"
+          >
+            Voltar para a página inicial
+          </Link>
+        </div>
+      )}
+
+      {!loading && !error && hasResults && (
+        <div className="space-y-12">
+          {categories.length > 0 && (
+            <section>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-[#071a2f]">
+                  Categorias
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    to={`/categoria/${encodeURIComponent(category.slug)}`}
+                    className="group rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1769e0] hover:shadow-md"
+                  >
+                    <h3 className="text-lg font-semibold text-[#071a2f] transition group-hover:text-[#1769e0]">
+                      {category.name}
+                    </h3>
+
+                    {category.description && (
+                      <p className="mt-2 line-clamp-2 text-sm text-[#52657c]">
+                        {category.description}
+                      </p>
+                    )}
+
+                    <span className="mt-4 inline-block text-sm font-semibold text-[#1769e0]">
+                      Ver categoria →
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {subcategories.length > 0 && (
+            <section>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-[#071a2f]">
+                  Subcategorias
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {subcategories.map((subcategory) => {
+                  const categorySlug = subcategory.category?.slug;
+
+                  if (!categorySlug) {
+                    return (
+                      <div
+                        key={subcategory.id}
+                        className="rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm"
+                      >
+                        <h3 className="text-lg font-semibold text-[#071a2f]">
+                          {subcategory.name}
+                        </h3>
+
+                        {subcategory.description && (
+                          <p className="mt-2 line-clamp-2 text-sm text-[#52657c]">
+                            {subcategory.description}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={subcategory.id}
+                      to={`/categoria/${encodeURIComponent(
+                        categorySlug,
+                      )}/${encodeURIComponent(subcategory.slug)}`}
+                      className="group rounded-2xl border border-[#e7edf5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#1769e0] hover:shadow-md"
+                    >
+                      <h3 className="text-lg font-semibold text-[#071a2f] transition group-hover:text-[#1769e0]">
+                        {subcategory.name}
+                      </h3>
+
+                      {subcategory.category && (
+                        <p className="mt-1 text-xs font-medium text-[#1769e0]">
+                          {subcategory.category.name}
+                        </p>
+                      )}
+
+                      {subcategory.description && (
+                        <p className="mt-2 line-clamp-2 text-sm text-[#52657c]">
+                          {subcategory.description}
+                        </p>
+                      )}
+
+                      <span className="mt-4 inline-block text-sm font-semibold text-[#1769e0]">
+                        Ver subcategoria →
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {products.length > 0 && (
+            <section>
+              <div className="mb-5">
+                <h2 className="text-2xl font-bold text-[#071a2f]">Produtos</h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -17175,326 +23021,389 @@ export function RegisterPage() {
 ## src\pages\SubcategoryPage.tsx
 
 ```tsx
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { FiArrowLeft, FiArrowRight, FiGrid, FiHome } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
+import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
-
-type SubcategoryData = {
-  title: string;
-  category: string;
-  query: string;
-  description: string;
-  image: string;
-  imageAlt: string;
-};
-
-const subcategories: Record<string, SubcategoryData> = {
-  "smartphones-acessorios": {
-    title: "Smartphones e acessórios",
-    category: "Tecnologia",
-    query: "smartphone acessórios",
-    description:
-      "Encontre celulares, capas, carregadores e acessórios para acompanhar sua rotina.",
-    image:
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Smartphone sobre uma mesa",
-  },
-  "audio-imagem": {
-    title: "Áudio e imagem",
-    category: "Tecnologia",
-    query: "fone de ouvido caixa de som",
-    description:
-      "Explore opções para ouvir, assistir e transformar seus momentos de entretenimento.",
-    image:
-      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Fones de ouvido modernos",
-  },
-  "casa-inteligente": {
-    title: "Casa inteligente",
-    category: "Tecnologia",
-    query: "casa inteligente automação",
-    description:
-      "Conheça dispositivos conectados que trazem mais praticidade para sua casa.",
-    image:
-      "https://images.unsplash.com/photo-1558008258-3256797b43f3?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Dispositivo inteligente em uma casa",
-  },
-  "trabalho-lazer": {
-    title: "Trabalho e lazer",
-    category: "Tecnologia",
-    query: "notebook acessórios informática",
-    description:
-      "Equipamentos e acessórios para produzir, estudar e aproveitar melhor seu tempo.",
-    image:
-      "https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Notebook e acessórios em uma mesa",
-  },
-  "organizacao-domestica": {
-    title: "Organização doméstica",
-    category: "Casa & Utilidades",
-    query: "organização doméstica",
-    description:
-      "Soluções para aproveitar cada espaço e deixar a rotina mais leve.",
-    image:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Ambiente doméstico organizado",
-  },
-  decoracao: {
-    title: "Decoração",
-    category: "Casa & Utilidades",
-    query: "decoração casa",
-    description:
-      "Detalhes que ajudam a transformar sua casa em um ambiente mais acolhedor.",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Sala com decoração contemporânea",
-  },
-  "utilidades-essenciais": {
-    title: "Utilidades essenciais",
-    category: "Casa & Utilidades",
-    query: "utilidades domésticas cozinha",
-    description:
-      "Itens práticos para resolver as tarefas do dia a dia com mais facilidade.",
-    image:
-      "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Utensílios em uma cozinha",
-  },
-  "conforto-rotina": {
-    title: "Conforto para a rotina",
-    category: "Casa & Utilidades",
-    query: "conforto casa quarto",
-    description:
-      "Escolhas simples para tornar seus momentos em casa ainda mais agradáveis.",
-    image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Quarto confortável e iluminado",
-  },
-  "roupas-calcados": {
-    title: "Roupas e calçados",
-    category: "Moda",
-    query: "roupas calçados",
-    description:
-      "Peças para expressar seu estilo com conforto em diferentes ocasiões.",
-    image:
-      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Roupas organizadas em uma arara",
-  },
-  acessorios: {
-    title: "Acessórios",
-    category: "Moda",
-    query: "acessórios moda",
-    description: "Os detalhes que dão personalidade a cada produção.",
-    image:
-      "https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Acessórios de moda",
-  },
-  "casual-elegante": {
-    title: "Casual e elegante",
-    category: "Moda",
-    query: "moda casual elegante",
-    description: "Combinações versáteis para todos os seus planos.",
-    image:
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Pessoa escolhendo roupas em uma loja",
-  },
-  "estilo-diario": {
-    title: "Estilo diário",
-    category: "Moda",
-    query: "look casual feminino masculino",
-    description:
-      "Inspirações práticas para vestir sua melhor versão todos os dias.",
-    image:
-      "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Look casual de moda",
-  },
-  "cuidados-higiene": {
-    title: "Cuidados e higiene",
-    category: "Pets",
-    query: "cuidados higiene pet",
-    description:
-      "Produtos para cuidar do bem-estar do seu companheiro com carinho.",
-    image:
-      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorro recebendo cuidados",
-  },
-  "brinquedos-diversao": {
-    title: "Brinquedos e diversão",
-    category: "Pets",
-    query: "brinquedos pet cachorro gato",
-    description: "Mais estímulo, alegria e momentos especiais juntos.",
-    image:
-      "https://images.unsplash.com/photo-1535294435445-d7249524ef2e?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorro brincando ao ar livre",
-  },
-  "acessorios-pets": {
-    title: "Acessórios para pets",
-    category: "Pets",
-    query: "acessórios pet",
-    description: "Conforto e praticidade para passeios e momentos em casa.",
-    image:
-      "https://images.unsplash.com/photo-1558788353-f76d92427f16?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorro usando acessório",
-  },
-  "rotina-pet": {
-    title: "Rotina pet",
-    category: "Pets",
-    query: "produtos rotina pet",
-    description: "Tudo para deixar o dia do seu companheiro mais completo.",
-    image:
-      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Cachorros juntos em um parque",
-  },
-  "cursos-conteudos": {
-    title: "Cursos e conteúdos",
-    category: "Produtos Digitais",
-    query: "cursos online",
-    description: "Aprenda no seu ritmo e amplie suas possibilidades.",
-    image:
-      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Pessoa estudando em um notebook",
-  },
-  "software-utilitarios": {
-    title: "Software e utilitários",
-    category: "Produtos Digitais",
-    query: "software utilitários licença",
-    description: "Ferramentas digitais para resolver mais com menos esforço.",
-    image:
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Código em uma tela de computador",
-  },
-  produtividade: {
-    title: "Produtividade",
-    category: "Produtos Digitais",
-    query: "produtividade software",
-    description: "Organize ideias, projetos e tarefas em um só lugar.",
-    image:
-      "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Mesa de trabalho organizada",
-  },
-  "entretenimento-digital": {
-    title: "Entretenimento digital",
-    category: "Produtos Digitais",
-    query: "jogos digitais streaming",
-    description: "Novas experiências para relaxar e se divertir.",
-    image:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=1400&q=85",
-    imageAlt: "Controle de videogame e televisão",
-  },
-};
-
-function normalizeSlug(value: string) {
-  return value.replace(/-e-/g, "-");
-}
+import { useSubcategories } from "../contexts/useSubcategories";
 
 export function SubcategoryPage() {
-  const { subcategory } = useParams();
+  const { categorySlug, subcategorySlug } = useParams<{
+    categorySlug: string;
+    subcategorySlug: string;
+  }>();
 
-  const { products, loading, error, fetchProducts } = useProducts();
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    fetchCategories,
+  } = useCategories();
 
-  const data = subcategory
-    ? (subcategories[subcategory] ?? subcategories[normalizeSlug(subcategory)])
-    : undefined;
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    error: subcategoriesError,
+    fetchSubcategories,
+  } = useSubcategories();
+
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    fetchProducts,
+  } = useProducts();
 
   useEffect(() => {
-    if (data) {
-      void fetchProducts(data.category);
+    if (categories.length === 0) {
+      void fetchCategories();
     }
-  }, [data, fetchProducts]);
+  }, [categories.length, fetchCategories]);
 
-  const visibleProducts = products.slice(0, 4);
+  useEffect(() => {
+    if (subcategories.length === 0) {
+      void fetchSubcategories();
+    }
+  }, [subcategories.length, fetchSubcategories]);
 
-  if (!data) {
+  const category = useMemo(() => {
+    if (!categorySlug) {
+      return undefined;
+    }
+
+    return categories.find(
+      (item) =>
+        item.slug.toLowerCase() === categorySlug.toLowerCase() && item.active,
+    );
+  }, [categories, categorySlug]);
+
+  const subcategory = useMemo(() => {
+    if (!subcategorySlug || !category) {
+      return undefined;
+    }
+
+    return subcategories.find(
+      (item) =>
+        item.slug.toLowerCase() === subcategorySlug.toLowerCase() &&
+        item.categoryId === category.id &&
+        item.active,
+    );
+  }, [subcategories, subcategorySlug, category]);
+
+  useEffect(() => {
+    if (category) {
+      void fetchProducts(category.name);
+    }
+  }, [category, fetchProducts]);
+
+  const visibleProducts = useMemo(() => {
+    if (!subcategory) {
+      return [];
+    }
+
+    return products
+      .filter(
+        (product) =>
+          product.subcategoryId === subcategory.id &&
+          product.active &&
+          product.available,
+      )
+      .slice(0, 4);
+  }, [products, subcategory]);
+
+  const loading = categoriesLoading || subcategoriesLoading || productsLoading;
+
+  const error = categoriesError || subcategoriesError || productsError;
+
+  /*
+   * Estado de carregamento
+   */
+  if (loading && !category) {
     return (
-      <section className="mx-auto max-w-[1200px] px-6 py-16">
-        <h1 className="text-3xl font-bold text-[#071a2f]">
-          Subcategoria não encontrada
-        </h1>
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="animate-pulse">
+          <div className="mb-6 h-5 w-40 rounded bg-slate-200" />
 
-        <Link to="/" className="mt-4 inline-block font-semibold text-[#1769e0]">
-          Voltar para a página inicial
-        </Link>
+          <div className="grid min-h-[360px] overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:grid-cols-[1fr_0.9fr]">
+            <div className="space-y-5 p-8 md:p-12">
+              <div className="h-5 w-32 rounded bg-slate-200" />
+              <div className="h-12 w-3/4 rounded bg-slate-200" />
+              <div className="h-20 w-full rounded bg-slate-200" />
+            </div>
+
+            <div className="min-h-[260px] bg-slate-200" />
+          </div>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {["one", "two", "three", "four"].map((item) => (
+              <div
+                key={`subcategory-product-skeleton-${item}`}
+                className="h-[360px] rounded-[24px] bg-slate-100"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+   * Categoria não encontrada
+   */
+  if (!category) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[32px] border border-[#e7edf5] bg-white px-6 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <FiGrid className="text-2xl text-slate-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Categoria não encontrada
+          </h1>
+
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
+            A categoria que você está procurando não existe ou não está
+            disponível no momento.
+          </p>
+
+          <Link
+            to="/"
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            <FiHome />
+            Voltar para o início
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+   * Subcategoria não encontrada
+   */
+  if (!subcategory) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="mb-6 flex items-center gap-2 text-sm text-slate-500">
+          <Link to="/" className="transition hover:text-slate-900">
+            Início
+          </Link>
+
+          <span>/</span>
+
+          <Link
+            to={`/categoria/${category.slug}`}
+            className="transition hover:text-slate-900"
+          >
+            {category.name}
+          </Link>
+        </div>
+
+        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-[32px] border border-[#e7edf5] bg-white px-6 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <FiGrid className="text-2xl text-slate-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Subcategoria não encontrada
+          </h1>
+
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">
+            A subcategoria que você está procurando não existe ou não está
+            disponível nesta categoria.
+          </p>
+
+          <Link
+            to={`/categoria/${category.slug}`}
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            <FiArrowLeft />
+            Voltar para {category.name}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  /*
+   * Erro
+   */
+  if (error) {
+    return (
+      <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+        <div className="rounded-[32px] border border-red-100 bg-white px-6 py-12 text-center shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+            <FiGrid className="text-2xl text-red-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">
+            Não foi possível carregar esta seleção
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500">
+            Ocorreu um problema ao carregar os produtos. Tente novamente em
+            alguns instantes.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              void fetchProducts(category.name);
+            }}
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            Tentar novamente
+          </button>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-14">
-      <nav className="mb-6 text-sm text-[#52657c]" aria-label="Breadcrumb">
-        <Link to="/" className="hover:text-[#1769e0]">
+    <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
+      {/* Breadcrumb */}
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500"
+      >
+        <Link to="/" className="transition hover:text-slate-900">
           Início
         </Link>
 
-        <span className="px-2">/</span>
+        <span>/</span>
 
-        <span>{data.category}</span>
+        <Link
+          to={`/categoria/${category.slug}`}
+          className="transition hover:text-slate-900"
+        >
+          {category.name}
+        </Link>
+
+        <span>/</span>
+
+        <span className="font-medium text-slate-900">{subcategory.name}</span>
       </nav>
 
-      <div className="mb-10 grid overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.05)] md:grid-cols-[1fr_0.85fr]">
-        <div className="flex flex-col justify-center p-8 md:p-10">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[#0b3d66]">
-            Seleção de produtos
-          </p>
+      {/* Hero */}
+      <div className="mb-12 grid min-h-[360px] overflow-hidden rounded-[32px] border border-[#e7edf5] bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:grid-cols-[1fr_0.9fr]">
+        {/* Conteúdo */}
+        <div className="flex flex-col justify-center p-8 md:p-12">
+          <span className="mb-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Subcategoria
+          </span>
 
-          <h1 className="text-3xl font-black text-[#071a2f] md:text-5xl">
-            {data.title}
+          <h1 className="max-w-xl text-3xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
+            {subcategory.name}
           </h1>
 
-          <p className="mt-4 max-w-xl text-base leading-7 text-[#52657c]">
-            {data.description}
-          </p>
+          {subcategory.description && (
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
+              {subcategory.description}
+            </p>
+          )}
 
-          <p className="mt-5 text-xs text-[#667085]">
-            Produtos apresentados por marketplaces parceiros. A compra acontece
-            no site do anunciante.
-          </p>
+          <div className="mt-7">
+            <Link
+              to={`/categoria/${category.slug}`}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
+            >
+              <FiArrowLeft />
+              Voltar para {category.name}
+            </Link>
+          </div>
         </div>
 
-        <div className="relative min-h-[240px] overflow-hidden md:min-h-[320px]">
-          <img
-            src={data.image}
-            alt={data.imageAlt}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-
-          <div className="absolute inset-0 bg-gradient-to-r from-[#071a2f]/20 to-transparent" />
+        {/* Imagem */}
+        <div className="relative min-h-[280px] overflow-hidden bg-slate-100 md:min-h-full">
+          {subcategory.image ? (
+            <img
+              src={subcategory.image}
+              alt={subcategory.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full min-h-[280px] items-center justify-center">
+              <FiGrid className="text-7xl text-slate-300" />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="mb-6 flex items-end justify-between gap-4">
+      {/* Cabeçalho dos produtos */}
+      <div className="mb-7 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
+          <span className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
             Ofertas encontradas
-          </p>
+          </span>
 
-          <h2 className="mt-2 text-2xl font-bold text-[#071a2f]">
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 md:text-3xl">
             Escolha o que combina com você
           </h2>
         </div>
 
-        <span className="hidden text-sm text-[#52657c] sm:inline">
+        <span className="text-sm text-slate-400">
           Links patrocinados identificados
         </span>
       </div>
 
-      {loading && (
-        <p className="py-10 text-sm text-[#52657c]">Buscando produtos...</p>
+      {/* Produtos */}
+      {productsLoading ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {["one", "two", "three", "four"].map((item) => (
+            <div
+              key={`product-skeleton-${item}`}
+              className="h-[360px] animate-pulse rounded-[24px] bg-slate-100"
+            />
+          ))}
+        </div>
+      ) : visibleProducts.length === 0 ? (
+        <div className="rounded-[24px] border border-[#e7edf5] bg-white px-6 py-12 text-center shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+            <FiGrid className="text-xl text-slate-500" />
+          </div>
+
+          <h3 className="text-xl font-bold text-slate-900">
+            Nenhum produto disponível
+          </h3>
+
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            Ainda não encontramos produtos ativos e disponíveis nesta
+            subcategoria.
+          </p>
+
+          <Link
+            to={`/categoria/${category.slug}`}
+            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-950"
+          >
+            Ver outras subcategorias
+            <FiArrowRight />
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {visibleProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          {visibleProducts.length === 4 && (
+            <div className="mt-8 flex justify-center">
+              <Link
+                to={`/categoria/${category.slug}`}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+              >
+                Voltar para a categoria
+                <FiArrowRight />
+              </Link>
+            </div>
+          )}
+        </>
       )}
-
-      {error && <p className="py-4 text-sm text-red-600">{error}</p>}
-
-      {!loading && !error && visibleProducts.length === 0 && (
-        <p className="py-10 text-sm text-[#52657c]">
-          Nenhum produto encontrado nesta categoria.
-        </p>
-      )}
-
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {visibleProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
     </section>
   );
 }
@@ -17598,15 +23507,15 @@ export function TermsOfUsePage() {
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminCategoryFormPage } from "../pages/AdminCategoriesFormPage";
 import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
 import AdminDashboardPage from "../pages/AdminDashboarPage";
 import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
 import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
-import { AdminProductsFormPage } from "../pages/AdminProductsFormPage";
 import { AdminProductsPage } from "../pages/AdminProductsPage";
 import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
 import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
+import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -17705,6 +23614,7 @@ export const authRoutes: RouteObject[] = [
 ## src\routes\homeRoutes.tsx
 
 ```tsx
+/** src/routes/homeRoutes.tsx */
 import type { RouteObject } from "react-router-dom";
 
 import { HomePage } from "../pages/HomePage";
@@ -17721,6 +23631,7 @@ export const homeRoutes: RouteObject[] = [
 ## src\routes\index.tsx
 
 ```tsx
+/* src/routes/index.tsx */
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
@@ -17835,17 +23746,34 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
 import type { RouteObject } from "react-router-dom";
 
 import { BlogPage } from "../pages/BlogPage";
+import { CategoryPage } from "../pages/CategoriesPage";
 import { DigitalProductsPage } from "../pages/DigitalProductsPage";
 import { FashionPage } from "../pages/FashionPage";
 import { HomeUtilitiesPage } from "../pages/HomeUtilitiesPage";
 import { OffersPage } from "../pages/OffersPage";
 import { PetsPage } from "../pages/PetsPage";
 import { ProductPage } from "../pages/ProductPage";
+import { ProductsPage } from "../pages/ProductsPage";
 import { SubcategoryPage } from "../pages/SubcategoryPage";
 import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
+  // Busca de produtos
+  { path: "produtos", element: <ProductsPage /> },
+
+  // Detalhes do produto
   { path: "produto/:slug", element: <ProductPage /> },
+
+  // Categoria
+  { path: "categoria/:slug", element: <CategoryPage /> },
+
+  // Subcategoria - rota hierárquica
+  {
+    path: "categoria/:categorySlug/:subcategorySlug",
+    element: <SubcategoryPage />,
+  },
+
+  // Rotas de categorias legadas
   { path: "tecnologia", element: <TechnologyPage /> },
   { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
   { path: "moda", element: <FashionPage /> },
@@ -17853,6 +23781,8 @@ export const productRoutes: RouteObject[] = [
   { path: "produtos-digitais", element: <DigitalProductsPage /> },
   { path: "ofertas", element: <OffersPage /> },
   { path: "blog", element: <BlogPage /> },
+
+  // Compatibilidade com URLs antigas
   {
     path: ":category/:subcategory",
     element: <SubcategoryPage />,
@@ -17889,6 +23819,60 @@ export type User = {
   email: string;
   role: "admin" | "customer";
 };
+
+```
+
+## src\utils\formatCurrency.ts
+
+```ts
+export function formatCurrencyBRL(
+  value: number | string | null | undefined,
+): string {
+  if (value === null || value === undefined || value === "") {
+    return "R$ 0,00";
+  }
+
+  const numericValue =
+    typeof value === "string"
+      ? Number.parseFloat(value.replace(",", "."))
+      : value;
+
+  if (!Number.isFinite(numericValue)) {
+    return "R$ 0,00";
+  }
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(numericValue);
+}
+
+export function parseCurrencyBRL(value: string): number {
+  const normalizedValue = value
+    .replace(/\s/g, "")
+    .replace(/R\$/gi, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+
+  const numericValue = Number.parseFloat(normalizedValue);
+
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+export function formatCurrencyInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  const numericValue = Number(digits) / 100;
+
+  return numericValue.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 ```
 

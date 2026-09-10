@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useMemo, useState } from "react";
+
 import {
   type Product,
   type ProductFormData,
@@ -14,29 +15,52 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Listagem
-  const fetchProducts = useCallback(async (category?: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (category) params.set("category", category);
+  // Listagem pública
+  const fetchProducts = useCallback(
+    async (category?: string, search?: string) => {
+      setLoading(true);
+      setError(null);
 
-      const response = await fetch(`${apiUrl}/products?${params.toString()}`);
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error("Não foi possível carregar os produtos.");
-      setProducts(data.products ?? []);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao carregar produtos.",
-      );
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const params = new URLSearchParams();
 
+        if (category) {
+          params.set("category", category);
+        }
+
+        if (search) {
+          params.set("search", search);
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/products${queryString ? `?${queryString}` : ""}`,
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar os produtos.",
+          );
+        }
+
+        setProducts(data.products ?? []);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Erro ao carregar produtos.",
+        );
+
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Listagem administrativa
   const fetchAdminProducts = useCallback(
     async (
       token: string,
@@ -112,17 +136,24 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // Detalhe
+  // Detalhe por slug
   const getProductBySlug = useCallback(
     async (slug: string): Promise<Product | null> => {
       try {
         const response = await fetch(
           `${apiUrl}/products/${encodeURIComponent(slug)}`,
         );
-        if (response.status === 404) return null;
+
+        if (response.status === 404) {
+          return null;
+        }
+
         const data = await response.json();
-        if (!response.ok)
+
+        if (!response.ok) {
           throw new Error("Não foi possível carregar o produto.");
+        }
+
         return data.product;
       } catch {
         return null;
@@ -131,6 +162,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // Detalhe por ID
   const getProductById = useCallback(
     async (id: string, token: string): Promise<Product | null> => {
       try {

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import type { CategoryFormData } from "../contexts/CategoriesContext";
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
+import type { CategoryFormData } from "../../contexts/CategoriesContext";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
 
 export function AdminCategoryFormPage() {
   const { id } = useParams<{ id: string }>();

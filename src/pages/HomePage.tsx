@@ -114,9 +114,9 @@ export function HomePage() {
                 <Link
                   key={category.id}
                   to={`/categoria/${category.slug}`}
-                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white p-4 text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
+                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
                 >
-                  <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-20 md:w-20">
+                  <span className="flex h-40 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-30 md:w-full">
                     {category.image ? (
                       <img
                         src={category.image}
@@ -128,7 +128,7 @@ export function HomePage() {
                     )}
                   </span>
 
-                  <span className="text-sm font-semibold leading-5 text-[#071a2f]">
+                  <span className="text-sm font-semibold leading-5 text-[#071a2f] my-5">
                     {category.name}
                   </span>
                 </Link>

@@ -7,9 +7,9 @@ import SearchIcon from "../../assets/Icons/searchIcon.svg?react";
 import { useAuth } from "../../contexts/useAuth";
 
 import { Icon } from "../Icon";
-import { InputText } from "../InputText";
 import { Logo } from "../Logo";
 import { Menu } from "../Menu";
+import { SearchBar } from "../SearchBar";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -129,14 +129,7 @@ export function Header() {
           <div className="hidden w-full max-w-[58%] items-center justify-end gap-4 md:flex">
             {/* Pesquisa */}
 
-            <div className="w-full">
-              <InputText
-                className="h-12 w-full min-w-0"
-                iconPosition="right"
-                placeholder="Buscar produtos, categorias ou artigos"
-                icon={<Icon svg={SearchIcon} />}
-              />
-            </div>
+            <SearchBar className="w-full" />
 
             {/* ==================================================
                 AUTENTICAÇÃO
@@ -188,14 +181,7 @@ export function Header() {
             ref={searchRef}
             className="mt-10 flex items-center gap-2 md:hidden"
           >
-            <div className="flex-1">
-              <InputText
-                className="w-full"
-                iconPosition="right"
-                placeholder="Buscar produtos, categorias ou artigos"
-                icon={<Icon svg={SearchIcon} />}
-              />
-            </div>
+            <SearchBar className="flex-1" />
 
             <button
               type="button"
@@ -246,16 +232,13 @@ export function Header() {
               </div>
 
               {/* ==================================================
-                  PESQUISA MOBILE
+                  PESQUISA MOBILE DO MENU
               ================================================== */}
 
-              <div className="mb-5 flex items-center gap-3 rounded-xl bg-white/5 px-3 py-2">
-                <span className="text-lg">⌕</span>
-
-                <input
-                  type="text"
-                  placeholder="Buscar"
-                  className="w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/60"
+              <div className="mb-5">
+                <SearchBar
+                  className="[&_input]:border-white/10 [&_input]:bg-white/5 [&_input]:text-white [&_input]:placeholder:text-white/60"
+                  onSearch={() => setIsMenuOpen(false)}
                 />
               </div>
 
@@ -296,7 +279,7 @@ export function Header() {
 
               {/* ==================================================
                   MENU DINÂMICO
-                  
+
                   Agora categorias e subcategorias vêm da API.
               ================================================== */}
 
