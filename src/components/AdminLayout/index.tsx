@@ -23,13 +23,17 @@ const menuItems = [
     label: "Marketplaces",
     href: "/admin/marketplaces",
   },
+  {
+    label: "Blog",
+    href: "/admin/blog",
+  },
 ];
 
 export function AdminLayout() {
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#071a2f]">
+      {" "}
       <HeaderAdmin />
-
       <div className="flex min-h-[calc(100vh-72px)]">
         <aside className="hidden w-64 shrink-0 border-r border-[#e7edf5] bg-white lg:block">
           <div className="sticky top-0 p-4">

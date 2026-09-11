@@ -211,7 +211,7 @@ export function Header() {
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
-                    W
+                    WM
                   </div>
 
                   <div>

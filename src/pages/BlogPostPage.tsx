@@ -1,5 +1,5 @@
 import DOMPurify from "dompurify";
-import { useEffect, useState } from "react";
+import { createElement, type ReactNode, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { BlogPost } from "../contexts/BlogContext";
 import { useBlog } from "../contexts/useBlog";
@@ -22,14 +22,14 @@ function normalizeContent(value: string) {
     .replaceAll("<div></div>", "")
     .trim();
 }
-function renderContentHtml(value: string) {
+function renderContent(value: string): ReactNode[] {
   const normalizedContent = normalizeContent(value);
 
   if (!normalizedContent) {
-    return "";
+    return [];
   }
 
-  return DOMPurify.sanitize(normalizedContent, {
+  const sanitizedContent = DOMPurify.sanitize(normalizedContent, {
     ALLOWED_TAGS: [
       "p",
       "br",
@@ -50,6 +50,43 @@ function renderContentHtml(value: string) {
     ],
     ALLOWED_ATTR: ["href", "target", "rel"],
   });
+
+  const document = new DOMParser().parseFromString(
+    sanitizedContent,
+    "text/html",
+  );
+
+  function renderNode(node: ChildNode, key: string): ReactNode {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+
+    if (!(node instanceof HTMLElement)) {
+      return null;
+    }
+
+    const props: Record<string, string> = {};
+
+    for (const attribute of ["href", "target", "rel"]) {
+      const value = node.getAttribute(attribute);
+
+      if (value) {
+        props[attribute] = value;
+      }
+    }
+
+    return createElement(
+      node.tagName.toLowerCase(),
+      { ...props, key },
+      ...Array.from(node.childNodes).map((child, index) =>
+        renderNode(child, `${key}-${index}`),
+      ),
+    );
+  }
+
+  return Array.from(document.body.childNodes).map((node, index) =>
+    renderNode(node, String(index)),
+  );
 }
 
 function formatPrice(price: number | string, currency?: string | null) {
@@ -179,7 +216,7 @@ export function BlogPostPage() {
           </p>
           <Link
             to="/blog"
-            className="mt-6 inline-flex rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="mt-6 inline-flex rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
           >
             Voltar para o Blog
           </Link>
@@ -188,7 +225,7 @@ export function BlogPostPage() {
     );
   }
 
-  const contentHtml = renderContentHtml(post.content);
+  const contentNodes = renderContent(post.content);
 
   return (
     <main className="bg-gray-50">
@@ -199,14 +236,14 @@ export function BlogPostPage() {
           {" "}
           <Link
             to="/blog"
-            className="inline-flex items-center text-sm font-medium text-blue-600 transition hover:text-blue-800"
+            className="inline-flex items-center text-sm font-medium text-blue transition hover:text-navy"
           >
             ← Voltar para o Blog{" "}
           </Link>{" "}
         </div>
         {post.category && (
           <div className="mb-4">
-            <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+            <span className="inline-flex rounded-full bg-green px-3 py-1 text-xs font-semibold text-white">
               {post.category.name}
             </span>
           </div>
@@ -217,7 +254,7 @@ export function BlogPostPage() {
           </h1>
 
           {post.excerpt && (
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-600 sm:text-xl">
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-500 sm:text-xl">
               {post.excerpt}
             </p>
           )}
@@ -253,7 +290,7 @@ export function BlogPostPage() {
           </div>
         )}
         <div className="mt-10 rounded-2xl bg-white p-5 shadow-sm sm:p-8 lg:p-10">
-          {contentHtml ? (
+          {contentNodes.length > 0 ? (
             <div
               className="
             text-base
@@ -261,14 +298,14 @@ export function BlogPostPage() {
             text-gray-700
             sm:text-lg
             [&_a]:font-medium
-            [&_a]:text-blue-600
+            [&_a]:text-blue
             [&_a]:underline
             [&_a]:underline-offset-2
-            [&_a:hover]:text-blue-800
+            [&_a:hover]:text-navy
             [&_blockquote]:my-6
             [&_blockquote]:border-l-4
-            [&_blockquote]:border-blue-500
-            [&_blockquote]:bg-blue-50
+            [&_blockquote]:border-blue
+            [&_blockquote]:bg-blue
             [&_blockquote]:px-5
             [&_blockquote]:py-4
             [&_blockquote]:italic
@@ -294,7 +331,7 @@ export function BlogPostPage() {
             [&_h4]:font-bold
             [&_h4]:text-gray-900
             [&_hr]:my-8
-            [&_hr]:border-gray-200
+            [&_hr]:border-gray-100
             [&_i]:italic
             [&_i]:text-gray-700
             [&_li]:my-1
@@ -311,8 +348,9 @@ export function BlogPostPage() {
             [&_ul]:space-y-1
             [&_ul]:pl-6            
           "
-              dangerouslySetInnerHTML={{ __html: contentHtml }}
-            />
+            >
+              {contentNodes}
+            </div>
           ) : (
             <p className="text-gray-500">
               Este artigo ainda não possui conteúdo.
@@ -338,7 +376,7 @@ export function BlogPostPage() {
                 return (
                   <article
                     key={item.id}
-                    className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50 transition hover:-translate-y-0.5 shadow-2xl"
                   >
                     <div className="h-32 overflow-hidden bg-gray-100">
                       {product.imageUrl ? (
@@ -373,7 +411,7 @@ export function BlogPostPage() {
                         {product.originalPrice &&
                           Number(product.originalPrice) >
                             Number(product.price) && (
-                            <p className="text-xs text-gray-400 line-through">
+                            <p className="text-xs text-gray-500 line-through">
                               {formatPrice(
                                 product.originalPrice,
                                 product.currency,
@@ -386,7 +424,7 @@ export function BlogPostPage() {
                             href={product.affiliateUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-blue px-3 py-2 text-xs font-semibold text-white transition hover:bg-navy"
                           >
                             Ver produto
                           </a>
