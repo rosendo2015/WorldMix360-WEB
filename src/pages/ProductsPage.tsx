@@ -6,7 +6,7 @@ import type { Product } from "../contexts/ProductsContext";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 12;
 
 type Pagination = {
   page: number;
