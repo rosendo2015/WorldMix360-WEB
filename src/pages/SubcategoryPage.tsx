@@ -372,7 +372,7 @@ export function SubcategoryPage() {
             <div className="mt-8 flex justify-center">
               <Link
                 to={`/categoria/${category.slug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                className="inline-flex items-center gap-2 rounded-full border border-blue bg-white px-5 py-3 text-sm font-semibold text-navy transition hover:border-blue hover:text-navy/20"
               >
                 Voltar para a categoria
                 <FiArrowRight />

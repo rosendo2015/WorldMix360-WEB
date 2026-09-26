@@ -1,4 +1,4 @@
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -54,25 +54,33 @@ export function Banner() {
   return (
     <section
       aria-label="Destaques WorldMix360"
-      className="w-full overflow-hidden bg-navy"
+      className="relative w-full overflow-hidden bg-navy pb-40 md:pb-60"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5500, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
         loop
-        className="home-banner h-[500px] md:h-[600px]"
+        className="home-banner h-[450px] md:h-[520px]"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.title}>
-            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-blue">
-              <img
-                src={banner.image}
-                alt={banner.imageAlt}
-                className={`absolute z-0 h-auto ${banner.imageClassName}`}
-              />
+            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-[#071a2f]">
+              {/* Container da Imagem com Gradiente de Desvanecimento na parte inferior */}
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={banner.image}
+                  alt={banner.imageAlt}
+                  className={`absolute h-auto ${banner.imageClassName}`}
+                />
+                {/* Gradiente vertical que esmaece a imagem do banner para a cor do fundo do slide no rodapé */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#071a2f] via-transparent to-transparent" />
+              </div>
+
+              {/* Gradiente horizontal para garantir a legibilidade do texto à esquerda */}
               <div className="absolute inset-0 z-10 bg-gradient-to-r from-navy via-navy/80 to-transparent" />
+
               <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
                 <div className="max-w-2xl">
                   <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9ad7ff]">
@@ -100,6 +108,9 @@ export function Banner() {
           </SwiperSlide>
         ))}
       </Swiper>
+
+      {/* Camada do degradê esmaecendo no finalzinho do fundo estendido (fundo da página) */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-75 bg-gradient-to-b from-transparent to-[#f7f9fc]" />
     </section>
   );
 }

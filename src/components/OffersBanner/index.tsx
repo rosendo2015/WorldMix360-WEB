@@ -1,4 +1,4 @@
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -26,7 +26,7 @@ export function OffersBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}

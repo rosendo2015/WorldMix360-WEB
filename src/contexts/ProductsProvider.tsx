@@ -69,6 +69,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         subcategoryId?: string;
         marketplaceId?: string;
         featured?: boolean;
+        bestSeller?: boolean;
         active?: boolean;
         available?: boolean;
       },
@@ -93,6 +94,10 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
         if (filters?.featured !== undefined) {
           params.set("featured", String(filters.featured));
+        }
+
+        if (filters?.bestSeller !== undefined) {
+          params.set("bestSeller", String(filters.bestSeller));
         }
 
         if (filters?.active !== undefined) {

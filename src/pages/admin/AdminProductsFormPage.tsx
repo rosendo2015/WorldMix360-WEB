@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { MercadoLivreOfferModal } from "../../components/admin/products/MercadoLivreOfferModal";
 import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
 import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
 import { ProductGallery } from "../../components/admin/products/ProductGallery";
@@ -13,7 +14,27 @@ import { useAuth } from "../../contexts/useAuth";
 import { useMarketplaces } from "../../contexts/useMarketplaces";
 import { useProducts } from "../../contexts/useProducts";
 import { useSubcategories } from "../../contexts/useSubcategories";
+import {
+  analyzeMercadoLivreProduct,
+  importMercadoLivreProduct,
+  type MercadoLivreAnalyzeResult,
+  type MercadoLivreOffer,
+  updateMercadoLivreProductOffer,
+} from "../../services/mercadoLivreService";
 import { parseCurrencyBRL } from "../../utils/formatCurrency";
+
+const MERCADO_LIVRE_MARKETPLACE_ID = "c255826b-2073-4c76-8966-b87f22403090";
+
+type ProductMarketplaceLink = {
+  id?: string;
+  marketplaceId?: string | null;
+  externalLink?: string | null;
+  affiliateUrl?: string | null;
+};
+
+type ProductWithMarketplaceLinks = {
+  marketplaceProducts?: ProductMarketplaceLink[] | null;
+};
 
 export function AdminProductsFormPage() {
   const { id } = useParams();
@@ -46,11 +67,18 @@ export function AdminProductsFormPage() {
   const [reviewsCount, setReviewsCount] = useState("0");
 
   const [affiliateUrl, setAffiliateUrl] = useState("");
+  const [externalLink, setExternalLink] = useState("");
 
   const [subcategoryId, setSubcategoryId] = useState("");
   const [marketplaceId, setMarketplaceId] = useState("");
 
+  // Mantido: comportamento original do featured.
   const [featured, setFeatured] = useState(false);
+
+  // Novas opções independentes.
+  const [destaque, setDestaque] = useState(false);
+  const [bestSeller, setBestSeller] = useState(false);
+
   const [available, setAvailable] = useState(true);
   const [active, setActive] = useState(true);
 
@@ -60,6 +88,13 @@ export function AdminProductsFormPage() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
+
+  const [mercadoLivreAnalysis, setMercadoLivreAnalysis] =
+    useState<MercadoLivreAnalyzeResult | null>(null);
+
+  const [mercadoLivreModalOpen, setMercadoLivreModalOpen] = useState(false);
+
+  const [mercadoLivreImporting, setMercadoLivreImporting] = useState(false);
 
   useEffect(() => {
     void fetchSubcategories();
@@ -143,7 +178,29 @@ export function AdminProductsFormPage() {
         setSubcategoryId(product.subcategoryId ?? "");
         setMarketplaceId(product.marketplaceId ?? "");
 
+        const productWithMarketplaceLinks = product as typeof product &
+          ProductWithMarketplaceLinks;
+
+        const marketplaceProducts =
+          productWithMarketplaceLinks.marketplaceProducts;
+
+        if (Array.isArray(marketplaceProducts)) {
+          const mercadoLivreProduct = marketplaceProducts.find(
+            (marketplaceProduct) =>
+              marketplaceProduct.marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID,
+          );
+
+          const currentExternalLink = mercadoLivreProduct?.externalLink ?? "";
+
+          setExternalLink(currentExternalLink);
+        } else {
+          setExternalLink("");
+        }
+
+        // featured permanece independente de destaque e bestSeller.
         setFeatured(Boolean(product.featured));
+        setDestaque(Boolean(product.destaque));
+        setBestSeller(Boolean(product.bestSeller));
         setAvailable(Boolean(product.available));
         setActive(Boolean(product.active));
 
@@ -178,10 +235,10 @@ export function AdminProductsFormPage() {
     ]);
   }
 
-  function handleGalleryImageChange(id: string, value: string) {
+  function handleGalleryImageChange(imageId: string, value: string) {
     setGalleryImages((currentImages) =>
       currentImages.map((image) =>
-        image.id === id
+        image.id === imageId
           ? {
               ...image,
               imageUrl: value,
@@ -191,15 +248,376 @@ export function AdminProductsFormPage() {
     );
   }
 
-  function handleRemoveGalleryImage(id: string) {
+  function handleRemoveGalleryImage(imageId: string) {
     setGalleryImages((currentImages) =>
       currentImages
-        .filter((image) => image.id !== id)
+        .filter((image) => image.id !== imageId)
         .map((image, index) => ({
           ...image,
           sortOrder: index,
         })),
     );
+  }
+
+  async function handleMercadoLivreImport(selectedOffer: MercadoLivreOffer) {
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!mercadoLivreAnalysis) {
+      setError("A análise do Mercado Livre não está disponível.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria antes de importar o produto.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado antes de importar o produto.");
+      return;
+    }
+
+    if (!externalLink.trim()) {
+      setError(
+        "Informe o link de referência do Mercado Livre antes de importar.",
+      );
+      return;
+    }
+
+    setMercadoLivreImporting(true);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const cleanDescription =
+        description.trim() === "<p></p>"
+          ? undefined
+          : description.trim() || undefined;
+
+      const parsedManualPrice = price.trim()
+        ? parseCurrencyBRL(price)
+        : undefined;
+
+      const parsedManualOriginalPrice = originalPrice.trim()
+        ? parseCurrencyBRL(originalPrice)
+        : undefined;
+
+      const parsedManualRating = rating.trim() ? Number(rating) : undefined;
+
+      const parsedManualReviewsCount = Number(reviewsCount);
+
+      const cleanGalleryImages = galleryImages
+        .map((image) => ({
+          imageUrl: image.imageUrl.trim(),
+          sortOrder: image.sortOrder,
+        }))
+        .filter((image) => image.imageUrl);
+
+      await importMercadoLivreProduct(
+        {
+          affiliateUrl: affiliateUrl.trim(),
+          externalLink: externalLink.trim(),
+
+          catalogProductId: mercadoLivreAnalysis.catalogProductId,
+
+          itemId: selectedOffer.itemId,
+          sellerId: selectedOffer.sellerId,
+
+          subcategoryId,
+
+          title: title.trim() || undefined,
+          description: cleanDescription,
+          shortDescription: shortDescription.trim() || undefined,
+          imageUrl: imageUrl.trim() || undefined,
+
+          images:
+            cleanGalleryImages.length > 0 ? cleanGalleryImages : undefined,
+
+          price:
+            parsedManualPrice !== undefined &&
+            Number.isFinite(parsedManualPrice) &&
+            parsedManualPrice >= 0
+              ? parsedManualPrice
+              : undefined,
+
+          originalPrice:
+            parsedManualOriginalPrice !== undefined &&
+            Number.isFinite(parsedManualOriginalPrice) &&
+            parsedManualOriginalPrice >= 0
+              ? parsedManualOriginalPrice
+              : undefined,
+
+          currency: currency.trim().toUpperCase() || undefined,
+
+          rating:
+            parsedManualRating !== undefined &&
+            Number.isFinite(parsedManualRating) &&
+            parsedManualRating >= 0 &&
+            parsedManualRating <= 5
+              ? parsedManualRating
+              : undefined,
+
+          reviewsCount:
+            Number.isInteger(parsedManualReviewsCount) &&
+            parsedManualReviewsCount >= 0
+              ? parsedManualReviewsCount
+              : undefined,
+
+          // Os três campos são independentes.
+          featured,
+          destaque,
+          bestSeller,
+          available,
+          active,
+
+          seoTitle: seoTitle.trim() || undefined,
+
+          seoDescription: seoDescription.trim() || undefined,
+        },
+        token,
+      );
+
+      setMercadoLivreModalOpen(false);
+      setMercadoLivreAnalysis(null);
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível importar o produto do Mercado Livre.",
+      );
+    } finally {
+      setMercadoLivreImporting(false);
+      setLoading(false);
+    }
+  }
+
+  function handleMercadoLivreModalCancel() {
+    if (mercadoLivreImporting) {
+      return;
+    }
+
+    setMercadoLivreModalOpen(false);
+    setMercadoLivreAnalysis(null);
+    setLoading(false);
+  }
+
+  async function handleMercadoLivreModalConfirm(
+    selectedOffer: MercadoLivreOffer | null,
+  ) {
+    if (!selectedOffer) {
+      handleMercadoLivreModalCancel();
+      return;
+    }
+
+    if (isEditing && id) {
+      await saveEditedProductWithMercadoLivreOffer(selectedOffer);
+      return;
+    }
+
+    await handleMercadoLivreImport(selectedOffer);
+  }
+
+  async function saveEditedProductWithMercadoLivreOffer(
+    selectedOffer: MercadoLivreOffer,
+  ) {
+    if (!token || !id) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!mercadoLivreAnalysis) {
+      setError("A análise do Mercado Livre não está disponível.");
+      return;
+    }
+
+    setMercadoLivreImporting(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const selectedOfferPrice = Number(selectedOffer.price);
+
+      if (!Number.isFinite(selectedOfferPrice) || selectedOfferPrice < 0) {
+        throw new Error("O preço da oferta selecionada é inválido.");
+      }
+
+      const selectedOfferOriginalPrice =
+        selectedOffer.originalPrice !== null &&
+        selectedOffer.originalPrice !== undefined
+          ? Number(selectedOffer.originalPrice)
+          : null;
+
+      if (
+        selectedOfferOriginalPrice !== null &&
+        (!Number.isFinite(selectedOfferOriginalPrice) ||
+          selectedOfferOriginalPrice < 0)
+      ) {
+        throw new Error("O preço original da oferta selecionada é inválido.");
+      }
+
+      await updateMercadoLivreProductOffer(
+        id,
+        {
+          externalLink: externalLink.trim(),
+          catalogProductId: mercadoLivreAnalysis.catalogProductId,
+          itemId: selectedOffer.itemId,
+          sellerId: selectedOffer.sellerId,
+        },
+        token,
+      );
+
+      await saveNormalProductUpdate(
+        id,
+        token,
+        selectedOfferPrice,
+        selectedOfferOriginalPrice,
+      );
+
+      setPrice(
+        selectedOfferPrice.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      );
+
+      if (selectedOfferOriginalPrice !== null) {
+        setOriginalPrice(
+          selectedOfferOriginalPrice.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+        );
+      } else {
+        setOriginalPrice("");
+      }
+
+      setMercadoLivreModalOpen(false);
+      setMercadoLivreAnalysis(null);
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível atualizar a oferta do Mercado Livre.",
+      );
+    } finally {
+      setMercadoLivreImporting(false);
+      setLoading(false);
+    }
+  }
+
+  async function saveNormalProductUpdate(
+    productId: string,
+    authToken: string,
+    mercadoLivrePrice?: number,
+    mercadoLivreOriginalPrice?: number | null,
+  ) {
+    const parsedPrice =
+      mercadoLivrePrice !== undefined
+        ? mercadoLivrePrice
+        : price.trim()
+          ? parseCurrencyBRL(price)
+          : undefined;
+
+    if (
+      parsedPrice === undefined ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice < 0
+    ) {
+      throw new Error("Informe um preço válido.");
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (mercadoLivreOriginalPrice !== undefined) {
+      if (
+        mercadoLivreOriginalPrice !== null &&
+        Number.isFinite(mercadoLivreOriginalPrice) &&
+        mercadoLivreOriginalPrice >= 0
+      ) {
+        parsedOriginalPrice = mercadoLivreOriginalPrice;
+      }
+    } else if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        throw new Error("Informe um preço original válido.");
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        throw new Error("A avaliação deve estar entre 0 e 5.");
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      throw new Error("A quantidade de avaliações deve ser um número inteiro.");
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    const cleanDescription =
+      description.trim() === "<p></p>"
+        ? undefined
+        : description.trim() || undefined;
+
+    const productData = {
+      title: title.trim(),
+      description: cleanDescription,
+      shortDescription: shortDescription.trim() || undefined,
+
+      imageUrl: imageUrl.trim(),
+
+      images: cleanGalleryImages,
+
+      price: parsedPrice,
+
+      originalPrice: parsedOriginalPrice,
+
+      currency: currency.trim().toUpperCase() || "BRL",
+
+      rating: parsedRating,
+      reviewsCount: parsedReviewsCount,
+
+      affiliateUrl: affiliateUrl.trim(),
+
+      subcategoryId,
+      marketplaceId,
+
+      featured,
+      destaque,
+      bestSeller,
+      available,
+      active,
+
+      seoTitle: seoTitle.trim() || undefined,
+
+      seoDescription: seoDescription.trim() || undefined,
+    };
+
+    await updateProduct(productId, productData, authToken);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -209,16 +627,6 @@ export function AdminProductsFormPage() {
 
     if (!token) {
       setError("Sua sessão não está autenticada.");
-      return;
-    }
-
-    if (!title.trim()) {
-      setError("Informe o título do produto.");
-      return;
-    }
-
-    if (!imageUrl.trim()) {
-      setError("Informe a URL da imagem.");
       return;
     }
 
@@ -237,9 +645,218 @@ export function AdminProductsFormPage() {
       return;
     }
 
-    const parsedPrice = parseCurrencyBRL(price);
+    const isMercadoLivre = marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID;
 
-    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+    /*
+     * ============================================================
+     * NOVO PRODUTO DO MERCADO LIVRE
+     * ============================================================
+     */
+    if (!isEditing && isMercadoLivre) {
+      if (!externalLink.trim()) {
+        setError("Informe o link de referência do Mercado Livre.");
+        return;
+      }
+
+      try {
+        new URL(affiliateUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o link de afiliado.");
+        return;
+      }
+
+      try {
+        new URL(externalLink.trim());
+      } catch {
+        setError(
+          "Informe uma URL válida para o link de referência do Mercado Livre.",
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const analysis = await analyzeMercadoLivreProduct(
+          externalLink.trim(),
+          token,
+        );
+
+        if (analysis.noOffersFound || analysis.offers.length === 0) {
+          setError(
+            "Nenhuma oferta foi encontrada para este produto no Mercado Livre.",
+          );
+          return;
+        }
+
+        setMercadoLivreAnalysis(analysis);
+
+        if (analysis.requiresOfferSelection || analysis.offers.length > 1) {
+          setMercadoLivreModalOpen(true);
+          return;
+        }
+
+        const selectedOffer =
+          analysis.selectedOffer ?? analysis.offers[0] ?? null;
+
+        if (!selectedOffer) {
+          setError(
+            "Não foi possível identificar uma oferta válida do Mercado Livre.",
+          );
+          return;
+        }
+
+        await handleMercadoLivreImport(selectedOffer);
+
+        return;
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Não foi possível analisar o produto do Mercado Livre.",
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    /*
+     * ============================================================
+     * EDIÇÃO DE PRODUTO DO MERCADO LIVRE
+     * ============================================================
+     *
+     * Toda atualização de produto do Mercado Livre:
+     *   -> exige externalLink;
+     *   -> analisa novamente o link;
+     *   -> busca as ofertas;
+     *   -> 0 ofertas: não salva;
+     *   -> 1 oferta: atualiza automaticamente;
+     *   -> várias ofertas: abre o modal para seleção.
+     *
+     * O externalLink atual é preservado mesmo quando o usuário
+     * não alterou o campo.
+     */
+    if (isEditing && isMercadoLivre) {
+      if (!externalLink.trim()) {
+        setError(
+          "O link de referência do Mercado Livre é obrigatório para atualizar este produto.",
+        );
+        return;
+      }
+
+      try {
+        new URL(externalLink.trim());
+      } catch {
+        setError(
+          "Informe uma URL válida para o link de referência do Mercado Livre.",
+        );
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        /*
+         * Sempre analisa novamente o produto no Mercado Livre,
+         * mesmo que o externalLink não tenha sido alterado.
+         */
+        const analysis = await analyzeMercadoLivreProduct(
+          externalLink.trim(),
+          token,
+        );
+
+        if (analysis.noOffersFound || analysis.offers.length === 0) {
+          setError(
+            "Nenhuma oferta foi encontrada para este produto no Mercado Livre. A atualização foi cancelada.",
+          );
+          return;
+        }
+
+        setMercadoLivreAnalysis(analysis);
+
+        /*
+         * Mais de uma oferta:
+         * deixa o usuário escolher no modal.
+         */
+        if (analysis.requiresOfferSelection || analysis.offers.length > 1) {
+          setMercadoLivreModalOpen(true);
+          return;
+        }
+
+        /*
+         * Apenas uma oferta:
+         * usa automaticamente.
+         */
+        const selectedOffer =
+          analysis.selectedOffer ?? analysis.offers[0] ?? null;
+
+        if (!selectedOffer) {
+          setError(
+            "Não foi possível identificar uma oferta válida do Mercado Livre.",
+          );
+          return;
+        }
+
+        await updateMercadoLivreProductOffer(
+          id!,
+          {
+            externalLink: externalLink.trim(),
+            catalogProductId: analysis.catalogProductId,
+            itemId: selectedOffer.itemId,
+            sellerId: selectedOffer.sellerId,
+          },
+          token,
+        );
+
+        /*
+         * Depois que a oferta foi validada e vinculada,
+         * salva os demais dados normalmente.
+         */
+        await saveNormalProductUpdate(id!, token);
+
+        setMercadoLivreAnalysis(null);
+        setMercadoLivreModalOpen(false);
+
+        navigate("/admin/products");
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Não foi possível analisar e atualizar a oferta do Mercado Livre.",
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    /*
+     * ============================================================
+     * CADASTRO / EDIÇÃO NORMAL
+     * ============================================================
+     */
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    const parsedPrice = price.trim() ? parseCurrencyBRL(price) : undefined;
+
+    if (
+      parsedPrice === undefined ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice < 0
+    ) {
       setError("Informe um preço válido.");
       return;
     }
@@ -311,42 +928,49 @@ export function AdminProductsFormPage() {
       }
     }
 
+    const cleanDescription =
+      description.trim() === "<p></p>"
+        ? undefined
+        : description.trim() || undefined;
+
+    const productData = {
+      title: title.trim(),
+      description: cleanDescription,
+      shortDescription: shortDescription.trim() || undefined,
+
+      imageUrl: imageUrl.trim(),
+
+      images: cleanGalleryImages,
+
+      price: parsedPrice,
+
+      originalPrice: parsedOriginalPrice,
+
+      currency: currency.trim().toUpperCase() || "BRL",
+
+      rating: parsedRating,
+      reviewsCount: parsedReviewsCount,
+
+      affiliateUrl: affiliateUrl.trim(),
+
+      subcategoryId,
+      marketplaceId,
+
+      // Mantidos os três campos independentes.
+      featured,
+      destaque,
+      bestSeller,
+      available,
+      active,
+
+      seoTitle: seoTitle.trim() || undefined,
+
+      seoDescription: seoDescription.trim() || undefined,
+    };
+
     setLoading(true);
 
     try {
-      const cleanDescription =
-        description === "<p></p>" ? undefined : description.trim();
-
-      const productData = {
-        title: title.trim(),
-        description: cleanDescription,
-        shortDescription: shortDescription.trim() || undefined,
-
-        imageUrl: imageUrl.trim(),
-
-        images: cleanGalleryImages,
-
-        price: parsedPrice,
-        originalPrice: parsedOriginalPrice,
-
-        currency: currency.trim().toUpperCase() || "BRL",
-
-        rating: parsedRating,
-        reviewsCount: parsedReviewsCount,
-
-        affiliateUrl: affiliateUrl.trim(),
-
-        subcategoryId,
-        marketplaceId,
-
-        featured,
-        available,
-        active,
-
-        seoTitle: seoTitle.trim() || undefined,
-        seoDescription: seoDescription.trim() || undefined,
-      };
-
       if (isEditing && id) {
         await updateProduct(id, productData, token);
       } else {
@@ -450,18 +1074,25 @@ export function AdminProductsFormPage() {
           subcategoryId={subcategoryId}
           marketplaceId={marketplaceId}
           affiliateUrl={affiliateUrl}
+          externalLink={externalLink}
           loading={loading}
+          isEditing={isEditing}
           onSubcategoryChange={setSubcategoryId}
           onMarketplaceChange={setMarketplaceId}
           onAffiliateUrlChange={setAffiliateUrl}
+          onExternalLinkChange={setExternalLink}
         />
 
         <ProductStatus
           featured={featured}
+          destaque={destaque}
+          bestSeller={bestSeller}
           available={available}
           active={active}
           loading={loading}
           onFeaturedChange={setFeatured}
+          onDestaqueChange={setDestaque}
+          onBestSellerChange={setBestSeller}
           onAvailableChange={setAvailable}
           onActiveChange={setActive}
         />
@@ -473,9 +1104,28 @@ export function AdminProductsFormPage() {
           onSeoTitleChange={setSeoTitle}
           onSeoDescriptionChange={setSeoDescription}
         />
-
+        {error && (
+          <div className="mb-6 rounded-lg bg-danger-light px-4 py-3 text-sm text-danger">
+            {error}
+          </div>
+        )}
         <ProductFormActions loading={loading} isEditing={isEditing} />
       </form>
+
+      {mercadoLivreAnalysis && (
+        <MercadoLivreOfferModal
+          open={mercadoLivreModalOpen}
+          title={
+            mercadoLivreAnalysis.title || "Produto do catálogo do Mercado Livre"
+          }
+          offers={mercadoLivreAnalysis.offers}
+          loading={mercadoLivreImporting}
+          onCancel={handleMercadoLivreModalCancel}
+          onConfirm={(selectedOffer) =>
+            void handleMercadoLivreModalConfirm(selectedOffer)
+          }
+        />
+      )}
     </section>
   );
 }

@@ -92,6 +92,8 @@ export default defineConfig([
 
 ```tsx
 import { AuthProvider } from "./contexts/AuthProvider";
+import { BlogCategoriesProvider } from "./contexts/BlogCategoriesProvider";
+import { BlogProvider } from "./contexts/BlogProvider";
 import { CategoriesProvider } from "./contexts/CategoriesProvider";
 import { MarketplacesProvider } from "./contexts/MarketplacesProvider";
 import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
@@ -107,7 +109,11 @@ export function App() {
           <SubcategoriesProvider>
             <MarketplacesProvider>
               <ProductsProvider>
-                <AppRoutes />
+                <BlogCategoriesProvider>
+                  <BlogProvider>
+                    <AppRoutes />
+                  </BlogProvider>
+                </BlogCategoriesProvider>
               </ProductsProvider>
             </MarketplacesProvider>
           </SubcategoriesProvider>
@@ -119,10 +125,249 @@ export function App() {
 
 ```
 
+## src\components\admin\products\MercadoLivreOfferModal.tsx
+
+```tsx
+import { useState } from "react";
+
+import type { MercadoLivreOffer } from "../../../services/mercadoLivreService";
+
+type MercadoLivreOfferModalProps = {
+  open: boolean;
+  title: string;
+  offers: MercadoLivreOffer[];
+  loading?: boolean;
+  onCancel: () => void;
+  onConfirm: (offer: MercadoLivreOffer | null) => void;
+};
+
+function getOfferKey(offer: MercadoLivreOffer) {
+  return `${offer.itemId}-${offer.sellerId}`;
+}
+
+export function MercadoLivreOfferModal({
+  open,
+  title,
+  offers,
+  loading = false,
+  onCancel,
+  onConfirm,
+}: MercadoLivreOfferModalProps) {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  if (!open) {
+    return null;
+  }
+
+  const selectedOffer =
+    offers.find((offer) => getOfferKey(offer) === selectedKey) ?? null;
+
+  function handleCancel() {
+    setSelectedKey(null);
+    onCancel();
+  }
+
+  function handleConfirm() {
+    /*
+     * Não limpamos a seleção aqui.
+     *
+     * O componente pai é responsável por fechar o modal depois
+     * que o cadastro for concluído. Se ocorrer algum erro durante
+     * o cadastro, a oferta continua selecionada e o usuário pode
+     * tentar novamente.
+     */
+    onConfirm(selectedOffer);
+  }
+
+  function handleSelect(value: string) {
+    setSelectedKey(value);
+  }
+
+  function handleSelectNone() {
+    setSelectedKey("none");
+  }
+
+  const isNoneSelected = selectedKey === "none";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      role="presentation"
+    >
+      {" "}
+      <div
+        className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mercado-livre-offer-modal-title"
+      >
+        {" "}
+        <div className="border-b border-gray-200 px-6 py-5">
+          {" "}
+          <h2
+            id="mercado-livre-offer-modal-title"
+            className="text-xl font-semibold text-gray-900"
+          >
+            Selecionar oferta{" "}
+          </h2>
+          ```
+          <p className="mt-1 text-sm text-gray-600">{title}</p>
+          <p className="mt-2 text-sm text-gray-500">
+            Encontramos {offers.length} ofertas para este produto. Selecione
+            exatamente a oferta que deseja cadastrar.
+          </p>
+        </div>
+        <div className="max-h-[55vh] overflow-y-auto p-6">
+          <div className="space-y-3">
+            {offers.map((offer) => {
+              const offerKey = getOfferKey(offer);
+              const isSelected = selectedKey === offerKey;
+
+              return (
+                <label
+                  key={offerKey}
+                  className={`block cursor-pointer rounded-xl border p-4 transition ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="radio"
+                      name="mercadoLivreOffer"
+                      value={offerKey}
+                      checked={isSelected}
+                      onChange={() => handleSelect(offerKey)}
+                      disabled={loading}
+                      className="mt-1 h-4 w-4"
+                    />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            R$ {offer.price.toFixed(2).replace(".", ",")}
+                          </p>
+
+                          {offer.originalPrice !== null &&
+                            offer.originalPrice !== undefined && (
+                              <p className="text-sm text-gray-500 line-through">
+                                R${" "}
+                                {offer.originalPrice
+                                  .toFixed(2)
+                                  .replace(".", ",")}
+                              </p>
+                            )}
+                        </div>
+
+                        {offer.freeShipping && (
+                          <span className="inline-flex w-fit bg-green/20 rounded-full px-2.5 py-1 text-xs font-medium text-green">
+                            Frete grátis
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-500 sm:grid-cols-2">
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Item:
+                          </span>{" "}
+                          {offer.itemId}
+                        </div>
+
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Vendedor:
+                          </span>{" "}
+                          {offer.sellerId}
+                        </div>
+
+                        {offer.condition && (
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Condição:
+                            </span>{" "}
+                            {offer.condition}
+                          </div>
+                        )}
+
+                        {offer.listingTypeId && (
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Anúncio:
+                            </span>{" "}
+                            {offer.listingTypeId}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
+
+            <label
+              className={`block cursor-pointer rounded-xl border p-4 transition ${
+                isNoneSelected
+                  ? "border-gray-500 bg-gray-100"
+                  : "border-gray-100 hover:border-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="radio"
+                  name="mercadoLivreOffer"
+                  value="none"
+                  checked={isNoneSelected}
+                  onChange={handleSelectNone}
+                  disabled={loading}
+                  className="mt-1 h-4 w-4"
+                />
+
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Nenhum dos valores
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    Não cadastrar nenhuma das ofertas apresentadas.
+                  </p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div className="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={loading}
+            className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={loading || selectedKey === null}
+            className="rounded-lg bg-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Cadastrando..." : "Confirmar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
 ## src\components\admin\products\ProductBasicInfo.tsx
 
 ```tsx
-import { RichTextEditor } from "../RichTextEditor";
+import { RichTextEditor } from "./RichTextEditor";
 
 type ProductBasicInfoProps = {
   title: string;
@@ -607,30 +852,40 @@ export function ProductPricing({
 ## src\components\admin\products\ProductRelationships.tsx
 
 ```tsx
-type Subcategory = {
+type SubcategoryOption = {
   id: string;
   name: string;
   category?: {
+    id: string;
     name: string;
   } | null;
 };
 
-type Marketplace = {
+type MarketplaceOption = {
   id: string;
   name: string;
 };
 
 type ProductRelationshipsProps = {
-  subcategories: Subcategory[];
-  marketplaces: Marketplace[];
+  subcategories: SubcategoryOption[];
+  marketplaces: MarketplaceOption[];
+
   subcategoryId: string;
   marketplaceId: string;
+
   affiliateUrl: string;
+  externalLink: string;
+
   loading: boolean;
+  isEditing: boolean;
+
   onSubcategoryChange: (value: string) => void;
   onMarketplaceChange: (value: string) => void;
   onAffiliateUrlChange: (value: string) => void;
+  onExternalLinkChange: (value: string) => void;
 };
+
+const MERCADO_LIVRE_MARKETPLACE_ID = "c255826b-2073-4c76-8966-b87f22403090";
 
 export function ProductRelationships({
   subcategories,
@@ -638,40 +893,43 @@ export function ProductRelationships({
   subcategoryId,
   marketplaceId,
   affiliateUrl,
+  externalLink,
   loading,
+  isEditing,
   onSubcategoryChange,
   onMarketplaceChange,
   onAffiliateUrlChange,
+  onExternalLinkChange,
 }: ProductRelationshipsProps) {
+  const isMercadoLivre = marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID;
+
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm">
-      <h2 className="mb-5 text-lg font-semibold text-gray-900">
-        Classificação e marketplace
-      </h2>
+      <h2 className="text-lg font-semibold text-gray-900">Relacionamentos</h2>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
           <label
             htmlFor="subcategoryId"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Subcategoria *
+            Subcategoria
           </label>
 
           <select
             id="subcategoryId"
             value={subcategoryId}
             onChange={(event) => onSubcategoryChange(event.target.value)}
-            required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           >
             <option value="">Selecione uma subcategoria</option>
 
             {subcategories.map((subcategory) => (
               <option key={subcategory.id} value={subcategory.id}>
                 {subcategory.category?.name
-                  ? `${subcategory.category.name} → ${subcategory.name}`
+                  ? `${subcategory.category.name} / ${subcategory.name}`
                   : subcategory.name}
               </option>
             ))}
@@ -681,18 +939,18 @@ export function ProductRelationships({
         <div>
           <label
             htmlFor="marketplaceId"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Marketplace *
+            Marketplace
           </label>
 
           <select
             id="marketplaceId"
             value={marketplaceId}
             onChange={(event) => onMarketplaceChange(event.target.value)}
-            required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           >
             <option value="">Selecione um marketplace</option>
 
@@ -707,9 +965,9 @@ export function ProductRelationships({
         <div className="sm:col-span-2">
           <label
             htmlFor="affiliateUrl"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Link de afiliado *
+            Link de afiliado
           </label>
 
           <input
@@ -720,13 +978,50 @@ export function ProductRelationships({
             placeholder="https://..."
             required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           />
 
           <p className="mt-2 text-xs text-gray-500">
-            Este será o link utilizado pelo botão de compra/afiliado.
+            Este é o link comercial utilizado pelo visitante para acessar o
+            marketplace e preservar o rastreamento do afiliado.
           </p>
         </div>
+
+        {isMercadoLivre && (
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="externalLink"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Link de referência do Mercado Livre
+            </label>
+
+            <input
+              id="externalLink"
+              type="url"
+              value={externalLink}
+              onChange={(event) => onExternalLinkChange(event.target.value)}
+              placeholder="https://www.mercadolivre.com.br/.../p/MLB..."
+              required
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Este link é usado internamente como referência do produto no
+              Mercado Livre. Ao alterá-lo durante a edição, o sistema irá
+              reanalisar as ofertas. Se houver mais de uma oferta, será
+              solicitado que você escolha qual deseja vincular ao produto.
+            </p>
+
+            {isEditing && (
+              <p className="mt-1 text-xs font-medium text-blue-600">
+                Alterar este link não cria outro produto. A oferta vinculada ao
+                produto atual será atualizada após a confirmação.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -806,20 +1101,28 @@ export function ProductSeo({
 ```tsx
 type ProductStatusProps = {
   featured: boolean;
+  destaque: boolean;
+  bestSeller: boolean;
   available: boolean;
   active: boolean;
   loading: boolean;
   onFeaturedChange: (value: boolean) => void;
+  onDestaqueChange: (value: boolean) => void;
+  onBestSellerChange: (value: boolean) => void;
   onAvailableChange: (value: boolean) => void;
   onActiveChange: (value: boolean) => void;
 };
 
 export function ProductStatus({
   featured,
+  destaque,
+  bestSeller,
   available,
   active,
   loading,
   onFeaturedChange,
+  onDestaqueChange,
+  onBestSellerChange,
   onAvailableChange,
   onActiveChange,
 }: ProductStatusProps) {
@@ -829,7 +1132,7 @@ export function ProductStatus({
         Status do produto
       </h2>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
           <input
             type="checkbox"
@@ -845,7 +1148,47 @@ export function ProductStatus({
             </span>
 
             <span className="block text-xs text-gray-500">
-              Exibir como produto destacado.
+              Define se o produto possui o status de destaque no sistema.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={destaque}
+            onChange={(event) => onDestaqueChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Ofertas em destaque
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir o produto na seção de ofertas em destaque.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={bestSeller}
+            onChange={(event) => onBestSellerChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Produtos mais vendidos
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir o produto na seção de produtos mais vendidos.
             </span>
           </span>
         </label>
@@ -896,18 +1239,7 @@ export function ProductStatus({
 
 ```
 
-## src\components\admin\products\types.ts
-
-```ts
-export type ProductImageForm = {
-  id: string;
-  imageUrl: string;
-  sortOrder: number;
-};
-
-```
-
-## src\components\admin\RichTextEditor.tsx
+## src\components\admin\products\RichTextEditor.tsx
 
 ```tsx
 import Link from "@tiptap/extension-link";
@@ -1242,6 +1574,17 @@ export function RichTextEditor({
 
 ```
 
+## src\components\admin\products\types.ts
+
+```ts
+export type ProductImageForm = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+```
+
 ## src\components\AdminLayout\index.tsx
 
 ```tsx
@@ -1270,13 +1613,17 @@ const menuItems = [
     label: "Marketplaces",
     href: "/admin/marketplaces",
   },
+  {
+    label: "Blog",
+    href: "/admin/blog",
+  },
 ];
 
 export function AdminLayout() {
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#071a2f]">
+      {" "}
       <HeaderAdmin />
-
       <div className="flex min-h-[calc(100vh-72px)]">
         <aside className="hidden w-64 shrink-0 border-r border-[#e7edf5] bg-white lg:block">
           <div className="sticky top-0 p-4">
@@ -1346,7 +1693,7 @@ export function AppLayout() {
 ## src\components\Banner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -1402,25 +1749,33 @@ export function Banner() {
   return (
     <section
       aria-label="Destaques WorldMix360"
-      className="w-full overflow-hidden bg-navy"
+      className="relative w-full overflow-hidden bg-navy pb-40 md:pb-60"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5500, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
         loop
-        className="home-banner h-[500px] md:h-[600px]"
+        className="home-banner h-[450px] md:h-[520px]"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.title}>
-            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-blue">
-              <img
-                src={banner.image}
-                alt={banner.imageAlt}
-                className={`absolute z-0 h-auto ${banner.imageClassName}`}
-              />
+            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-[#071a2f]">
+              {/* Container da Imagem com Gradiente de Desvanecimento na parte inferior */}
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={banner.image}
+                  alt={banner.imageAlt}
+                  className={`absolute h-auto ${banner.imageClassName}`}
+                />
+                {/* Gradiente vertical que esmaece a imagem do banner para a cor do fundo do slide no rodapé */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#071a2f] via-transparent to-transparent" />
+              </div>
+
+              {/* Gradiente horizontal para garantir a legibilidade do texto à esquerda */}
               <div className="absolute inset-0 z-10 bg-gradient-to-r from-navy via-navy/80 to-transparent" />
+
               <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
                 <div className="max-w-2xl">
                   <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9ad7ff]">
@@ -1448,6 +1803,9 @@ export function Banner() {
           </SwiperSlide>
         ))}
       </Swiper>
+
+      {/* Camada do degradê esmaecendo no finalzinho do fundo estendido (fundo da página) */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-75 bg-gradient-to-b from-transparent to-[#f7f9fc]" />
     </section>
   );
 }
@@ -1457,7 +1815,7 @@ export function Banner() {
 ## src\components\BlogBanner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -1514,7 +1872,7 @@ export function BlogBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 6000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
@@ -1916,7 +2274,7 @@ export function Header() {
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
-                    W
+                    WM
                   </div>
 
                   <div>
@@ -2874,7 +3232,7 @@ export function getCategoryIcon(slug: string): IconType {
 ## src\components\OffersBanner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -2902,7 +3260,7 @@ export function OffersBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
@@ -3466,7 +3824,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  console.log("PRODUTO DO CARD:", product);
   const formattedPrice = formatCurrencyBRL(product.price);
 
   const formattedOriginalPrice = product.originalPrice
@@ -3603,55 +3960,78 @@ export function SearchBar({ className = "", onSearch }: SearchBarProps) {
 ## src\components\Session\index.tsx
 
 ```tsx
-import React from "react";
-import { FiBox } from "react-icons/fi";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import { v4 as uuidv4 } from "uuid";
+import React, { useRef, useState } from "react";
+import { FiArrowUpRight, FiBox } from "react-icons/fi";
 
 interface SessionProps {
   title?: string;
-  children: React.ReactNode | React.ReactNode[];
+  children: React.ReactNode;
 }
 
 export function Session({ title, children }: SessionProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => setIsDown(false);
+  const handleMouseUp = () => setIsDown(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   return (
-    <section className="mx-auto w-full md:max-w-[1200px] bg-gradient-to-b from-gray-100 to-gray-50 p-6 shadow-md">
+    <div className="mx-auto w-full bg-gradient-to-b from-gray-100 to-gray-50 p-6 shadow-md md:max-w-[1200px]">
       {/* Cabeçalho */}
-      <header className="flex items-center justify-between mb-6">
+      <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FiBox className="text-white text-xl" />
-          <h2 className="text-blue text-lg font-bold">{title}</h2>
+          <FiBox className="text-xl text-blue-600" />
+          <h2 className="text-lg font-bold text-navy">{title}</h2>
         </div>
-        <a href="##" className="text-sm font-medium text-navy hover:underline">
-          Ver todos
+        <a
+          href="##"
+          className="hidden items-center gap-1 text-sm font-semibold text-navy transition hover:text-blue sm:flex"
+        >
+          Ver todos <FiArrowUpRight />
         </a>
       </header>
 
-      {/* Carrossel */}
-      <Swiper
-        spaceBetween={16}
-        slidesPerView={1}
-        breakpoints={{
-          640: { slidesPerView: 2 },
-          1024: { slidesPerView: 4 },
-        }}
+      {/* Usando <section> semântica em vez de <div role="region"> */}
+      <section
+        ref={scrollRef}
+        aria-label={title ?? "Carrossel de itens"}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        className="no-scrollbar flex w-full select-none gap-4 overflow-x-auto pb-2 scroll-smooth cursor-grab active:cursor-grabbing touch-pan-x"
       >
-        {React.Children.map(children, (child) =>
+        {React.Children.map(children, (child, index) =>
           React.isValidElement(child) ? (
-            <SwiperSlide
-              key={uuidv4()}
-              id={uuidv4()}
-              className="!flex !h-auto !items-stretch"
+            <div
+              key={child.key ?? index}
+              className="flex h-auto w-[260px] shrink-0 items-stretch md:w-[280px]"
             >
               {child}
-            </SwiperSlide>
+            </div>
           ) : (
             child
           ),
         )}
-      </Swiper>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -3660,7 +4040,7 @@ export function Session({ title, children }: SessionProps) {
 ## src\components\SocialBanner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -3717,7 +4097,7 @@ export function SocialBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
@@ -3933,6 +4313,734 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+```
+
+## src\contexts\BlogCategoriesContext.ts
+
+```ts
+import { createContext } from "react";
+
+import type {
+  BlogCategory,
+  BlogCategoryFilters,
+  BlogCategoryFormData,
+  BlogCategoryUpdateData,
+} from "../types/Blog";
+
+export type BlogCategoriesContextValue = {
+  categories: BlogCategory[];
+  loading: boolean;
+  error: string | null;
+
+  fetchCategories: (filters?: BlogCategoryFilters) => Promise<void>;
+
+  getCategoryById: (id: string, token: string) => Promise<BlogCategory | null>;
+
+  getCategoryBySlug: (slug: string) => Promise<BlogCategory | null>;
+
+  createCategory: (
+    data: BlogCategoryFormData,
+    token: string,
+  ) => Promise<BlogCategory>;
+
+  updateCategory: (
+    id: string,
+    data: BlogCategoryUpdateData,
+    token: string,
+  ) => Promise<BlogCategory>;
+
+  deleteCategory: (id: string, token: string) => Promise<void>;
+};
+
+export const BlogCategoriesContext = createContext<
+  BlogCategoriesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\BlogCategoriesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type {
+  BlogCategory,
+  BlogCategoryFilters,
+  BlogCategoryFormData,
+  BlogCategoryUpdateData,
+} from "../types/Blog";
+import { BlogCategoriesContext } from "./BlogCategoriesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function BlogCategoriesProvider({ children }: { children: ReactNode }) {
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Listagem pública das categorias do Blog.
+   */
+  const fetchCategories = useCallback(async (filters?: BlogCategoryFilters) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (filters?.search) {
+        params.set("search", filters.search);
+      }
+
+      if (filters?.active !== undefined) {
+        params.set("active", String(filters.active));
+      }
+
+      const queryString = params.toString();
+
+      const response = await fetch(
+        `${apiUrl}/blog/categories${queryString ? `?${queryString}` : ""}`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar as categorias do Blog.",
+        );
+      }
+
+      setCategories(data.categories ?? []);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar categorias do Blog.",
+      );
+
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Busca uma categoria pelo ID.
+   * Operação administrativa.
+   */
+  const getCategoryById = useCallback(
+    async (id: string, token: string): Promise<BlogCategory | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/categories/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a categoria do Blog.",
+          );
+        }
+
+        return data.category ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  /**
+   * Busca uma categoria pelo slug.
+   * Operação pública.
+   */
+  const getCategoryBySlug = useCallback(
+    async (slug: string): Promise<BlogCategory | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/categories/slug/${encodeURIComponent(slug)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a categoria do Blog.",
+          );
+        }
+
+        return data.category ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  /**
+   * Cria uma categoria.
+   */
+  const createCategory = useCallback(
+    async (
+      categoryData: BlogCategoryFormData,
+      token: string,
+    ): Promise<BlogCategory> => {
+      const response = await fetch(`${apiUrl}/blog/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar categoria do Blog.");
+      }
+
+      setCategories((currentCategories) => [
+        ...currentCategories,
+        data.category,
+      ]);
+
+      return data.category;
+    },
+    [],
+  );
+
+  /**
+   * Atualiza uma categoria.
+   */
+  const updateCategory = useCallback(
+    async (
+      id: string,
+      categoryData: BlogCategoryUpdateData,
+      token: string,
+    ): Promise<BlogCategory> => {
+      const response = await fetch(
+        `${apiUrl}/blog/categories/${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(categoryData),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar categoria do Blog.");
+      }
+
+      setCategories((currentCategories) =>
+        currentCategories.map((category) =>
+          category.id === id ? data.category : category,
+        ),
+      );
+
+      return data.category;
+    },
+    [],
+  );
+
+  /**
+   * Exclui uma categoria.
+   */
+  const deleteCategory = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(
+        `${apiUrl}/blog/categories/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao excluir categoria do Blog.");
+      }
+
+      setCategories((currentCategories) =>
+        currentCategories.filter((category) => category.id !== id),
+      );
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      getCategoryBySlug,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    }),
+    [
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      getCategoryBySlug,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    ],
+  );
+
+  return (
+    <BlogCategoriesContext.Provider value={value}>
+      {children}
+    </BlogCategoriesContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\BlogContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type BlogPostStatus = "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED";
+
+export type BlogAuthor = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type BlogPostProduct = {
+  id: string;
+  sortOrder: number;
+  product: {
+    id: string;
+    title: string;
+    slug: string;
+    shortDescription?: string | null;
+    imageUrl?: string | null;
+    price: number | string;
+    originalPrice?: number | string | null;
+    currency?: string | null;
+    rating?: number | string | null;
+    reviewsCount?: number | null;
+    affiliateUrl: string;
+    available: boolean;
+    featured: boolean;
+    active: boolean;
+  };
+};
+
+export type BlogPostCategory = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  content: string;
+  coverImage?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  status: BlogPostStatus;
+  publishedAt?: string | null;
+  scheduledAt?: string | null;
+  authorId: string;
+  categoryId?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+
+  author?: BlogAuthor | null;
+  category?: BlogPostCategory | null;
+  products?: BlogPostProduct[];
+};
+
+export type BlogPostProductFormData = {
+  productId: string;
+  sortOrder?: number;
+};
+
+export type BlogPostFormData = {
+  title: string;
+  excerpt?: string;
+  content: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  categoryId?: string;
+  products?: BlogPostProductFormData[];
+};
+
+export type BlogPostFilters = {
+  search?: string;
+  categoryId?: string;
+};
+
+export type BlogPostAdminFilters = {
+  search?: string;
+  categoryId?: string;
+  status?: BlogPostStatus;
+};
+
+export type BlogContextValue = {
+  posts: BlogPost[];
+  loading: boolean;
+  error: string | null;
+
+  fetchPosts: (filters?: BlogPostFilters) => Promise<void>;
+
+  getPostBySlug: (slug: string) => Promise<BlogPost | null>;
+
+  getPostById: (id: string, token: string) => Promise<BlogPost | null>;
+
+  fetchAdminPosts: (
+    token: string,
+    filters?: BlogPostAdminFilters,
+  ) => Promise<void>;
+
+  createPost: (data: BlogPostFormData, token: string) => Promise<BlogPost>;
+
+  updatePost: (
+    id: string,
+    data: Partial<BlogPostFormData>,
+    token: string,
+  ) => Promise<BlogPost>;
+
+  deletePost: (id: string, token: string) => Promise<void>;
+};
+
+export const BlogContext = createContext<BlogContextValue | undefined>(
+  undefined,
+);
+
+```
+
+## src\contexts\BlogProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type {
+  BlogContextValue,
+  BlogPost,
+  BlogPostAdminFilters,
+  BlogPostFilters,
+  BlogPostFormData,
+} from "./BlogContext";
+
+import { BlogContext } from "./BlogContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function BlogProvider({ children }: { children: ReactNode }) {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPosts = useCallback(async (filters?: BlogPostFilters) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (filters?.search) {
+        params.set("search", filters.search);
+      }
+
+      if (filters?.categoryId) {
+        params.set("categoryId", filters.categoryId);
+      }
+
+      const queryString = params.toString();
+
+      const response = await fetch(
+        `${apiUrl}/blog${queryString ? `?${queryString}` : ""}`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar os posts do blog.",
+        );
+      }
+
+      setPosts(Array.isArray(data) ? data : (data.posts ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar os posts do blog.",
+      );
+
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getPostBySlug = useCallback(
+    async (slug: string): Promise<BlogPost | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/${encodeURIComponent(slug)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message ?? "Não foi possível carregar o post.");
+        }
+
+        return data.post ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const getPostById = useCallback(
+    async (id: string, token: string): Promise<BlogPost | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/id/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message ?? "Não foi possível carregar o post.");
+        }
+
+        return data.post ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const fetchAdminPosts = useCallback(
+    async (token: string, filters?: BlogPostAdminFilters) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams();
+
+        if (filters?.search) {
+          params.set("search", filters.search);
+        }
+
+        if (filters?.categoryId) {
+          params.set("categoryId", filters.categoryId);
+        }
+
+        if (filters?.status) {
+          params.set("status", filters.status);
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/blog/admin${queryString ? `?${queryString}` : ""}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ??
+              "Não foi possível carregar os posts administrativos.",
+          );
+        }
+
+        setPosts(Array.isArray(data) ? data : (data.posts ?? []));
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Erro ao carregar os posts administrativos.",
+        );
+
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  const createPost = useCallback(
+    async (postData: BlogPostFormData, token: string): Promise<BlogPost> => {
+      const response = await fetch(`${apiUrl}/blog`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(postData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar post.");
+      }
+
+      const post = data.post ?? data;
+
+      setPosts((previous) => [post, ...previous]);
+
+      return post;
+    },
+    [],
+  );
+
+  const updatePost = useCallback(
+    async (
+      id: string,
+      postData: Partial<BlogPostFormData>,
+      token: string,
+    ): Promise<BlogPost> => {
+      const response = await fetch(`${apiUrl}/blog/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(postData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar post.");
+      }
+
+      const post = data.post ?? data;
+
+      setPosts((previous) =>
+        previous.map((item) => (item.id === id ? post : item)),
+      );
+
+      return post;
+    },
+    [],
+  );
+
+  const deletePost = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/blog/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir post.";
+
+        try {
+          const data = await response.json();
+
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setPosts((previous) => previous.filter((post) => post.id !== id));
+    },
+    [],
+  );
+
+  const value = useMemo<BlogContextValue>(
+    () => ({
+      posts,
+      loading,
+      error,
+      fetchPosts,
+      getPostBySlug,
+      getPostById,
+      fetchAdminPosts,
+      createPost,
+      updatePost,
+      deletePost,
+    }),
+    [
+      posts,
+      loading,
+      error,
+      fetchPosts,
+      getPostBySlug,
+      getPostById,
+      fetchAdminPosts,
+      createPost,
+      updatePost,
+      deletePost,
+    ],
+  );
+
+  return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;
 }
 
 ```
@@ -4597,7 +5705,16 @@ export type Product = {
   category?: string | null;
 
   available: boolean;
+
+  // Status de destaque existente no sistema
   featured: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller: boolean;
+
   active: boolean;
 
   seoTitle?: string | null;
@@ -4626,7 +5743,15 @@ export type ProductFormData = {
   subcategoryId: string;
   marketplaceId: string;
 
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
+
   available?: boolean;
   active?: boolean;
 
@@ -4656,7 +5781,15 @@ export type ProductUpdateData = {
   subcategoryId?: string;
   marketplaceId?: string;
 
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
+
   available?: boolean;
   active?: boolean;
 
@@ -4667,7 +5800,15 @@ export type ProductUpdateData = {
 export type ProductStatusData = {
   active?: boolean;
   available?: boolean;
+
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
 };
 
 export type ProductsContextValue = {
@@ -4683,7 +5824,14 @@ export type ProductsContextValue = {
       search?: string;
       subcategoryId?: string;
       marketplaceId?: string;
+
+      // Status de destaque existente no sistema
       featured?: boolean;
+
+      // Filtros das seções da loja
+      destaque?: boolean;
+      bestSeller?: boolean;
+
       active?: boolean;
       available?: boolean;
     },
@@ -4788,6 +5936,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         subcategoryId?: string;
         marketplaceId?: string;
         featured?: boolean;
+        bestSeller?: boolean;
         active?: boolean;
         available?: boolean;
       },
@@ -4812,6 +5961,10 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
         if (filters?.featured !== undefined) {
           params.set("featured", String(filters.featured));
+        }
+
+        if (filters?.bestSeller !== undefined) {
+          params.set("bestSeller", String(filters.bestSeller));
         }
 
         if (filters?.active !== undefined) {
@@ -5325,6 +6478,46 @@ export function useAuth() {
 
 ```
 
+## src\contexts\useBlog.ts
+
+```ts
+import { useContext } from "react";
+
+import { BlogContext } from "./BlogContext";
+
+export function useBlog() {
+  const context = useContext(BlogContext);
+
+  if (!context) {
+    throw new Error("useBlog deve ser utilizado dentro de BlogProvider.");
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useBlogCategories.ts
+
+```ts
+import { useContext } from "react";
+
+import { BlogCategoriesContext } from "./BlogCategoriesContext";
+
+export function useBlogCategories() {
+  const context = useContext(BlogCategoriesContext);
+
+  if (!context) {
+    throw new Error(
+      "useBlogCategories deve ser usado dentro de BlogCategoriesProvider",
+    );
+  }
+
+  return context;
+}
+
+```
+
 ## src\contexts\useCategories.ts
 
 ```ts
@@ -5452,13 +6645,14 @@ declare module "*.svg?react" {
   --color-white: #ffffff;
   --color-gray-50: #f7f9fc;
   --color-gray-100: #eef2f6;
+  --color-gray-200: #cccccc;
   --color-gray-500: #667085;
   --color-gray-700: #344054;
   --color-gray-900: #101828;
   --color-yellow: #f5b700;
 
   --color-danger: #d92d20;
-  --color-danger-light: #d8756d;
+  --color-danger-light: #f1b1a1;
 }
 
 .home-banner .swiper-button-prev,
@@ -5494,6 +6688,16 @@ declare module "*.svg?react" {
 .home-banner .swiper-pagination-bullet-active {
   background: #20b35b;
   opacity: 1;
+}
+/* Esconde a barra de rolagem no Chrome, Safari e Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Esconde a barra de rolagem no IE, Edge e Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE e Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 
@@ -5673,6 +6877,983 @@ export function AboutPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+```
+
+## src\pages\admin\AdminBlogFormPage.tsx
+
+```tsx
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { RichTextEditor } from "../../components/admin/products/RichTextEditor";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+import { useBlogCategories } from "../../contexts/useBlogCategories";
+import { useProducts } from "../../contexts/useProducts";
+import type {
+  BlogPostFormData,
+  BlogPostProductFormData,
+  BlogPostStatus,
+} from "../../types/Blog";
+
+const STATUS_OPTIONS: Array<{
+  value: BlogPostStatus;
+  label: string;
+}> = [
+  { value: "DRAFT", label: "Rascunho" },
+  { value: "PUBLISHED", label: "Publicado" },
+  { value: "SCHEDULED", label: "Agendado" },
+  { value: "ARCHIVED", label: "Arquivado" },
+];
+
+function formatDateTimeLocal(value?: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+
+  return localDate.toISOString().slice(0, 16);
+}
+
+function toISOStringOrUndefined(value: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return date.toISOString();
+}
+
+function isRichTextEmpty(value: string) {
+  const normalized = value
+    .replace(/<p>\s*<\/p>/gi, "")
+    .replace(/<br\s*\/?>/gi, "")
+    .replace(/&nbsp;/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+
+  return normalized.length === 0;
+}
+
+export function AdminBlogFormPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const {
+    getPostById,
+    createPost,
+    updatePost,
+    loading: blogLoading,
+  } = useBlog();
+
+  const {
+    categories,
+    fetchCategories,
+    loading: categoriesLoading,
+  } = useBlogCategories();
+
+  const {
+    products,
+    fetchAdminProducts,
+    loading: productsLoading,
+  } = useProducts();
+
+  const isEditMode = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [content, setContent] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [status, setStatus] = useState<BlogPostStatus>("DRAFT");
+  const [publishedAt, setPublishedAt] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loadingPost, setLoadingPost] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    void fetchCategories();
+    void fetchAdminProducts(token);
+  }, [token, fetchCategories, fetchAdminProducts]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const postId = id;
+    const authToken = token;
+
+    let cancelled = false;
+
+    async function loadPost() {
+      setLoadingPost(true);
+      setError(null);
+
+      try {
+        const post = await getPostById(postId, authToken);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!post) {
+          setError("Artigo não encontrado.");
+          return;
+        }
+
+        setTitle(post.title);
+        setExcerpt(post.excerpt ?? "");
+        setContent(post.content);
+        setCoverImage(post.coverImage ?? "");
+        setCategoryId(post.categoryId ?? "");
+        setStatus(post.status);
+        setPublishedAt(formatDateTimeLocal(post.publishedAt));
+        setScheduledAt(formatDateTimeLocal(post.scheduledAt));
+        setSeoTitle(post.seoTitle ?? "");
+        setSeoDescription(post.seoDescription ?? "");
+
+        setSelectedProductIds(
+          (post.products ?? [])
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((item) => item.product.id),
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar o artigo.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPost(false);
+        }
+      }
+    }
+
+    void loadPost();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, token, getPostById]);
+
+  function handleProductToggle(productId: string) {
+    setSelectedProductIds((currentIds) => {
+      if (currentIds.includes(productId)) {
+        return currentIds.filter((currentId) => currentId !== productId);
+      }
+
+      return [...currentIds, productId];
+    });
+  }
+
+  function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
+    setStatus(event.target.value as BlogPostStatus);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setError("Informe o título do artigo.");
+      return;
+    }
+
+    if (isRichTextEmpty(content)) {
+      setError("Informe o conteúdo do artigo.");
+      return;
+    }
+
+    if (status === "PUBLISHED" && !publishedAt) {
+      setError("Informe a data de publicação para um artigo publicado.");
+      return;
+    }
+
+    if (status === "SCHEDULED" && !scheduledAt) {
+      setError("Informe a data de agendamento para um artigo agendado.");
+      return;
+    }
+
+    const productsData: BlogPostProductFormData[] = selectedProductIds.map(
+      (productId, index) => ({
+        productId,
+        sortOrder: index,
+      }),
+    );
+
+    const cleanContent = content === "<p></p>" ? undefined : content.trim();
+
+    const postData: BlogPostFormData = {
+      title: title.trim(),
+      excerpt: excerpt.trim() || undefined,
+      content: cleanContent ?? "",
+      coverImage: coverImage.trim() || undefined,
+      categoryId: categoryId || undefined,
+      status,
+      publishedAt:
+        status === "PUBLISHED"
+          ? toISOStringOrUndefined(publishedAt)
+          : undefined,
+      scheduledAt:
+        status === "SCHEDULED"
+          ? toISOStringOrUndefined(scheduledAt)
+          : undefined,
+      seoTitle: seoTitle.trim() || undefined,
+      seoDescription: seoDescription.trim() || undefined,
+      products: productsData,
+    };
+
+    setSaving(true);
+
+    try {
+      if (isEditMode && id) {
+        await updatePost(id, postData, token);
+      } else {
+        await createPost(postData, token);
+      }
+
+      navigate("/admin/blog");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível salvar o artigo.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isLoading =
+    loadingPost || blogLoading || categoriesLoading || productsLoading;
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/blog"
+          className="text-sm font-medium text-navy transition hover:text-blue"
+        >
+          ← Voltar para o Blog
+        </Link>
+
+        <h1 className="mt-3 text-2xl font-bold text-gray-900">
+          {isEditMode ? "Editar artigo" : "Novo artigo"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-700">
+          {isEditMode
+            ? "Atualize as informações do artigo do Blog."
+            : "Cadastre um novo artigo para o Blog do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      )}
+
+      {isLoading && isEditMode && loadingPost ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
+          Carregando artigo...
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">
+              Informações do artigo
+            </h2>
+
+            <div className="space-y-5">
+              <div>
+                <label
+                  htmlFor="title"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Título *
+                </label>
+
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Digite o título do artigo"
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="excerpt"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Resumo
+                </label>
+
+                <textarea
+                  id="excerpt"
+                  value={excerpt}
+                  onChange={(event) => setExcerpt(event.target.value)}
+                  placeholder="Breve resumo do artigo"
+                  rows={3}
+                  className="w-full resize-y rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="content"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Conteúdo *
+                </label>
+
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  disabled={saving || loadingPost}
+                  placeholder="Escreva o conteúdo completo do artigo..."
+                />
+
+                <p className="mt-2 text-xs text-gray-500">
+                  Use títulos, negrito, listas, links e outros recursos para
+                  deixar o artigo mais organizado e agradável para o leitor.
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="coverImage"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Imagem de capa
+                </label>
+
+                <input
+                  id="coverImage"
+                  type="url"
+                  value={coverImage}
+                  onChange={(event) => setCoverImage(event.target.value)}
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">
+              Publicação
+            </h2>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="categoryId"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Categoria
+                </label>
+
+                <select
+                  id="categoryId"
+                  value={categoryId}
+                  onChange={(event) => setCategoryId(event.target.value)}
+                  className="w-full rounded-lg border border-gray-500 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                >
+                  <option value="">Sem categoria</option>
+
+                  {categories
+                    .filter((category) => category.active)
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="status"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Status *
+                </label>
+
+                <select
+                  id="status"
+                  value={status}
+                  onChange={handleStatusChange}
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {status === "PUBLISHED" && (
+                <div>
+                  <label
+                    htmlFor="publishedAt"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Data de publicação *
+                  </label>
+
+                  <input
+                    id="publishedAt"
+                    type="datetime-local"
+                    value={publishedAt}
+                    onChange={(event) => setPublishedAt(event.target.value)}
+                    className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                  />
+                </div>
+              )}
+
+              {status === "SCHEDULED" && (
+                <div>
+                  <label
+                    htmlFor="scheduledAt"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Data de agendamento *
+                  </label>
+
+                  <input
+                    id="scheduledAt"
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(event) => setScheduledAt(event.target.value)}
+                    className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-2 text-lg font-semibold text-gray-900">
+              Produtos relacionados
+            </h2>
+
+            <p className="mb-5 text-sm text-gray-600">
+              Selecione os produtos que deseja apresentar relacionados ao
+              artigo.
+            </p>
+
+            {products.length === 0 ? (
+              <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+                Nenhum produto disponível para seleção.
+              </p>
+            ) : (
+              <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
+                {products.map((product) => {
+                  const selected = selectedProductIds.includes(product.id);
+
+                  return (
+                    <label
+                      key={product.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-transparent p-3 transition hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => handleProductToggle(product.id)}
+                        className="h-4 w-4 rounded border-gray-500 text-blue-600 focus:ring-blue-500"
+                      />
+
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.title}
+                          className="h-12 w-12 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500">
+                          Sem imagem
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">
+                          {product.title}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          {product.currency}{" "}
+                          {Number(product.price).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="mt-3 text-xs text-gray-500">
+              {selectedProductIds.length} produto(s) selecionado(s).
+            </p>
+          </section>
+
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
+
+            <div className="space-y-5">
+              <div>
+                <label
+                  htmlFor="seoTitle"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Título SEO
+                </label>
+
+                <input
+                  id="seoTitle"
+                  type="text"
+                  value={seoTitle}
+                  onChange={(event) => setSeoTitle(event.target.value)}
+                  placeholder="Título otimizado para mecanismos de busca"
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="seoDescription"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Descrição SEO
+                </label>
+
+                <textarea
+                  id="seoDescription"
+                  value={seoDescription}
+                  onChange={(event) => setSeoDescription(event.target.value)}
+                  placeholder="Descrição otimizada para mecanismos de busca"
+                  rows={4}
+                  className="w-full resize-y rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+            </div>
+          </section>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Link
+              to="/admin/blog"
+              className="rounded-lg border border-gray-500 px-5 py-2.5 text-center text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              Cancelar
+            </Link>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving
+                ? "Salvando..."
+                : isEditMode
+                  ? "Salvar alterações"
+                  : "Criar artigo"}
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\admin\AdminBlogPage.tsx
+
+```tsx
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+
+export function AdminBlogPage() {
+  const { posts, loading, error, fetchAdminPosts, deletePost } = useBlog();
+
+  const { user, token } = useAuth();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const loadPosts = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    await fetchAdminPosts(token);
+  }, [fetchAdminPosts, token]);
+
+  useEffect(() => {
+    void loadPosts();
+  }, [loadPosts]);
+
+  async function handleDelete(id: string, title: string) {
+    if (!token) {
+      setActionError("Sessão não encontrada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir o artigo "${title}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      setActionError(null);
+
+      await deletePost(id, token);
+    } catch (err) {
+      console.error("Erro ao excluir artigo:", err);
+
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível excluir o artigo.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function getStatusLabel(status: string) {
+    switch (status) {
+      case "PUBLISHED":
+        return "Publicado";
+
+      case "DRAFT":
+        return "Rascunho";
+
+      case "SCHEDULED":
+        return "Agendado";
+
+      case "ARCHIVED":
+        return "Arquivado";
+
+      default:
+        return status;
+    }
+  }
+
+  function getStatusClass(status: string) {
+    switch (status) {
+      case "PUBLISHED":
+        return "bg-green-100 text-green-700";
+
+      case "DRAFT":
+        return "bg-yellow-100 text-yellow-700";
+
+      case "SCHEDULED":
+        return "bg-blue-100 text-blue-700";
+
+      case "ARCHIVED":
+        return "bg-gray-100 text-gray-700";
+
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  }
+
+  function formatDate(date: string | null | undefined) {
+    if (!date) {
+      return "-";
+    }
+
+    return new Date(date).toLocaleDateString("pt-BR");
+  }
+
+  if (!user || !token) {
+    return (
+      <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-xl border border-danger bg-danger-light p-6 text-center">
+            <h1 className="text-xl font-semibold text-danger">
+              Acesso não autorizado
+            </h1>
+
+            <p className="mt-2 text-sm text-red-600">
+              Você precisa estar autenticado para acessar o gerenciamento do
+              Blog.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Cabeçalho */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              Blog
+            </h1>
+
+            <p className="mt-1 text-sm text-gray-600">
+              Gerencie os artigos publicados e os rascunhos do WorldMix360.
+            </p>
+          </div>
+
+          <Link
+            to="/admin/blog/novo"
+            className="inline-flex items-center justify-center rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue"
+          >
+            + Novo artigo
+          </Link>
+        </div>
+
+        {/* Erro de ação */}
+        {actionError && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {actionError}
+          </div>
+        )}
+
+        {/* Erro da API */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+            <p className="text-sm text-red-700">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => void loadPosts()}
+              className="mt-3 rounded-lg bg-danger-light px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger hover:text-navy"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {/* Carregamento */}
+        {loading ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <p className="text-gray-600">Carregando artigos...</p>
+          </div>
+        ) : posts.length === 0 ? (
+          /* Nenhum post */
+          <div className="rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Nenhum artigo encontrado
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-600">
+              Comece criando o primeiro artigo do Blog.
+            </p>
+
+            <Link
+              to="/admin/blog/novo"
+              className="mt-5 inline-flex rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Criar primeiro artigo
+            </Link>
+          </div>
+        ) : (
+          /* Tabela */
+          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-left">
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Artigo
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Categoria
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Autor
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Data
+                    </th>
+
+                    <th className="px-5 py-4 text-right text-sm font-semibold text-gray-700">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {posts.map((post) => (
+                    <tr
+                      key={post.id}
+                      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
+                    >
+                      {/* Artigo */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {post.coverImage ? (
+                            <img
+                              src={post.coverImage}
+                              alt={post.title}
+                              className="h-14 w-20 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-14 w-20 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                              Sem imagem
+                            </div>
+                          )}
+
+                          <div className="max-w-sm">
+                            <p className="font-semibold text-gray-900">
+                              {post.title}
+                            </p>
+
+                            <p className="mt-1 truncate text-xs text-gray-500">
+                              /blog/{post.slug}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Categoria */}
+                      <td className="px-5 py-4 text-sm text-gray-600">
+                        {post.category?.name ?? "Sem categoria"}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
+                            post.status,
+                          )}`}
+                        >
+                          {getStatusLabel(post.status)}
+                        </span>
+                      </td>
+
+                      {/* Autor */}
+                      <td className="px-5 py-4 text-sm text-gray-600">
+                        {post.author?.name ?? "-"}
+                      </td>
+
+                      {/* Data */}
+                      <td className="px-5 py-4 text-sm text-gray-600">
+                        {formatDate(post.publishedAt ?? post.createdAt)}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/blog/${encodeURIComponent(post.slug)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                          >
+                            Ver
+                          </Link>
+
+                          <Link
+                            to={`/admin/blog/editar/${post.id}`}
+                            className="rounded-lg bg-navy px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleDelete(post.id, post.title)
+                            }
+                            disabled={deletingId === post.id}
+                            className="rounded-lg bg-danger px-3 py-2 text-xs font-semibold text-white transition hover:bg-danger-light disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === post.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Rodapé */}
+            <div className="border-t border-gray-200 bg-gray-50 px-5 py-3">
+              <p className="text-sm text-gray-600">
+                Total de artigos:{" "}
+                <span className="font-semibold text-gray-900">
+                  {posts.length}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
 
@@ -5969,501 +8150,14 @@ export function AdminCategoryFormPage() {
 
 ```
 
-## src\pages\admin\AdminProductsFormPage.tsx
-
-```tsx
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-
-import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
-import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
-import { ProductGallery } from "../../components/admin/products/ProductGallery";
-import { ProductPricing } from "../../components/admin/products/ProductPricing";
-import { ProductRelationships } from "../../components/admin/products/ProductRelationships";
-import { ProductSeo } from "../../components/admin/products/ProductSeo";
-import { ProductStatus } from "../../components/admin/products/ProductStatus";
-import type { ProductImageForm } from "../../components/admin/products/types";
-import { useAuth } from "../../contexts/useAuth";
-import { useMarketplaces } from "../../contexts/useMarketplaces";
-import { useProducts } from "../../contexts/useProducts";
-import { useSubcategories } from "../../contexts/useSubcategories";
-import { parseCurrencyBRL } from "../../utils/formatCurrency";
-
-export function AdminProductsFormPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const { token } = useAuth();
-
-  const { getProductById, createProduct, updateProduct } = useProducts();
-
-  const { subcategories, fetchSubcategories } = useSubcategories();
-
-  const { marketplaces, fetchMarketplaces } = useMarketplaces();
-
-  const isEditing = Boolean(id);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-
-  const [imageUrl, setImageUrl] = useState("");
-
-  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
-
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-
-  const [currency, setCurrency] = useState("BRL");
-
-  const [rating, setRating] = useState("");
-  const [reviewsCount, setReviewsCount] = useState("0");
-
-  const [affiliateUrl, setAffiliateUrl] = useState("");
-
-  const [subcategoryId, setSubcategoryId] = useState("");
-  const [marketplaceId, setMarketplaceId] = useState("");
-
-  const [featured, setFeatured] = useState(false);
-  const [available, setAvailable] = useState(true);
-  const [active, setActive] = useState(true);
-
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDescription, setSeoDescription] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(isEditing);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchSubcategories();
-    void fetchMarketplaces();
-  }, [fetchSubcategories, fetchMarketplaces]);
-
-  useEffect(() => {
-    if (!id || !token) {
-      return;
-    }
-
-    const productId = id;
-    const authToken = token;
-
-    let isMounted = true;
-
-    async function loadProduct() {
-      try {
-        const product = await getProductById(productId, authToken);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (!product) {
-          setError("Produto não encontrado.");
-          setLoadingData(false);
-          return;
-        }
-
-        setTitle(product.title ?? "");
-        setDescription(product.description ?? "");
-        setShortDescription(product.shortDescription ?? "");
-        setImageUrl(product.imageUrl ?? "");
-
-        setGalleryImages(
-          Array.isArray(product.images)
-            ? product.images
-                .map((image, index) => ({
-                  id: image.id ?? crypto.randomUUID(),
-                  imageUrl: image.imageUrl ?? "",
-                  sortOrder:
-                    typeof image.sortOrder === "number"
-                      ? image.sortOrder
-                      : index,
-                }))
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-            : [],
-        );
-
-        setPrice(
-          product.price !== null && product.price !== undefined
-            ? Number(product.price).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
-            : "",
-        );
-
-        setOriginalPrice(
-          product.originalPrice !== null && product.originalPrice !== undefined
-            ? Number(product.originalPrice).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
-            : "",
-        );
-
-        setCurrency(product.currency ?? "BRL");
-
-        setRating(
-          product.rating !== null && product.rating !== undefined
-            ? String(product.rating)
-            : "",
-        );
-
-        setReviewsCount(String(product.reviewsCount ?? 0));
-
-        setAffiliateUrl(product.affiliateUrl ?? "");
-
-        setSubcategoryId(product.subcategoryId ?? "");
-        setMarketplaceId(product.marketplaceId ?? "");
-
-        setFeatured(Boolean(product.featured));
-        setAvailable(Boolean(product.available));
-        setActive(Boolean(product.active));
-
-        setSeoTitle(product.seoTitle ?? "");
-        setSeoDescription(product.seoDescription ?? "");
-      } catch {
-        if (isMounted) {
-          setError("Não foi possível carregar o produto.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingData(false);
-        }
-      }
-    }
-
-    void loadProduct();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [id, token, getProductById]);
-
-  function handleAddGalleryImage() {
-    setGalleryImages((currentImages) => [
-      ...currentImages,
-      {
-        id: crypto.randomUUID(),
-        imageUrl: "",
-        sortOrder: currentImages.length,
-      },
-    ]);
-  }
-
-  function handleGalleryImageChange(id: string, value: string) {
-    setGalleryImages((currentImages) =>
-      currentImages.map((image) =>
-        image.id === id
-          ? {
-              ...image,
-              imageUrl: value,
-            }
-          : image,
-      ),
-    );
-  }
-
-  function handleRemoveGalleryImage(id: string) {
-    setGalleryImages((currentImages) =>
-      currentImages
-        .filter((image) => image.id !== id)
-        .map((image, index) => ({
-          ...image,
-          sortOrder: index,
-        })),
-    );
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setError(null);
-
-    if (!token) {
-      setError("Sua sessão não está autenticada.");
-      return;
-    }
-
-    if (!title.trim()) {
-      setError("Informe o título do produto.");
-      return;
-    }
-
-    if (!imageUrl.trim()) {
-      setError("Informe a URL da imagem.");
-      return;
-    }
-
-    if (!affiliateUrl.trim()) {
-      setError("Informe o link de afiliado.");
-      return;
-    }
-
-    if (!subcategoryId) {
-      setError("Selecione uma subcategoria.");
-      return;
-    }
-
-    if (!marketplaceId) {
-      setError("Selecione um marketplace.");
-      return;
-    }
-
-    const parsedPrice = parseCurrencyBRL(price);
-
-    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      setError("Informe um preço válido.");
-      return;
-    }
-
-    let parsedOriginalPrice: number | undefined;
-
-    if (originalPrice.trim()) {
-      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
-
-      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
-        setError("Informe um preço original válido.");
-        return;
-      }
-    }
-
-    let parsedRating: number | undefined;
-
-    if (rating.trim()) {
-      parsedRating = Number(rating);
-
-      if (
-        !Number.isFinite(parsedRating) ||
-        parsedRating < 0 ||
-        parsedRating > 5
-      ) {
-        setError("A avaliação deve estar entre 0 e 5.");
-        return;
-      }
-    }
-
-    const parsedReviewsCount = Number(reviewsCount);
-
-    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
-      setError("A quantidade de avaliações deve ser um número inteiro.");
-      return;
-    }
-
-    try {
-      new URL(imageUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para a imagem.");
-      return;
-    }
-
-    try {
-      new URL(affiliateUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para o link de afiliado.");
-      return;
-    }
-
-    const cleanGalleryImages = galleryImages
-      .map((image) => ({
-        imageUrl: image.imageUrl.trim(),
-        sortOrder: image.sortOrder,
-      }))
-      .filter((image) => image.imageUrl);
-
-    for (const image of cleanGalleryImages) {
-      try {
-        new URL(image.imageUrl);
-      } catch {
-        setError(
-          `Informe uma URL válida para a imagem da galeria na posição ${
-            image.sortOrder + 1
-          }.`,
-        );
-        return;
-      }
-    }
-
-    setLoading(true);
-
-    try {
-      const cleanDescription =
-        description === "<p></p>" ? undefined : description.trim();
-
-      const productData = {
-        title: title.trim(),
-        description: cleanDescription,
-        shortDescription: shortDescription.trim() || undefined,
-
-        imageUrl: imageUrl.trim(),
-
-        images: cleanGalleryImages,
-
-        price: parsedPrice,
-        originalPrice: parsedOriginalPrice,
-
-        currency: currency.trim().toUpperCase() || "BRL",
-
-        rating: parsedRating,
-        reviewsCount: parsedReviewsCount,
-
-        affiliateUrl: affiliateUrl.trim(),
-
-        subcategoryId,
-        marketplaceId,
-
-        featured,
-        available,
-        active,
-
-        seoTitle: seoTitle.trim() || undefined,
-        seoDescription: seoDescription.trim() || undefined,
-      };
-
-      if (isEditing && id) {
-        await updateProduct(id, productData, token);
-      } else {
-        await createProduct(productData, token);
-      }
-
-      navigate("/admin/products");
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : isEditing
-            ? "Não foi possível atualizar o produto."
-            : "Não foi possível criar o produto.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loadingData) {
-    return (
-      <section className="mx-auto w-full max-w-5xl">
-        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">Carregando produto...</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="mx-auto w-full max-w-5xl">
-      <div className="mb-6">
-        <Link
-          to="/admin/products"
-          className="text-sm font-semibold text-blue hover:underline"
-        >
-          ← Voltar para produtos
-        </Link>
-
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          {isEditing ? "Editar produto" : "Novo produto"}
-        </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
-          {isEditing
-            ? "Atualize os dados do produto."
-            : "Cadastre um novo produto no catálogo do WorldMix360."}
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <form
-        onSubmit={(event) => void handleSubmit(event)}
-        className="space-y-6"
-      >
-        <ProductBasicInfo
-          title={title}
-          description={description}
-          shortDescription={shortDescription}
-          imageUrl={imageUrl}
-          loading={loading}
-          onTitleChange={setTitle}
-          onDescriptionChange={setDescription}
-          onShortDescriptionChange={setShortDescription}
-          onImageUrlChange={setImageUrl}
-        />
-
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <ProductGallery
-            galleryImages={galleryImages}
-            loading={loading}
-            onAdd={handleAddGalleryImage}
-            onChange={handleGalleryImageChange}
-            onRemove={handleRemoveGalleryImage}
-          />
-        </div>
-
-        <ProductPricing
-          price={price}
-          originalPrice={originalPrice}
-          currency={currency}
-          rating={rating}
-          reviewsCount={reviewsCount}
-          loading={loading}
-          onPriceChange={setPrice}
-          onOriginalPriceChange={setOriginalPrice}
-          onCurrencyChange={setCurrency}
-          onRatingChange={setRating}
-          onReviewsCountChange={setReviewsCount}
-        />
-
-        <ProductRelationships
-          subcategories={subcategories}
-          marketplaces={marketplaces}
-          subcategoryId={subcategoryId}
-          marketplaceId={marketplaceId}
-          affiliateUrl={affiliateUrl}
-          loading={loading}
-          onSubcategoryChange={setSubcategoryId}
-          onMarketplaceChange={setMarketplaceId}
-          onAffiliateUrlChange={setAffiliateUrl}
-        />
-
-        <ProductStatus
-          featured={featured}
-          available={available}
-          active={active}
-          loading={loading}
-          onFeaturedChange={setFeatured}
-          onAvailableChange={setAvailable}
-          onActiveChange={setActive}
-        />
-
-        <ProductSeo
-          seoTitle={seoTitle}
-          seoDescription={seoDescription}
-          loading={loading}
-          onSeoTitleChange={setSeoTitle}
-          onSeoDescriptionChange={setSeoDescription}
-        />
-
-        <ProductFormActions loading={loading} isEditing={isEditing} />
-      </form>
-    </section>
-  );
-}
-
-```
-
-## src\pages\AdminCategoriesPage.tsx
+## src\pages\admin\AdminCategoriesPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
 
 export function AdminCategoriesPage() {
   const { token } = useAuth();
@@ -6765,7 +8459,7 @@ export function AdminCategoriesPage() {
 
 ```
 
-## src\pages\AdminDashboarPage.tsx
+## src\pages\admin\AdminDashboarPage.tsx
 
 ```tsx
 // src/pages/admin/AdminDashboardPage.tsx
@@ -6773,13 +8467,14 @@ export function AdminCategoriesPage() {
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
-import { useMarketplaces } from "../contexts/useMarketplaces";
-import { useProducts } from "../contexts/useProducts";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+import { useCategories } from "../../contexts/useCategories";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
-export default function AdminDashboardPage() {
+export function AdminDashboardPage() {
   const { token } = useAuth();
 
   const {
@@ -6810,10 +8505,17 @@ export default function AdminDashboardPage() {
     error: marketplacesError,
   } = useMarketplaces();
 
+  const {
+    posts,
+    fetchAdminPosts,
+    loading: blogLoading,
+    error: blogError,
+  } = useBlog();
+
   /**
    * Carrega os dados necessários para o Dashboard.
    *
-   * Produtos administrativos precisam do token.
+   * Produtos e Blog administrativos precisam do token.
    * Categorias, subcategorias e marketplaces possuem
    * endpoints públicos de leitura.
    */
@@ -6827,6 +8529,7 @@ export default function AdminDashboardPage() {
       fetchCategories(),
       fetchSubcategories(),
       fetchMarketplaces(),
+      fetchAdminPosts(token),
     ]);
   }, [
     token,
@@ -6834,6 +8537,7 @@ export default function AdminDashboardPage() {
     fetchCategories,
     fetchSubcategories,
     fetchMarketplaces,
+    fetchAdminPosts,
   ]);
 
   // ================================
@@ -6882,17 +8586,35 @@ export default function AdminDashboardPage() {
     (marketplace) => marketplace.active,
   ).length;
 
+  // ================================
+  // Estatísticas do Blog
+  // ================================
+
+  const totalPosts = posts.length;
+
+  const publishedPosts = posts.filter(
+    (post) => post.status === "PUBLISHED",
+  ).length;
+
+  const draftPosts = posts.filter((post) => post.status === "DRAFT").length;
+
+  const scheduledPosts = posts.filter(
+    (post) => post.status === "SCHEDULED",
+  ).length;
+
   const isLoading =
     productsLoading ||
     categoriesLoading ||
     subcategoriesLoading ||
-    marketplacesLoading;
+    marketplacesLoading ||
+    blogLoading;
 
   const errors = [
     productsError,
     categoriesError,
     subcategoriesError,
     marketplacesError,
+    blogError,
   ].filter(Boolean);
 
   return (
@@ -6911,7 +8633,8 @@ export default function AdminDashboardPage() {
             </h1>
 
             <p className="mt-2 text-sm text-gray-500 sm:text-base">
-              Visão geral do catálogo e das principais áreas do sistema.
+              Visão geral do catálogo, conteúdo e das principais áreas do
+              sistema.
             </p>
           </div>
 
@@ -6965,7 +8688,7 @@ export default function AdminDashboardPage() {
           CARDS PRINCIPAIS
       ======================================== */}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {/* Produtos */}
 
         <Link
@@ -7075,6 +8798,33 @@ export default function AdminDashboardPage() {
 
           <div className="mt-5 flex items-center justify-between text-xs">
             <span className="text-gray-500">{activeMarketplaces} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Blog */}
+
+        <Link
+          to="/admin/blog"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Blog</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">{totalPosts}</p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📝
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{publishedPosts} publicados</span>
 
             <span className="font-semibold text-blue group-hover:underline">
               Gerenciar →
@@ -7226,6 +8976,59 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ========================================
+          RESUMO DO BLOG
+      ======================================== */}
+
+      <section className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-navy">Resumo do Blog</h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Situação atual dos conteúdos publicados e em produção.
+            </p>
+          </div>
+
+          <Link
+            to="/admin/blog"
+            className="text-sm font-semibold text-blue hover:underline"
+          >
+            Gerenciar Blog →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Total</p>
+
+            <p className="mt-1 text-2xl font-bold text-navy">{totalPosts}</p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Publicados</p>
+
+            <p className="mt-1 text-2xl font-bold text-green">
+              {publishedPosts}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Rascunhos</p>
+
+            <p className="mt-1 text-2xl font-bold text-yellow">{draftPosts}</p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Agendados</p>
+
+            <p className="mt-1 text-2xl font-bold text-blue">
+              {scheduledPosts}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================
           AÇÕES RÁPIDAS
       ======================================== */}
 
@@ -7238,7 +9041,7 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Link
             to="/admin/products/new"
             className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
@@ -7290,6 +9093,19 @@ export default function AdminDashboardPage() {
               Adicionar um canal de venda.
             </p>
           </Link>
+
+          <Link
+            to="/admin/blog"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📝</span>
+
+            <p className="mt-2 font-semibold text-navy">Gerenciar Blog</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Gerenciar os artigos e conteúdos.
+            </p>
+          </Link>
         </div>
       </section>
     </section>
@@ -7298,14 +9114,14 @@ export default function AdminDashboardPage() {
 
 ```
 
-## src\pages\AdminMarketplaceFormPage.tsx
+## src\pages\admin\AdminMarketplaceFormPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
 
 export function AdminMarketplaceFormPage() {
   const { id } = useParams();
@@ -7715,14 +9531,14 @@ export function AdminMarketplaceFormPage() {
 
 ```
 
-## src\pages\AdminMarketplacesPage.tsx
+## src\pages\admin\AdminMarketplacesPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
 
 export function AdminMarketplacesPage() {
   const { token } = useAuth();
@@ -8072,14 +9888,1151 @@ export function AdminMarketplacesPage() {
 
 ```
 
-## src\pages\AdminProductsPage.tsx
+## src\pages\admin\AdminProductsFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { MercadoLivreOfferModal } from "../../components/admin/products/MercadoLivreOfferModal";
+import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
+import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
+import { ProductGallery } from "../../components/admin/products/ProductGallery";
+import { ProductPricing } from "../../components/admin/products/ProductPricing";
+import { ProductRelationships } from "../../components/admin/products/ProductRelationships";
+import { ProductSeo } from "../../components/admin/products/ProductSeo";
+import { ProductStatus } from "../../components/admin/products/ProductStatus";
+import type { ProductImageForm } from "../../components/admin/products/types";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
+import {
+  analyzeMercadoLivreProduct,
+  importMercadoLivreProduct,
+  type MercadoLivreAnalyzeResult,
+  type MercadoLivreOffer,
+  updateMercadoLivreProductOffer,
+} from "../../services/mercadoLivreService";
+import { parseCurrencyBRL } from "../../utils/formatCurrency";
+
+const MERCADO_LIVRE_MARKETPLACE_ID = "c255826b-2073-4c76-8966-b87f22403090";
+
+type ProductMarketplaceLink = {
+  id?: string;
+  marketplaceId?: string | null;
+  externalLink?: string | null;
+  affiliateUrl?: string | null;
+};
+
+type ProductWithMarketplaceLinks = {
+  marketplaceProducts?: ProductMarketplaceLink[] | null;
+};
+
+export function AdminProductsFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getProductById, createProduct, updateProduct } = useProducts();
+
+  const { subcategories, fetchSubcategories } = useSubcategories();
+
+  const { marketplaces, fetchMarketplaces } = useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
+
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+
+  const [currency, setCurrency] = useState("BRL");
+
+  const [rating, setRating] = useState("");
+  const [reviewsCount, setReviewsCount] = useState("0");
+
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+  const [externalLink, setExternalLink] = useState("");
+
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [marketplaceId, setMarketplaceId] = useState("");
+
+  // Mantido: comportamento original do featured.
+  const [featured, setFeatured] = useState(false);
+
+  // Novas opções independentes.
+  const [destaque, setDestaque] = useState(false);
+  const [bestSeller, setBestSeller] = useState(false);
+
+  const [available, setAvailable] = useState(true);
+  const [active, setActive] = useState(true);
+
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  const [mercadoLivreAnalysis, setMercadoLivreAnalysis] =
+    useState<MercadoLivreAnalyzeResult | null>(null);
+
+  const [mercadoLivreModalOpen, setMercadoLivreModalOpen] = useState(false);
+
+  const [mercadoLivreImporting, setMercadoLivreImporting] = useState(false);
+
+  useEffect(() => {
+    void fetchSubcategories();
+    void fetchMarketplaces();
+  }, [fetchSubcategories, fetchMarketplaces]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const productId = id;
+    const authToken = token;
+
+    let isMounted = true;
+
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId, authToken);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!product) {
+          setError("Produto não encontrado.");
+          setLoadingData(false);
+          return;
+        }
+
+        setTitle(product.title ?? "");
+        setDescription(product.description ?? "");
+        setShortDescription(product.shortDescription ?? "");
+        setImageUrl(product.imageUrl ?? "");
+
+        setGalleryImages(
+          Array.isArray(product.images)
+            ? product.images
+                .map((image, index) => ({
+                  id: image.id ?? crypto.randomUUID(),
+                  imageUrl: image.imageUrl ?? "",
+                  sortOrder:
+                    typeof image.sortOrder === "number"
+                      ? image.sortOrder
+                      : index,
+                }))
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+            : [],
+        );
+
+        setPrice(
+          product.price !== null && product.price !== undefined
+            ? Number(product.price).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setOriginalPrice(
+          product.originalPrice !== null && product.originalPrice !== undefined
+            ? Number(product.originalPrice).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setCurrency(product.currency ?? "BRL");
+
+        setRating(
+          product.rating !== null && product.rating !== undefined
+            ? String(product.rating)
+            : "",
+        );
+
+        setReviewsCount(String(product.reviewsCount ?? 0));
+
+        setAffiliateUrl(product.affiliateUrl ?? "");
+
+        setSubcategoryId(product.subcategoryId ?? "");
+        setMarketplaceId(product.marketplaceId ?? "");
+
+        const productWithMarketplaceLinks = product as typeof product &
+          ProductWithMarketplaceLinks;
+
+        const marketplaceProducts =
+          productWithMarketplaceLinks.marketplaceProducts;
+
+        if (Array.isArray(marketplaceProducts)) {
+          const mercadoLivreProduct = marketplaceProducts.find(
+            (marketplaceProduct) =>
+              marketplaceProduct.marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID,
+          );
+
+          const currentExternalLink = mercadoLivreProduct?.externalLink ?? "";
+
+          setExternalLink(currentExternalLink);
+        } else {
+          setExternalLink("");
+        }
+
+        // featured permanece independente de destaque e bestSeller.
+        setFeatured(Boolean(product.featured));
+        setDestaque(Boolean(product.destaque));
+        setBestSeller(Boolean(product.bestSeller));
+        setAvailable(Boolean(product.available));
+        setActive(Boolean(product.active));
+
+        setSeoTitle(product.seoTitle ?? "");
+        setSeoDescription(product.seoDescription ?? "");
+      } catch {
+        if (isMounted) {
+          setError("Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, token, getProductById]);
+
+  function handleAddGalleryImage() {
+    setGalleryImages((currentImages) => [
+      ...currentImages,
+      {
+        id: crypto.randomUUID(),
+        imageUrl: "",
+        sortOrder: currentImages.length,
+      },
+    ]);
+  }
+
+  function handleGalleryImageChange(imageId: string, value: string) {
+    setGalleryImages((currentImages) =>
+      currentImages.map((image) =>
+        image.id === imageId
+          ? {
+              ...image,
+              imageUrl: value,
+            }
+          : image,
+      ),
+    );
+  }
+
+  function handleRemoveGalleryImage(imageId: string) {
+    setGalleryImages((currentImages) =>
+      currentImages
+        .filter((image) => image.id !== imageId)
+        .map((image, index) => ({
+          ...image,
+          sortOrder: index,
+        })),
+    );
+  }
+
+  async function handleMercadoLivreImport(selectedOffer: MercadoLivreOffer) {
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!mercadoLivreAnalysis) {
+      setError("A análise do Mercado Livre não está disponível.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria antes de importar o produto.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado antes de importar o produto.");
+      return;
+    }
+
+    if (!externalLink.trim()) {
+      setError(
+        "Informe o link de referência do Mercado Livre antes de importar.",
+      );
+      return;
+    }
+
+    setMercadoLivreImporting(true);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const cleanDescription =
+        description.trim() === "<p></p>"
+          ? undefined
+          : description.trim() || undefined;
+
+      const parsedManualPrice = price.trim()
+        ? parseCurrencyBRL(price)
+        : undefined;
+
+      const parsedManualOriginalPrice = originalPrice.trim()
+        ? parseCurrencyBRL(originalPrice)
+        : undefined;
+
+      const parsedManualRating = rating.trim() ? Number(rating) : undefined;
+
+      const parsedManualReviewsCount = Number(reviewsCount);
+
+      const cleanGalleryImages = galleryImages
+        .map((image) => ({
+          imageUrl: image.imageUrl.trim(),
+          sortOrder: image.sortOrder,
+        }))
+        .filter((image) => image.imageUrl);
+
+      await importMercadoLivreProduct(
+        {
+          affiliateUrl: affiliateUrl.trim(),
+          externalLink: externalLink.trim(),
+
+          catalogProductId: mercadoLivreAnalysis.catalogProductId,
+
+          itemId: selectedOffer.itemId,
+          sellerId: selectedOffer.sellerId,
+
+          subcategoryId,
+
+          title: title.trim() || undefined,
+          description: cleanDescription,
+          shortDescription: shortDescription.trim() || undefined,
+          imageUrl: imageUrl.trim() || undefined,
+
+          images:
+            cleanGalleryImages.length > 0 ? cleanGalleryImages : undefined,
+
+          price:
+            parsedManualPrice !== undefined &&
+            Number.isFinite(parsedManualPrice) &&
+            parsedManualPrice >= 0
+              ? parsedManualPrice
+              : undefined,
+
+          originalPrice:
+            parsedManualOriginalPrice !== undefined &&
+            Number.isFinite(parsedManualOriginalPrice) &&
+            parsedManualOriginalPrice >= 0
+              ? parsedManualOriginalPrice
+              : undefined,
+
+          currency: currency.trim().toUpperCase() || undefined,
+
+          rating:
+            parsedManualRating !== undefined &&
+            Number.isFinite(parsedManualRating) &&
+            parsedManualRating >= 0 &&
+            parsedManualRating <= 5
+              ? parsedManualRating
+              : undefined,
+
+          reviewsCount:
+            Number.isInteger(parsedManualReviewsCount) &&
+            parsedManualReviewsCount >= 0
+              ? parsedManualReviewsCount
+              : undefined,
+
+          // Os três campos são independentes.
+          featured,
+          destaque,
+          bestSeller,
+          available,
+          active,
+
+          seoTitle: seoTitle.trim() || undefined,
+
+          seoDescription: seoDescription.trim() || undefined,
+        },
+        token,
+      );
+
+      setMercadoLivreModalOpen(false);
+      setMercadoLivreAnalysis(null);
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível importar o produto do Mercado Livre.",
+      );
+    } finally {
+      setMercadoLivreImporting(false);
+      setLoading(false);
+    }
+  }
+
+  function handleMercadoLivreModalCancel() {
+    if (mercadoLivreImporting) {
+      return;
+    }
+
+    setMercadoLivreModalOpen(false);
+    setMercadoLivreAnalysis(null);
+    setLoading(false);
+  }
+
+  async function handleMercadoLivreModalConfirm(
+    selectedOffer: MercadoLivreOffer | null,
+  ) {
+    if (!selectedOffer) {
+      handleMercadoLivreModalCancel();
+      return;
+    }
+
+    if (isEditing && id) {
+      await saveEditedProductWithMercadoLivreOffer(selectedOffer);
+      return;
+    }
+
+    await handleMercadoLivreImport(selectedOffer);
+  }
+
+  async function saveEditedProductWithMercadoLivreOffer(
+    selectedOffer: MercadoLivreOffer,
+  ) {
+    if (!token || !id) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!mercadoLivreAnalysis) {
+      setError("A análise do Mercado Livre não está disponível.");
+      return;
+    }
+
+    setMercadoLivreImporting(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const selectedOfferPrice = Number(selectedOffer.price);
+
+      if (!Number.isFinite(selectedOfferPrice) || selectedOfferPrice < 0) {
+        throw new Error("O preço da oferta selecionada é inválido.");
+      }
+
+      const selectedOfferOriginalPrice =
+        selectedOffer.originalPrice !== null &&
+        selectedOffer.originalPrice !== undefined
+          ? Number(selectedOffer.originalPrice)
+          : null;
+
+      if (
+        selectedOfferOriginalPrice !== null &&
+        (!Number.isFinite(selectedOfferOriginalPrice) ||
+          selectedOfferOriginalPrice < 0)
+      ) {
+        throw new Error("O preço original da oferta selecionada é inválido.");
+      }
+
+      await updateMercadoLivreProductOffer(
+        id,
+        {
+          externalLink: externalLink.trim(),
+          catalogProductId: mercadoLivreAnalysis.catalogProductId,
+          itemId: selectedOffer.itemId,
+          sellerId: selectedOffer.sellerId,
+        },
+        token,
+      );
+
+      await saveNormalProductUpdate(
+        id,
+        token,
+        selectedOfferPrice,
+        selectedOfferOriginalPrice,
+      );
+
+      setPrice(
+        selectedOfferPrice.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      );
+
+      if (selectedOfferOriginalPrice !== null) {
+        setOriginalPrice(
+          selectedOfferOriginalPrice.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+        );
+      } else {
+        setOriginalPrice("");
+      }
+
+      setMercadoLivreModalOpen(false);
+      setMercadoLivreAnalysis(null);
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível atualizar a oferta do Mercado Livre.",
+      );
+    } finally {
+      setMercadoLivreImporting(false);
+      setLoading(false);
+    }
+  }
+
+  async function saveNormalProductUpdate(
+    productId: string,
+    authToken: string,
+    mercadoLivrePrice?: number,
+    mercadoLivreOriginalPrice?: number | null,
+  ) {
+    const parsedPrice =
+      mercadoLivrePrice !== undefined
+        ? mercadoLivrePrice
+        : price.trim()
+          ? parseCurrencyBRL(price)
+          : undefined;
+
+    if (
+      parsedPrice === undefined ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice < 0
+    ) {
+      throw new Error("Informe um preço válido.");
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (mercadoLivreOriginalPrice !== undefined) {
+      if (
+        mercadoLivreOriginalPrice !== null &&
+        Number.isFinite(mercadoLivreOriginalPrice) &&
+        mercadoLivreOriginalPrice >= 0
+      ) {
+        parsedOriginalPrice = mercadoLivreOriginalPrice;
+      }
+    } else if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        throw new Error("Informe um preço original válido.");
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        throw new Error("A avaliação deve estar entre 0 e 5.");
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      throw new Error("A quantidade de avaliações deve ser um número inteiro.");
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    const cleanDescription =
+      description.trim() === "<p></p>"
+        ? undefined
+        : description.trim() || undefined;
+
+    const productData = {
+      title: title.trim(),
+      description: cleanDescription,
+      shortDescription: shortDescription.trim() || undefined,
+
+      imageUrl: imageUrl.trim(),
+
+      images: cleanGalleryImages,
+
+      price: parsedPrice,
+
+      originalPrice: parsedOriginalPrice,
+
+      currency: currency.trim().toUpperCase() || "BRL",
+
+      rating: parsedRating,
+      reviewsCount: parsedReviewsCount,
+
+      affiliateUrl: affiliateUrl.trim(),
+
+      subcategoryId,
+      marketplaceId,
+
+      featured,
+      destaque,
+      bestSeller,
+      available,
+      active,
+
+      seoTitle: seoTitle.trim() || undefined,
+
+      seoDescription: seoDescription.trim() || undefined,
+    };
+
+    await updateProduct(productId, productData, authToken);
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria.");
+      return;
+    }
+
+    if (!marketplaceId) {
+      setError("Selecione um marketplace.");
+      return;
+    }
+
+    const isMercadoLivre = marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID;
+
+    /*
+     * ============================================================
+     * NOVO PRODUTO DO MERCADO LIVRE
+     * ============================================================
+     */
+    if (!isEditing && isMercadoLivre) {
+      if (!externalLink.trim()) {
+        setError("Informe o link de referência do Mercado Livre.");
+        return;
+      }
+
+      try {
+        new URL(affiliateUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o link de afiliado.");
+        return;
+      }
+
+      try {
+        new URL(externalLink.trim());
+      } catch {
+        setError(
+          "Informe uma URL válida para o link de referência do Mercado Livre.",
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const analysis = await analyzeMercadoLivreProduct(
+          externalLink.trim(),
+          token,
+        );
+
+        if (analysis.noOffersFound || analysis.offers.length === 0) {
+          setError(
+            "Nenhuma oferta foi encontrada para este produto no Mercado Livre.",
+          );
+          return;
+        }
+
+        setMercadoLivreAnalysis(analysis);
+
+        if (analysis.requiresOfferSelection || analysis.offers.length > 1) {
+          setMercadoLivreModalOpen(true);
+          return;
+        }
+
+        const selectedOffer =
+          analysis.selectedOffer ?? analysis.offers[0] ?? null;
+
+        if (!selectedOffer) {
+          setError(
+            "Não foi possível identificar uma oferta válida do Mercado Livre.",
+          );
+          return;
+        }
+
+        await handleMercadoLivreImport(selectedOffer);
+
+        return;
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Não foi possível analisar o produto do Mercado Livre.",
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    /*
+     * ============================================================
+     * EDIÇÃO DE PRODUTO DO MERCADO LIVRE
+     * ============================================================
+     *
+     * Toda atualização de produto do Mercado Livre:
+     *   -> exige externalLink;
+     *   -> analisa novamente o link;
+     *   -> busca as ofertas;
+     *   -> 0 ofertas: não salva;
+     *   -> 1 oferta: atualiza automaticamente;
+     *   -> várias ofertas: abre o modal para seleção.
+     *
+     * O externalLink atual é preservado mesmo quando o usuário
+     * não alterou o campo.
+     */
+    if (isEditing && isMercadoLivre) {
+      if (!externalLink.trim()) {
+        setError(
+          "O link de referência do Mercado Livre é obrigatório para atualizar este produto.",
+        );
+        return;
+      }
+
+      try {
+        new URL(externalLink.trim());
+      } catch {
+        setError(
+          "Informe uma URL válida para o link de referência do Mercado Livre.",
+        );
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        /*
+         * Sempre analisa novamente o produto no Mercado Livre,
+         * mesmo que o externalLink não tenha sido alterado.
+         */
+        const analysis = await analyzeMercadoLivreProduct(
+          externalLink.trim(),
+          token,
+        );
+
+        if (analysis.noOffersFound || analysis.offers.length === 0) {
+          setError(
+            "Nenhuma oferta foi encontrada para este produto no Mercado Livre. A atualização foi cancelada.",
+          );
+          return;
+        }
+
+        setMercadoLivreAnalysis(analysis);
+
+        /*
+         * Mais de uma oferta:
+         * deixa o usuário escolher no modal.
+         */
+        if (analysis.requiresOfferSelection || analysis.offers.length > 1) {
+          setMercadoLivreModalOpen(true);
+          return;
+        }
+
+        /*
+         * Apenas uma oferta:
+         * usa automaticamente.
+         */
+        const selectedOffer =
+          analysis.selectedOffer ?? analysis.offers[0] ?? null;
+
+        if (!selectedOffer) {
+          setError(
+            "Não foi possível identificar uma oferta válida do Mercado Livre.",
+          );
+          return;
+        }
+
+        await updateMercadoLivreProductOffer(
+          id!,
+          {
+            externalLink: externalLink.trim(),
+            catalogProductId: analysis.catalogProductId,
+            itemId: selectedOffer.itemId,
+            sellerId: selectedOffer.sellerId,
+          },
+          token,
+        );
+
+        /*
+         * Depois que a oferta foi validada e vinculada,
+         * salva os demais dados normalmente.
+         */
+        await saveNormalProductUpdate(id!, token);
+
+        setMercadoLivreAnalysis(null);
+        setMercadoLivreModalOpen(false);
+
+        navigate("/admin/products");
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Não foi possível analisar e atualizar a oferta do Mercado Livre.",
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    /*
+     * ============================================================
+     * CADASTRO / EDIÇÃO NORMAL
+     * ============================================================
+     */
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    const parsedPrice = price.trim() ? parseCurrencyBRL(price) : undefined;
+
+    if (
+      parsedPrice === undefined ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice < 0
+    ) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        setError("Informe um preço original válido.");
+        return;
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        setError("A avaliação deve estar entre 0 e 5.");
+        return;
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      setError("A quantidade de avaliações deve ser um número inteiro.");
+      return;
+    }
+
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para a imagem.");
+      return;
+    }
+
+    try {
+      new URL(affiliateUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para o link de afiliado.");
+      return;
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    for (const image of cleanGalleryImages) {
+      try {
+        new URL(image.imageUrl);
+      } catch {
+        setError(
+          `Informe uma URL válida para a imagem da galeria na posição ${
+            image.sortOrder + 1
+          }.`,
+        );
+        return;
+      }
+    }
+
+    const cleanDescription =
+      description.trim() === "<p></p>"
+        ? undefined
+        : description.trim() || undefined;
+
+    const productData = {
+      title: title.trim(),
+      description: cleanDescription,
+      shortDescription: shortDescription.trim() || undefined,
+
+      imageUrl: imageUrl.trim(),
+
+      images: cleanGalleryImages,
+
+      price: parsedPrice,
+
+      originalPrice: parsedOriginalPrice,
+
+      currency: currency.trim().toUpperCase() || "BRL",
+
+      rating: parsedRating,
+      reviewsCount: parsedReviewsCount,
+
+      affiliateUrl: affiliateUrl.trim(),
+
+      subcategoryId,
+      marketplaceId,
+
+      // Mantidos os três campos independentes.
+      featured,
+      destaque,
+      bestSeller,
+      available,
+      active,
+
+      seoTitle: seoTitle.trim() || undefined,
+
+      seoDescription: seoDescription.trim() || undefined,
+    };
+
+    setLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateProduct(id, productData, token);
+      } else {
+        await createProduct(productData, token);
+      }
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o produto."
+            : "Não foi possível criar o produto.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando produto...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/products"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para produtos
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar produto" : "Novo produto"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do produto."
+            : "Cadastre um novo produto no catálogo do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <ProductBasicInfo
+          title={title}
+          description={description}
+          shortDescription={shortDescription}
+          imageUrl={imageUrl}
+          loading={loading}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onShortDescriptionChange={setShortDescription}
+          onImageUrlChange={setImageUrl}
+        />
+
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <ProductGallery
+            galleryImages={galleryImages}
+            loading={loading}
+            onAdd={handleAddGalleryImage}
+            onChange={handleGalleryImageChange}
+            onRemove={handleRemoveGalleryImage}
+          />
+        </div>
+
+        <ProductPricing
+          price={price}
+          originalPrice={originalPrice}
+          currency={currency}
+          rating={rating}
+          reviewsCount={reviewsCount}
+          loading={loading}
+          onPriceChange={setPrice}
+          onOriginalPriceChange={setOriginalPrice}
+          onCurrencyChange={setCurrency}
+          onRatingChange={setRating}
+          onReviewsCountChange={setReviewsCount}
+        />
+
+        <ProductRelationships
+          subcategories={subcategories}
+          marketplaces={marketplaces}
+          subcategoryId={subcategoryId}
+          marketplaceId={marketplaceId}
+          affiliateUrl={affiliateUrl}
+          externalLink={externalLink}
+          loading={loading}
+          isEditing={isEditing}
+          onSubcategoryChange={setSubcategoryId}
+          onMarketplaceChange={setMarketplaceId}
+          onAffiliateUrlChange={setAffiliateUrl}
+          onExternalLinkChange={setExternalLink}
+        />
+
+        <ProductStatus
+          featured={featured}
+          destaque={destaque}
+          bestSeller={bestSeller}
+          available={available}
+          active={active}
+          loading={loading}
+          onFeaturedChange={setFeatured}
+          onDestaqueChange={setDestaque}
+          onBestSellerChange={setBestSeller}
+          onAvailableChange={setAvailable}
+          onActiveChange={setActive}
+        />
+
+        <ProductSeo
+          seoTitle={seoTitle}
+          seoDescription={seoDescription}
+          loading={loading}
+          onSeoTitleChange={setSeoTitle}
+          onSeoDescriptionChange={setSeoDescription}
+        />
+        {error && (
+          <div className="mb-6 rounded-lg bg-danger-light px-4 py-3 text-sm text-danger">
+            {error}
+          </div>
+        )}
+        <ProductFormActions loading={loading} isEditing={isEditing} />
+      </form>
+
+      {mercadoLivreAnalysis && (
+        <MercadoLivreOfferModal
+          open={mercadoLivreModalOpen}
+          title={
+            mercadoLivreAnalysis.title || "Produto do catálogo do Mercado Livre"
+          }
+          offers={mercadoLivreAnalysis.offers}
+          loading={mercadoLivreImporting}
+          onCancel={handleMercadoLivreModalCancel}
+          onConfirm={(selectedOffer) =>
+            void handleMercadoLivreModalConfirm(selectedOffer)
+          }
+        />
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\admin\AdminProductsPage.tsx
 
 ```tsx
 // src/pages/admin/AdminProductsPage.tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth";
-import { useProducts } from "../contexts/useProducts";
+import { useAuth } from "../../contexts/useAuth";
+import { useProducts } from "../../contexts/useProducts";
 
 export function AdminProductsPage() {
   const { products, fetchAdminProducts, updateProductStatus, loading, error } =
@@ -8088,6 +11041,7 @@ export function AdminProductsPage() {
   const { token } = useAuth();
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [syncingMercadoLivre, setSyncingMercadoLivre] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -8124,6 +11078,48 @@ export function AdminProductsPage() {
     }
   }
 
+  async function handleMercadoLivreSync() {
+    if (!token || syncingMercadoLivre) {
+      return;
+    }
+
+    try {
+      setSyncingMercadoLivre(true);
+
+      const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+      const response = await fetch(`${apiUrl}/mercado-livre/sync`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Não foi possível sincronizar os produtos do Mercado Livre.",
+        );
+      }
+
+      await fetchAdminProducts(token);
+
+      alert(
+        data?.message || "Produtos do Mercado Livre sincronizados com sucesso.",
+      );
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível sincronizar os produtos do Mercado Livre.",
+      );
+    } finally {
+      setSyncingMercadoLivre(false);
+    }
+  }
+
   if (loading) {
     return <p className="p-6">Carregando produtos...</p>;
   }
@@ -8137,12 +11133,25 @@ export function AdminProductsPage() {
       <header className="flex justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
 
-        <Link
-          to="/admin/products/new"
-          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
-        >
-          + Cadastrar Produto
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void handleMercadoLivreSync()}
+            disabled={!token || syncingMercadoLivre}
+            className="bg-green/80 text-white px-4 py-2 rounded-lg hover:bg-green transition whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {syncingMercadoLivre
+              ? "Sincronizando..."
+              : "🔄 Sincronizar Mercado Livre"}
+          </button>
+
+          <Link
+            to="/admin/products/new"
+            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
+          >
+            + Cadastrar Produto
+          </Link>
+        </div>
       </header>
 
       <div className="overflow-x-auto">
@@ -8272,14 +11281,14 @@ export function AdminProductsPage() {
 
 ```
 
-## src\pages\AdminSubcategoriesPage.tsx
+## src\pages\admin\AdminSubcategoriesPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
 export function AdminSubcategoriesPage() {
   const { token } = useAuth();
@@ -8636,15 +11645,15 @@ export function AdminSubcategoriesPage() {
 
 ```
 
-## src\pages\AdminSubcategoryFormPage.tsx
+## src\pages\admin\AdminSubcategoryFormPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
 export function AdminSubcategoryFormPage() {
   const { id } = useParams();
@@ -9012,7 +12021,7 @@ export function AdminSubcategoryFormPage() {
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Link
             to="/admin/subcategories"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
             Cancelar
           </Link>
@@ -9041,46 +12050,605 @@ export function AdminSubcategoryFormPage() {
 ## src\pages\BlogPage.tsx
 
 ```tsx
-import { CategoryPage } from "./ContentPages";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+
+import { useBlog } from "../contexts/useBlog";
 
 export function BlogPage() {
+  const { posts, loading, error, fetchPosts } = useBlog();
+
+  useEffect(() => {
+    void fetchPosts();
+  }, [fetchPosts]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex min-h-[300px] items-center justify-center">
+            <p className="text-gray-600">Carregando artigos...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+            <h1 className="mb-2 text-xl font-semibold text-red-700">
+              Não foi possível carregar o Blog
+            </h1>
+
+            <p className="text-sm text-red-600">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => void fetchPosts()}
+              className="mt-4 rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-red-700"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <CategoryPage
-      title="Blog"
-      summary="Conteúdos úteis para ajudar você a comprar melhor e descobrir novas tendências."
-      image="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=85"
-      imageAlt="Caderno, café e notebook em uma mesa de trabalho"
-      highlights={[
-        {
-          title: "Dicas de consumo",
-          description: "Informação para comprar com mais consciência.",
-          image:
-            "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Caderno com anotações e caneta",
-        },
-        {
-          title: "Guias de compras",
-          description: "Critérios práticos para encontrar o produto certo.",
-          image:
-            "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Pessoa pesquisando em um notebook",
-        },
-        {
-          title: "Tendências e novidades",
-          description: "O que está mudando no mundo dos produtos e serviços.",
-          image:
-            "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Notebook em uma mesa de trabalho",
-        },
-        {
-          title: "Conteúdo confiável",
-          description: "Leituras úteis, diretas e feitas para ajudar você.",
-          image:
-            "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Pessoa lendo notícias em um jornal",
-        },
-      ]}
-    />
+    <main className="min-h-screen bg-white px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Cabeçalho */}
+        <header className="mb-10 text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
+            WorldMix360
+          </p>
+
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">Blog</h1>
+
+          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+            Dicas, informações e conteúdos para ajudar você a encontrar produtos
+            úteis para o seu dia a dia.
+          </p>
+        </header>
+
+        {/* Nenhum artigo */}
+        {posts.length === 0 ? (
+          <section className="rounded-xl border border-gray-200 bg-gray-50 p-10 text-center">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Nenhum artigo publicado
+            </h2>
+
+            <p className="mt-2 text-gray-600">
+              Em breve teremos novos conteúdos no WorldMix360.
+            </p>
+          </section>
+        ) : (
+          <section>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  {/* Imagem */}
+                  {post.coverImage ? (
+                    <Link
+                      to={`/blog/${encodeURIComponent(post.slug)}`}
+                      className="block overflow-hidden"
+                    >
+                      <img
+                        src={post.coverImage}
+                        alt={post.title}
+                        className="h-52 w-full object-cover transition duration-300 hover:scale-105"
+                      />
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/blog/${encodeURIComponent(post.slug)}`}
+                      className="flex h-52 items-center justify-center bg-gray-100"
+                    >
+                      <span className="text-sm text-gray-400">WorldMix360</span>
+                    </Link>
+                  )}
+
+                  {/* Conteúdo */}
+                  <div className="flex flex-1 flex-col p-5">
+                    {/* Categoria */}
+                    {post.category && (
+                      <span className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
+                        {post.category.name}
+                      </span>
+                    )}
+
+                    <h2 className="text-xl font-bold leading-tight text-gray-900">
+                      <Link
+                        to={`/blog/${encodeURIComponent(post.slug)}`}
+                        className="transition hover:text-blue-600"
+                      >
+                        {post.title}
+                      </Link>
+                    </h2>
+
+                    {/* Excerpt */}
+                    {post.excerpt && (
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
+                        {post.excerpt}
+                      </p>
+                    )}
+
+                    {/* Rodapé do card */}
+                    <div className="mt-auto pt-5">
+                      <Link
+                        to={`/blog/${encodeURIComponent(post.slug)}`}
+                        className="inline-flex items-center text-sm font-semibold text-blue-600 transition hover:text-blue-800"
+                      >
+                        Ler artigo
+                        <span className="ml-1" aria-hidden="true">
+                          →
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
+
+```
+
+## src\pages\BlogPostPage.tsx
+
+```tsx
+import DOMPurify from "dompurify";
+import { createElement, type ReactNode, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import type { BlogPost } from "../contexts/BlogContext";
+import { useBlog } from "../contexts/useBlog";
+
+function decodeHtmlEntities(value: string) {
+  const textarea = document.createElement("textarea");
+
+  textarea.innerHTML = value;
+
+  return textarea.value;
+}
+
+function normalizeContent(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  return decodeHtmlEntities(value)
+    .replaceAll("<p></p>", "")
+    .replaceAll("<div></div>", "")
+    .trim();
+}
+function renderContent(value: string): ReactNode[] {
+  const normalizedContent = normalizeContent(value);
+
+  if (!normalizedContent) {
+    return [];
+  }
+
+  const sanitizedContent = DOMPurify.sanitize(normalizedContent, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "h2",
+      "h3",
+      "h4",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "hr",
+      "a",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel"],
+  });
+
+  const document = new DOMParser().parseFromString(
+    sanitizedContent,
+    "text/html",
+  );
+
+  function renderNode(node: ChildNode, key: string): ReactNode {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+
+    if (!(node instanceof HTMLElement)) {
+      return null;
+    }
+
+    const props: Record<string, string> = {};
+
+    for (const attribute of ["href", "target", "rel"]) {
+      const value = node.getAttribute(attribute);
+
+      if (value) {
+        props[attribute] = value;
+      }
+    }
+
+    return createElement(
+      node.tagName.toLowerCase(),
+      { ...props, key },
+      ...Array.from(node.childNodes).map((child, index) =>
+        renderNode(child, `${key}-${index}`),
+      ),
+    );
+  }
+
+  return Array.from(document.body.childNodes).map((node, index) =>
+    renderNode(node, String(index)),
+  );
+}
+
+function formatPrice(price: number | string, currency?: string | null) {
+  const numericPrice = typeof price === "number" ? price : Number(price);
+
+  if (!Number.isFinite(numericPrice)) {
+    return "Preço indisponível";
+  }
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: currency || "BRL",
+  }).format(numericPrice);
+}
+
+function formatDate(date?: string | null) {
+  if (!date) {
+    return "";
+  }
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function BlogPostPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const { getPostBySlug } = useBlog();
+
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPost() {
+      if (!slug) {
+        setError("Artigo não encontrado.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getPostBySlug(slug);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!result) {
+          setPost(null);
+          setError("Artigo não encontrado.");
+          return;
+        }
+
+        setPost(result);
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
+
+        setPost(null);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível carregar o artigo.",
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadPost();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, getPostBySlug]);
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        {" "}
+        <div className="animate-pulse">
+          {" "}
+          <div className="mb-4 h-5 w-32 rounded bg-gray-200" />
+          <div className="mb-3 h-10 w-3/4 rounded bg-gray-200" />
+          <div className="mb-8 h-5 w-1/2 rounded bg-gray-200" />
+          <div className="mb-10 h-72 rounded-xl bg-gray-200" />
+          <div className="space-y-4">
+            <div className="h-4 w-full rounded bg-gray-200" />
+            <div className="h-4 w-full rounded bg-gray-200" />
+            <div className="h-4 w-5/6 rounded bg-gray-200" />
+            <div className="h-4 w-4/6 rounded bg-gray-200" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
+        {" "}
+        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+          {" "}
+          <h1 className="text-2xl font-bold text-gray-900">
+            Artigo não encontrado{" "}
+          </h1>
+          <p className="mt-3 text-gray-600">
+            {error ?? "O artigo que você procura não existe."}
+          </p>
+          <Link
+            to="/blog"
+            className="mt-6 inline-flex rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
+          >
+            Voltar para o Blog
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const contentNodes = renderContent(post.content);
+
+  return (
+    <main className="bg-gray-50">
+      {" "}
+      <article className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        {" "}
+        <div className="mb-6">
+          {" "}
+          <Link
+            to="/blog"
+            className="inline-flex items-center text-sm font-medium text-blue transition hover:text-navy"
+          >
+            ← Voltar para o Blog{" "}
+          </Link>{" "}
+        </div>
+        {post.category && (
+          <div className="mb-4">
+            <span className="inline-flex rounded-full bg-green px-3 py-1 text-xs font-semibold text-white">
+              {post.category.name}
+            </span>
+          </div>
+        )}
+        <header>
+          <h1 className="max-w-4xl text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            {post.title}
+          </h1>
+
+          {post.excerpt && (
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-500 sm:text-xl">
+              {post.excerpt}
+            </p>
+          )}
+
+          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+            {post.author && (
+              <span>
+                Por{" "}
+                <strong className="font-semibold text-gray-700">
+                  {post.author.name}
+                </strong>
+              </span>
+            )}
+
+            {post.publishedAt && (
+              <>
+                <span className="hidden sm:inline">•</span>
+
+                <time dateTime={post.publishedAt}>
+                  {formatDate(post.publishedAt)}
+                </time>
+              </>
+            )}
+          </div>
+        </header>
+        {post.coverImage && (
+          <div className="mt-8 overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              className="h-auto max-h-[520px] w-full object-cover"
+            />
+          </div>
+        )}
+        <div className="mt-10 rounded-2xl bg-white p-5 shadow-sm sm:p-8 lg:p-10">
+          {contentNodes.length > 0 ? (
+            <div
+              className="
+            text-base
+            leading-8
+            text-gray-700
+            sm:text-lg
+            [&_a]:font-medium
+            [&_a]:text-blue
+            [&_a]:underline
+            [&_a]:underline-offset-2
+            [&_a:hover]:text-navy
+            [&_blockquote]:my-6
+            [&_blockquote]:border-l-4
+            [&_blockquote]:border-blue
+            [&_blockquote]:bg-blue
+            [&_blockquote]:px-5
+            [&_blockquote]:py-4
+            [&_blockquote]:italic
+            [&_blockquote]:text-gray-700
+            [&_b]:font-bold
+            [&_b]:text-gray-900
+            [&_em]:italic
+            [&_h2]:mb-4
+            [&_h2]:mt-10
+            [&_h2]:text-2xl
+            [&_h2]:font-bold
+            [&_h2]:leading-tight
+            [&_h2]:text-gray-900
+            [&_h3]:mb-3
+            [&_h3]:mt-8
+            [&_h3]:text-xl
+            [&_h3]:font-bold
+            [&_h3]:leading-tight
+            [&_h3]:text-gray-900
+            [&_h4]:mb-2
+            [&_h4]:mt-6
+            [&_h4]:text-lg
+            [&_h4]:font-bold
+            [&_h4]:text-gray-900
+            [&_hr]:my-8
+            [&_hr]:border-gray-100
+            [&_i]:italic
+            [&_i]:text-gray-700
+            [&_li]:my-1
+            [&_ol]:my-5
+            [&_ol]:list-decimal
+            [&_ol]:space-y-1
+            [&_ol]:pl-6
+            [&_p]:my-4
+            [&_strong]:font-bold
+            [&_strong]:text-gray-900
+            [&_u]:underline
+            [&_ul]:my-5
+            [&_ul]:list-disc
+            [&_ul]:space-y-1
+            [&_ul]:pl-6            
+          "
+            >
+              {contentNodes}
+            </div>
+          ) : (
+            <p className="text-gray-500">
+              Este artigo ainda não possui conteúdo.
+            </p>
+          )}
+        </div>
+        {post.products && post.products.length > 0 && (
+          <section className="mt-10 rounded-2xl bg-white p-5 shadow-sm sm:p-8">
+            <div className="mb-5">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Produtos relacionados
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Confira alguns produtos relacionados a este artigo.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {post.products.map((item) => {
+                const product = item.product;
+
+                return (
+                  <article
+                    key={item.id}
+                    className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50 transition hover:-translate-y-0.5 shadow-2xl"
+                  >
+                    <div className="h-32 overflow-hidden bg-gray-100">
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                          Sem imagem
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-3">
+                      <h3 className="line-clamp-2 text-sm font-semibold text-gray-900">
+                        {product.title}
+                      </h3>
+
+                      {product.shortDescription && (
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">
+                          {product.shortDescription}
+                        </p>
+                      )}
+
+                      <div className="mt-auto pt-3">
+                        <p className="text-base font-bold text-gray-900">
+                          {formatPrice(product.price, product.currency)}
+                        </p>
+
+                        {product.originalPrice &&
+                          Number(product.originalPrice) >
+                            Number(product.price) && (
+                            <p className="text-xs text-gray-500 line-through">
+                              {formatPrice(
+                                product.originalPrice,
+                                product.currency,
+                              )}
+                            </p>
+                          )}
+
+                        {product.affiliateUrl && (
+                          <a
+                            href={product.affiliateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-blue px-3 py-2 text-xs font-semibold text-white transition hover:bg-navy"
+                          >
+                            Ver produto
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </article>
+    </main>
   );
 }
 
@@ -9802,31 +13370,68 @@ export function FashionPage() {
 ## src\pages\HomePage.tsx
 
 ```tsx
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiArrowUpRight,
-  FiBookOpen,
-  FiCheckCircle,
-  FiGrid,
+  FiCreditCard,
   FiHeart,
+  FiLock,
   FiSearch,
   FiShield,
   FiShoppingBag,
-  FiStar,
   FiTool,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Banner } from "../components/Banner";
 import { BlogBanner } from "../components/BlogBanner";
-
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
 import { SocialBanner } from "../components/SocialBanner";
 import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 
+// Array de garantias
+const trustBadges = [
+  {
+    icon: FiShoppingBag,
+    title: "Compra na loja oficial",
+    description:
+      "Você é redirecionado para Mercado Livre, Amazon ou Shopee. O pagamento acontece diretamente no ambiente da loja parceira, nunca no WorldMix360.",
+  },
+  {
+    icon: FiLock,
+    title: "Conexão segura (HTTPS)",
+    description:
+      "O WorldMix360 utiliza conexão HTTPS para proteger a comunicação entre seu navegador e o site. Não coletamos dados de cartão de crédito.",
+  },
+  {
+    icon: FiCreditCard,
+    title: "Pagamentos protegidos",
+    description:
+      "O pagamento é realizado diretamente na plataforma da loja parceira, utilizando as opções e os meios de pagamento disponibilizados por ela.",
+  },
+  {
+    icon: FiShield,
+    title: "Garantia e suporte da loja parceira",
+    description:
+      "Após o redirecionamento, a compra, a emissão da nota fiscal, o suporte e as políticas de troca e devolução são tratados diretamente com a loja ou marketplace.",
+  },
+];
+
+const categoryIcons = {
+  tecnologia: FiShoppingBag,
+  "casa-utilidades": FiTool,
+  moda: FiShoppingBag,
+  pets: FiHeart,
+  "produtos-digitais": FiSearch,
+};
+
 export function HomePage() {
+  const [skeletonKeys] = useState(() =>
+    Array.from({ length: 7 }, () => crypto.randomUUID()),
+  );
+
   const {
     categories,
     loading: categoriesLoading,
@@ -9835,6 +13440,35 @@ export function HomePage() {
   } = useCategories();
 
   const { products, loading, error, fetchProducts } = useProducts();
+
+  // Ref e Estados para permitir ARRASTAR com o mouse
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Velocidade do arrasto
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   useEffect(() => {
     void fetchCategories();
@@ -9848,13 +13482,8 @@ export function HomePage() {
     .filter((category) => category.active)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const categoryIcons = {
-    tecnologia: FiGrid,
-    "casa-utilidades": FiTool,
-    moda: FiShoppingBag,
-    pets: FiHeart,
-    "produtos-digitais": FiGrid,
-  };
+  const destaqueProducts = products.filter((product) => product.destaque);
+  const bestSellerProducts = products.filter((product) => product.bestSeller);
 
   return (
     <>
@@ -9866,108 +13495,108 @@ export function HomePage() {
         </div>
       )}
 
-      <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-14">
+      <div className="relative z-20 mx-auto max-w-[1200px] px-6 pb-10 -mt-40 md:-mt-55 md:pb-14">
         <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
-              Explore por interesse
-            </p>
-
-            <h2 className="text-2xl font-bold text-[#071a2f] md:text-3xl">
-              Encontre o que combina com você
-            </h2>
-          </div>
+          <div></div>
 
           <Link
             to="/ofertas"
-            className="hidden items-center gap-1 text-sm font-semibold text-[#0b3d66] transition hover:text-[#1769e0] sm:flex"
+            className="hidden items-center gap-1 text-sm font-semibold text-navy transition hover:text-white sm:flex"
           >
-            Ver ofertas <FiArrowUpRight />
+            Ver todas as categorias <FiArrowUpRight />
           </Link>
         </div>
 
         {categoriesLoading ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
-            {[
-              "category-skeleton-1",
-              "category-skeleton-2",
-              "category-skeleton-3",
-              "category-skeleton-4",
-              "category-skeleton-5",
-              "category-skeleton-6",
-              "category-skeleton-7",
-            ].map((skeletonKey) => (
+          <div className="flex w-full gap-3 overflow-x-auto pb-4 no-scrollbar">
+            {skeletonKeys.map((key) => (
               <div
-                key={skeletonKey}
-                className="aspect-square animate-pulse rounded-2xl border border-[#e7edf5] bg-[#f7f9fc]"
+                key={key}
+                className="h-36 w-36 shrink-0 animate-pulse rounded-2xl bg-[#f7f9fc] md:h-40 md:w-40"
               />
             ))}
           </div>
         ) : activeCategories.length === 0 ? (
-          <div className="rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
+          <div className="rounded-2xl bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
             Nenhuma categoria disponível no momento.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+          /* USANDO <section> SEMÂNTICA EM VEZ DE <div role="region"> */
+          <section
+            ref={scrollRef}
+            aria-label="Carrossel de categorias"
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            className="flex w-full select-none gap-3 overflow-x-auto pb-4 no-scrollbar cursor-grab active:cursor-grabbing scroll-smooth touch-pan-x"
+          >
+            <Link
+              to="/blog"
+              draggable={false}
+              className="group flex h-36 w-36 shrink-0 flex-col items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-0 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1 md:h-40 md:w-40 md:p-0"
+            >
+              <span className="flex h-12 w-full items-center justify-center bg-white/15 text-2xl text-[#9ad7ff] transition group-hover:scale-110 md:h-27 md:text-3xl">
+                <img
+                  src="https://img.magnific.com/fotos-gratis/blog-online_53876-123696.jpg?semt=ais_hybrid&w=740&q=80"
+                  alt="Blog"
+                  className="h-full w-full object-cover"
+                />
+              </span>
+
+              <span className="text-lg font-semibold leading-4 text-white">
+                Blog
+              </span>
+
+              <span className="mb-2 text-[9px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff] md:text-[10px]">
+                Conteúdos
+              </span>
+            </Link>
+
             {activeCategories.map((category) => {
-              const Icon =
+              const IconComponent =
                 categoryIcons[category.slug as keyof typeof categoryIcons] ??
-                FiGrid;
+                FiSearch;
 
               return (
                 <Link
                   key={category.id}
                   to={`/categoria/${category.slug}`}
-                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
+                  draggable={false}
+                  className="group flex h-36 w-36 shrink-0 flex-col items-center justify-between overflow-hidden rounded-2xl bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] md:h-40 md:w-40"
                 >
-                  <span className="flex h-40 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-30 md:w-full">
+                  <span className="flex h-24 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-28">
                     {category.image ? (
                       <img
                         src={category.image}
                         alt={category.name}
+                        draggable={false}
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Icon className="text-3xl md:text-4xl" />
+                      <IconComponent className="text-3xl md:text-4xl" />
                     )}
                   </span>
 
-                  <span className="text-sm font-semibold leading-5 text-[#071a2f] my-5">
+                  <span className="my-auto px-2 text-xs font-semibold leading-4 text-[#071a2f] md:text-sm">
                     {category.name}
                   </span>
                 </Link>
               );
             })}
-
-            <Link
-              to="/blog"
-              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-4 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1"
-            >
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl text-[#9ad7ff] transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl">
-                <FiBookOpen />
-              </span>
-
-              <span className="text-sm font-semibold leading-5 text-white">
-                Blog
-              </span>
-
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
-                Conteúdos
-              </span>
-            </Link>
-          </div>
+          </section>
         )}
-      </section>
+      </div>
 
       <Session title="Ofertas em destaque">
         {loading ? (
           <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
-        ) : products.length === 0 ? (
+        ) : destaqueProducts.length === 0 ? (
           <p className="px-6 text-sm text-[#52657c]">
-            Nenhum produto disponível no momento.
+            Nenhuma oferta em destaque disponível no momento.
           </p>
         ) : (
-          products.map((product) => (
+          destaqueProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
@@ -9976,51 +13605,35 @@ export function HomePage() {
       <BlogBanner />
 
       <Session title="Produtos mais vendidos">
-        {products.map((product) => (
-          <ProductCard key={`${product.id}-secondary`} product={product} />
-        ))}
+        {loading ? (
+          <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
+        ) : bestSellerProducts.length === 0 ? (
+          <p className="px-6 text-sm text-[#52657c]">
+            Nenhum produto mais vendido disponível no momento.
+          </p>
+        ) : (
+          bestSellerProducts.map((product) => (
+            <ProductCard key={`${product.id}-secondary`} product={product} />
+          ))
+        )}
       </Session>
 
       <SocialBanner />
 
       <section className="mx-auto grid max-w-[1200px] gap-4 px-6 py-10 md:grid-cols-4 md:py-14">
-        {[
-          [
-            FiSearch,
-            "Pesquisa fácil",
-            "Encontre ideias em diferentes categorias.",
-          ],
-          [
-            FiShield,
-            "Escolhas claras",
-            "Veja informações antes de acessar a oferta.",
-          ],
-          [
-            FiStar,
-            "Curadoria",
-            "Descubra produtos selecionados para sua rotina.",
-          ],
-          [
-            FiCheckCircle,
-            "Parceiros confiáveis",
-            "A compra acontece diretamente no marketplace.",
-          ],
-        ].map(([Icon, title, description]) => (
+        {trustBadges.map(({ icon: BadgeIcon, title, description }) => (
           <div
-            key={title as string}
+            key={title}
             className="flex gap-3 rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-5"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dff5e8] text-[#159447]">
-              <Icon />
+              <BadgeIcon />
             </span>
 
             <div>
-              <h3 className="font-semibold text-[#071a2f]">
-                {title as string}
-              </h3>
-
+              <h3 className="font-semibold text-[#071a2f]">{title}</h3>
               <p className="mt-1 text-sm leading-5 text-[#52657c]">
-                {description as string}
+                {description}
               </p>
             </div>
           </div>
@@ -11333,7 +14946,7 @@ export function SubcategoryPage() {
             <div className="mt-8 flex justify-center">
               <Link
                 to={`/categoria/${category.slug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                className="inline-flex items-center gap-2 rounded-full border border-blue bg-white px-5 py-3 text-sm font-semibold text-navy transition hover:border-blue hover:text-navy/20"
               >
                 Voltar para a categoria
                 <FiArrowRight />
@@ -11445,15 +15058,17 @@ export function TermsOfUsePage() {
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
-import AdminDashboardPage from "../pages/AdminDashboarPage";
-import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
-import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
-import { AdminProductsPage } from "../pages/AdminProductsPage";
-import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
-import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminBlogFormPage } from "../pages/admin/AdminBlogFormPage";
+import { AdminBlogPage } from "../pages/admin/AdminBlogPage";
 import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
+import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage";
+import { AdminDashboardPage } from "../pages/admin/AdminDashboarPage";
+import { AdminMarketplaceFormPage } from "../pages/admin/AdminMarketplaceFormPage";
+import { AdminMarketplacesPage } from "../pages/admin/AdminMarketplacesPage";
 import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
+import { AdminProductsPage } from "../pages/admin/AdminProductsPage";
+import { AdminSubcategoriesPage } from "../pages/admin/AdminSubcategoriesPage";
+import { AdminSubcategoryFormPage } from "../pages/admin/AdminSubcategoryFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -11469,6 +15084,7 @@ export const adminRoutes: RouteObject[] = [
         path: "dashboard",
         element: <AdminDashboardPage />,
       },
+
       {
         path: "products",
         element: <AdminProductsPage />,
@@ -11486,30 +15102,28 @@ export const adminRoutes: RouteObject[] = [
         path: "categories",
         element: <AdminCategoriesPage />,
       },
-
       {
         path: "categories/new",
         element: <AdminCategoryFormPage />,
       },
-
       {
         path: "categories/:id/edit",
         element: <AdminCategoryFormPage />,
       },
+
       {
         path: "subcategories",
         element: <AdminSubcategoriesPage />,
       },
-
       {
         path: "subcategories/new",
         element: <AdminSubcategoryFormPage />,
       },
-
       {
         path: "subcategories/:id/edit",
         element: <AdminSubcategoryFormPage />,
       },
+
       {
         path: "marketplaces",
         element: <AdminMarketplacesPage />,
@@ -11521,6 +15135,19 @@ export const adminRoutes: RouteObject[] = [
       {
         path: "marketplaces/:id/edit",
         element: <AdminMarketplaceFormPage />,
+      },
+
+      {
+        path: "blog",
+        element: <AdminBlogPage />,
+      },
+      {
+        path: "blog/novo",
+        element: <AdminBlogFormPage />,
+      },
+      {
+        path: "blog/editar/:id",
+        element: <AdminBlogFormPage />,
       },
     ],
   },
@@ -11684,6 +15311,7 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
 import type { RouteObject } from "react-router-dom";
 
 import { BlogPage } from "../pages/BlogPage";
+import { BlogPostPage } from "../pages/BlogPostPage";
 import { CategoryPage } from "../pages/CategoriesPage";
 import { DigitalProductsPage } from "../pages/DigitalProductsPage";
 import { FashionPage } from "../pages/FashionPage";
@@ -11697,13 +15325,22 @@ import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
   // Busca de produtos
-  { path: "produtos", element: <ProductsPage /> },
+  {
+    path: "produtos",
+    element: <ProductsPage />,
+  },
 
   // Detalhes do produto
-  { path: "produto/:slug", element: <ProductPage /> },
+  {
+    path: "produto/:slug",
+    element: <ProductPage />,
+  },
 
   // Categoria
-  { path: "categoria/:slug", element: <CategoryPage /> },
+  {
+    path: "categoria/:slug",
+    element: <CategoryPage />,
+  },
 
   // Subcategoria - rota hierárquica
   {
@@ -11712,13 +15349,42 @@ export const productRoutes: RouteObject[] = [
   },
 
   // Rotas de categorias legadas
-  { path: "tecnologia", element: <TechnologyPage /> },
-  { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
-  { path: "moda", element: <FashionPage /> },
-  { path: "pets", element: <PetsPage /> },
-  { path: "produtos-digitais", element: <DigitalProductsPage /> },
-  { path: "ofertas", element: <OffersPage /> },
-  { path: "blog", element: <BlogPage /> },
+  {
+    path: "tecnologia",
+    element: <TechnologyPage />,
+  },
+  {
+    path: "casa-utilidades",
+    element: <HomeUtilitiesPage />,
+  },
+  {
+    path: "moda",
+    element: <FashionPage />,
+  },
+  {
+    path: "pets",
+    element: <PetsPage />,
+  },
+  {
+    path: "produtos-digitais",
+    element: <DigitalProductsPage />,
+  },
+  {
+    path: "ofertas",
+    element: <OffersPage />,
+  },
+
+  // Blog
+  {
+    path: "blog",
+    element: <BlogPage />,
+  },
+
+  // Artigo individual do Blog
+  {
+    path: "blog/:slug",
+    element: <BlogPostPage />,
+  },
 
   // Compatibilidade com URLs antigas
   {
@@ -11726,6 +15392,178 @@ export const productRoutes: RouteObject[] = [
     element: <SubcategoryPage />,
   },
 ];
+
+```
+
+## src\services\mercadoLivreService.ts
+
+```ts
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export type MercadoLivreOffer = {
+  itemId: string;
+  sellerId: string;
+  price: number;
+  originalPrice?: number | null;
+  currencyId: string;
+
+  categoryId?: string;
+  warranty?: string;
+  condition?: string;
+  listingTypeId?: string;
+  officialStoreId?: string | null;
+
+  freeShipping?: boolean;
+
+  shipping?: {
+    freeShipping?: boolean;
+    logisticType?: string;
+  };
+
+  userProductId?: string;
+};
+
+export type MercadoLivreAnalyzeResult = {
+  externalLink: string;
+  catalogProductId: string;
+  requestedItemId: string | null;
+  requestedWid: string | null;
+  catalogStatus: string | null;
+  title: string;
+  permalink: string | null;
+  imageUrls: string[];
+  offers: MercadoLivreOffer[];
+  selectedOffer: MercadoLivreOffer | null;
+  requiresOfferSelection: boolean;
+  noOffersFound: boolean;
+};
+
+export type ImportMercadoLivreProductInput = {
+  affiliateUrl: string;
+  externalLink: string;
+
+  catalogProductId: string;
+  itemId: string;
+  sellerId: string;
+
+  subcategoryId: string;
+
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+
+  imageUrl?: string;
+
+  images?: Array<{
+    imageUrl: string;
+    sortOrder?: number;
+  }>;
+
+  price?: number;
+  originalPrice?: number;
+  currency?: string;
+
+  rating?: number;
+  reviewsCount?: number;
+
+  featured?: boolean;
+  destaque?: boolean;
+  bestSeller?: boolean;
+  available?: boolean;
+  active?: boolean;
+
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+export type UpdateMercadoLivreProductOfferInput = {
+  externalLink: string;
+  catalogProductId: string;
+  itemId: string;
+  sellerId: string;
+};
+
+async function parseResponse(response: Response) {
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ?? "Não foi possível concluir a operação no Mercado Livre.",
+    );
+  }
+
+  return data;
+}
+
+export async function analyzeMercadoLivreProduct(
+  externalLink: string,
+  token: string,
+): Promise<MercadoLivreAnalyzeResult> {
+  const response = await fetch(`${apiUrl}/mercado-livre/products/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      externalLink,
+    }),
+  });
+
+  const data = await parseResponse(response);
+
+  return {
+    ...data,
+
+    offers: Array.isArray(data.offers)
+      ? data.offers.map((offer: MercadoLivreOffer) => ({
+          ...offer,
+          freeShipping:
+            offer.freeShipping ?? offer.shipping?.freeShipping ?? false,
+        }))
+      : [],
+  };
+}
+
+export async function importMercadoLivreProduct(
+  data: ImportMercadoLivreProductInput,
+  token: string,
+) {
+  const response = await fetch(`${apiUrl}/mercado-livre/products/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await parseResponse(response);
+
+  return result.product;
+}
+
+export async function updateMercadoLivreProductOffer(
+  productId: string,
+  data: UpdateMercadoLivreProductOfferInput,
+  token: string,
+) {
+  const response = await fetch(
+    `${apiUrl}/mercado-livre/products/${encodeURIComponent(productId)}/offer`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    },
+  );
+
+  const result = await parseResponse(response);
+
+  return result.product;
+}
 
 ```
 
@@ -11744,6 +15582,146 @@ export type AffiliateProduct = {
   marketplace: Marketplace;
   affiliateUrl: string;
   category?: string;
+};
+
+```
+
+## src\types\Blog.ts
+
+```ts
+export type BlogPostStatus = "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED";
+
+export type BlogProduct = {
+  id: string;
+  sortOrder: number;
+  product: {
+    id: string;
+    title: string;
+    slug: string;
+    shortDescription?: string | null;
+    imageUrl?: string | null;
+    price: number | string;
+    originalPrice?: number | string | null;
+    currency?: string | null;
+    rating?: number | string | null;
+    reviewsCount?: number | null;
+    affiliateUrl: string;
+    available: boolean;
+    featured: boolean;
+    active: boolean;
+  };
+};
+
+export type BlogAuthor = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type BlogCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+  postsCount?: number;
+  createdAt?: string;
+  updatedAt?: string | null;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  content: string;
+  coverImage?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  status: BlogPostStatus;
+  publishedAt?: string | null;
+  scheduledAt?: string | null;
+  authorId: string;
+  categoryId?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+
+  author?: BlogAuthor | null;
+
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+
+  products?: BlogProduct[];
+};
+
+export type BlogPostProductFormData = {
+  productId: string;
+  sortOrder?: number;
+};
+
+export type BlogPostFormData = {
+  title: string;
+  excerpt?: string;
+  content: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  categoryId?: string;
+  products?: BlogPostProductFormData[];
+};
+
+export type BlogPostUpdateData = {
+  title?: string;
+  excerpt?: string;
+  content?: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  categoryId?: string;
+  products?: BlogPostProductFormData[];
+};
+
+export type BlogPostListFilters = {
+  search?: string;
+  categoryId?: string;
+};
+
+export type BlogPostAdminFilters = {
+  search?: string;
+  categoryId?: string;
+  status?: BlogPostStatus;
+};
+
+export type BlogCategoryFormData = {
+  name: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type BlogCategoryUpdateData = {
+  name?: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type BlogCategoryFilters = {
+  search?: string;
+  active?: boolean;
 };
 
 ```
@@ -12154,6 +16132,8 @@ export default defineConfig([
 
 ```tsx
 import { AuthProvider } from "./contexts/AuthProvider";
+import { BlogCategoriesProvider } from "./contexts/BlogCategoriesProvider";
+import { BlogProvider } from "./contexts/BlogProvider";
 import { CategoriesProvider } from "./contexts/CategoriesProvider";
 import { MarketplacesProvider } from "./contexts/MarketplacesProvider";
 import { MercadoLivreProvider } from "./contexts/MercadoLivreProvider";
@@ -12169,7 +16149,11 @@ export function App() {
           <SubcategoriesProvider>
             <MarketplacesProvider>
               <ProductsProvider>
-                <AppRoutes />
+                <BlogCategoriesProvider>
+                  <BlogProvider>
+                    <AppRoutes />
+                  </BlogProvider>
+                </BlogCategoriesProvider>
               </ProductsProvider>
             </MarketplacesProvider>
           </SubcategoriesProvider>
@@ -12181,10 +16165,249 @@ export function App() {
 
 ```
 
+## src\components\admin\products\MercadoLivreOfferModal.tsx
+
+```tsx
+import { useState } from "react";
+
+import type { MercadoLivreOffer } from "../../../services/mercadoLivreService";
+
+type MercadoLivreOfferModalProps = {
+  open: boolean;
+  title: string;
+  offers: MercadoLivreOffer[];
+  loading?: boolean;
+  onCancel: () => void;
+  onConfirm: (offer: MercadoLivreOffer | null) => void;
+};
+
+function getOfferKey(offer: MercadoLivreOffer) {
+  return `${offer.itemId}-${offer.sellerId}`;
+}
+
+export function MercadoLivreOfferModal({
+  open,
+  title,
+  offers,
+  loading = false,
+  onCancel,
+  onConfirm,
+}: MercadoLivreOfferModalProps) {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  if (!open) {
+    return null;
+  }
+
+  const selectedOffer =
+    offers.find((offer) => getOfferKey(offer) === selectedKey) ?? null;
+
+  function handleCancel() {
+    setSelectedKey(null);
+    onCancel();
+  }
+
+  function handleConfirm() {
+    /*
+     * Não limpamos a seleção aqui.
+     *
+     * O componente pai é responsável por fechar o modal depois
+     * que o cadastro for concluído. Se ocorrer algum erro durante
+     * o cadastro, a oferta continua selecionada e o usuário pode
+     * tentar novamente.
+     */
+    onConfirm(selectedOffer);
+  }
+
+  function handleSelect(value: string) {
+    setSelectedKey(value);
+  }
+
+  function handleSelectNone() {
+    setSelectedKey("none");
+  }
+
+  const isNoneSelected = selectedKey === "none";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      role="presentation"
+    >
+      {" "}
+      <div
+        className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mercado-livre-offer-modal-title"
+      >
+        {" "}
+        <div className="border-b border-gray-200 px-6 py-5">
+          {" "}
+          <h2
+            id="mercado-livre-offer-modal-title"
+            className="text-xl font-semibold text-gray-900"
+          >
+            Selecionar oferta{" "}
+          </h2>
+          ```
+          <p className="mt-1 text-sm text-gray-600">{title}</p>
+          <p className="mt-2 text-sm text-gray-500">
+            Encontramos {offers.length} ofertas para este produto. Selecione
+            exatamente a oferta que deseja cadastrar.
+          </p>
+        </div>
+        <div className="max-h-[55vh] overflow-y-auto p-6">
+          <div className="space-y-3">
+            {offers.map((offer) => {
+              const offerKey = getOfferKey(offer);
+              const isSelected = selectedKey === offerKey;
+
+              return (
+                <label
+                  key={offerKey}
+                  className={`block cursor-pointer rounded-xl border p-4 transition ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="radio"
+                      name="mercadoLivreOffer"
+                      value={offerKey}
+                      checked={isSelected}
+                      onChange={() => handleSelect(offerKey)}
+                      disabled={loading}
+                      className="mt-1 h-4 w-4"
+                    />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            R$ {offer.price.toFixed(2).replace(".", ",")}
+                          </p>
+
+                          {offer.originalPrice !== null &&
+                            offer.originalPrice !== undefined && (
+                              <p className="text-sm text-gray-500 line-through">
+                                R${" "}
+                                {offer.originalPrice
+                                  .toFixed(2)
+                                  .replace(".", ",")}
+                              </p>
+                            )}
+                        </div>
+
+                        {offer.freeShipping && (
+                          <span className="inline-flex w-fit bg-green/20 rounded-full px-2.5 py-1 text-xs font-medium text-green">
+                            Frete grátis
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-500 sm:grid-cols-2">
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Item:
+                          </span>{" "}
+                          {offer.itemId}
+                        </div>
+
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Vendedor:
+                          </span>{" "}
+                          {offer.sellerId}
+                        </div>
+
+                        {offer.condition && (
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Condição:
+                            </span>{" "}
+                            {offer.condition}
+                          </div>
+                        )}
+
+                        {offer.listingTypeId && (
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Anúncio:
+                            </span>{" "}
+                            {offer.listingTypeId}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
+
+            <label
+              className={`block cursor-pointer rounded-xl border p-4 transition ${
+                isNoneSelected
+                  ? "border-gray-500 bg-gray-100"
+                  : "border-gray-100 hover:border-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="radio"
+                  name="mercadoLivreOffer"
+                  value="none"
+                  checked={isNoneSelected}
+                  onChange={handleSelectNone}
+                  disabled={loading}
+                  className="mt-1 h-4 w-4"
+                />
+
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Nenhum dos valores
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    Não cadastrar nenhuma das ofertas apresentadas.
+                  </p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div className="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={loading}
+            className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={loading || selectedKey === null}
+            className="rounded-lg bg-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Cadastrando..." : "Confirmar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+```
+
 ## src\components\admin\products\ProductBasicInfo.tsx
 
 ```tsx
-import { RichTextEditor } from "../RichTextEditor";
+import { RichTextEditor } from "./RichTextEditor";
 
 type ProductBasicInfoProps = {
   title: string;
@@ -12669,30 +16892,40 @@ export function ProductPricing({
 ## src\components\admin\products\ProductRelationships.tsx
 
 ```tsx
-type Subcategory = {
+type SubcategoryOption = {
   id: string;
   name: string;
   category?: {
+    id: string;
     name: string;
   } | null;
 };
 
-type Marketplace = {
+type MarketplaceOption = {
   id: string;
   name: string;
 };
 
 type ProductRelationshipsProps = {
-  subcategories: Subcategory[];
-  marketplaces: Marketplace[];
+  subcategories: SubcategoryOption[];
+  marketplaces: MarketplaceOption[];
+
   subcategoryId: string;
   marketplaceId: string;
+
   affiliateUrl: string;
+  externalLink: string;
+
   loading: boolean;
+  isEditing: boolean;
+
   onSubcategoryChange: (value: string) => void;
   onMarketplaceChange: (value: string) => void;
   onAffiliateUrlChange: (value: string) => void;
+  onExternalLinkChange: (value: string) => void;
 };
+
+const MERCADO_LIVRE_MARKETPLACE_ID = "c255826b-2073-4c76-8966-b87f22403090";
 
 export function ProductRelationships({
   subcategories,
@@ -12700,40 +16933,43 @@ export function ProductRelationships({
   subcategoryId,
   marketplaceId,
   affiliateUrl,
+  externalLink,
   loading,
+  isEditing,
   onSubcategoryChange,
   onMarketplaceChange,
   onAffiliateUrlChange,
+  onExternalLinkChange,
 }: ProductRelationshipsProps) {
+  const isMercadoLivre = marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID;
+
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm">
-      <h2 className="mb-5 text-lg font-semibold text-gray-900">
-        Classificação e marketplace
-      </h2>
+      <h2 className="text-lg font-semibold text-gray-900">Relacionamentos</h2>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
           <label
             htmlFor="subcategoryId"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Subcategoria *
+            Subcategoria
           </label>
 
           <select
             id="subcategoryId"
             value={subcategoryId}
             onChange={(event) => onSubcategoryChange(event.target.value)}
-            required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           >
             <option value="">Selecione uma subcategoria</option>
 
             {subcategories.map((subcategory) => (
               <option key={subcategory.id} value={subcategory.id}>
                 {subcategory.category?.name
-                  ? `${subcategory.category.name} → ${subcategory.name}`
+                  ? `${subcategory.category.name} / ${subcategory.name}`
                   : subcategory.name}
               </option>
             ))}
@@ -12743,18 +16979,18 @@ export function ProductRelationships({
         <div>
           <label
             htmlFor="marketplaceId"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Marketplace *
+            Marketplace
           </label>
 
           <select
             id="marketplaceId"
             value={marketplaceId}
             onChange={(event) => onMarketplaceChange(event.target.value)}
-            required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           >
             <option value="">Selecione um marketplace</option>
 
@@ -12769,9 +17005,9 @@ export function ProductRelationships({
         <div className="sm:col-span-2">
           <label
             htmlFor="affiliateUrl"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Link de afiliado *
+            Link de afiliado
           </label>
 
           <input
@@ -12782,13 +17018,50 @@ export function ProductRelationships({
             placeholder="https://..."
             required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           />
 
           <p className="mt-2 text-xs text-gray-500">
-            Este será o link utilizado pelo botão de compra/afiliado.
+            Este é o link comercial utilizado pelo visitante para acessar o
+            marketplace e preservar o rastreamento do afiliado.
           </p>
         </div>
+
+        {isMercadoLivre && (
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="externalLink"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Link de referência do Mercado Livre
+            </label>
+
+            <input
+              id="externalLink"
+              type="url"
+              value={externalLink}
+              onChange={(event) => onExternalLinkChange(event.target.value)}
+              placeholder="https://www.mercadolivre.com.br/.../p/MLB..."
+              required
+              disabled={loading}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
+            />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Este link é usado internamente como referência do produto no
+              Mercado Livre. Ao alterá-lo durante a edição, o sistema irá
+              reanalisar as ofertas. Se houver mais de uma oferta, será
+              solicitado que você escolha qual deseja vincular ao produto.
+            </p>
+
+            {isEditing && (
+              <p className="mt-1 text-xs font-medium text-blue-600">
+                Alterar este link não cria outro produto. A oferta vinculada ao
+                produto atual será atualizada após a confirmação.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -12868,20 +17141,28 @@ export function ProductSeo({
 ```tsx
 type ProductStatusProps = {
   featured: boolean;
+  destaque: boolean;
+  bestSeller: boolean;
   available: boolean;
   active: boolean;
   loading: boolean;
   onFeaturedChange: (value: boolean) => void;
+  onDestaqueChange: (value: boolean) => void;
+  onBestSellerChange: (value: boolean) => void;
   onAvailableChange: (value: boolean) => void;
   onActiveChange: (value: boolean) => void;
 };
 
 export function ProductStatus({
   featured,
+  destaque,
+  bestSeller,
   available,
   active,
   loading,
   onFeaturedChange,
+  onDestaqueChange,
+  onBestSellerChange,
   onAvailableChange,
   onActiveChange,
 }: ProductStatusProps) {
@@ -12891,7 +17172,7 @@ export function ProductStatus({
         Status do produto
       </h2>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
           <input
             type="checkbox"
@@ -12907,7 +17188,47 @@ export function ProductStatus({
             </span>
 
             <span className="block text-xs text-gray-500">
-              Exibir como produto destacado.
+              Define se o produto possui o status de destaque no sistema.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={destaque}
+            onChange={(event) => onDestaqueChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Ofertas em destaque
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir o produto na seção de ofertas em destaque.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={bestSeller}
+            onChange={(event) => onBestSellerChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Produtos mais vendidos
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir o produto na seção de produtos mais vendidos.
             </span>
           </span>
         </label>
@@ -12958,18 +17279,7 @@ export function ProductStatus({
 
 ```
 
-## src\components\admin\products\types.ts
-
-```ts
-export type ProductImageForm = {
-  id: string;
-  imageUrl: string;
-  sortOrder: number;
-};
-
-```
-
-## src\components\admin\RichTextEditor.tsx
+## src\components\admin\products\RichTextEditor.tsx
 
 ```tsx
 import Link from "@tiptap/extension-link";
@@ -13304,6 +17614,17 @@ export function RichTextEditor({
 
 ```
 
+## src\components\admin\products\types.ts
+
+```ts
+export type ProductImageForm = {
+  id: string;
+  imageUrl: string;
+  sortOrder: number;
+};
+
+```
+
 ## src\components\AdminLayout\index.tsx
 
 ```tsx
@@ -13332,13 +17653,17 @@ const menuItems = [
     label: "Marketplaces",
     href: "/admin/marketplaces",
   },
+  {
+    label: "Blog",
+    href: "/admin/blog",
+  },
 ];
 
 export function AdminLayout() {
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#071a2f]">
+      {" "}
       <HeaderAdmin />
-
       <div className="flex min-h-[calc(100vh-72px)]">
         <aside className="hidden w-64 shrink-0 border-r border-[#e7edf5] bg-white lg:block">
           <div className="sticky top-0 p-4">
@@ -13408,7 +17733,7 @@ export function AppLayout() {
 ## src\components\Banner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -13464,25 +17789,33 @@ export function Banner() {
   return (
     <section
       aria-label="Destaques WorldMix360"
-      className="w-full overflow-hidden bg-navy"
+      className="relative w-full overflow-hidden bg-navy pb-40 md:pb-60"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5500, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
         loop
-        className="home-banner h-[500px] md:h-[600px]"
+        className="home-banner h-[450px] md:h-[520px]"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.title}>
-            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-blue">
-              <img
-                src={banner.image}
-                alt={banner.imageAlt}
-                className={`absolute z-0 h-auto ${banner.imageClassName}`}
-              />
+            <div className="relative h-full overflow-hidden bg-gradient-to-br from-navy via-[#0b3d66] to-[#071a2f]">
+              {/* Container da Imagem com Gradiente de Desvanecimento na parte inferior */}
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={banner.image}
+                  alt={banner.imageAlt}
+                  className={`absolute h-auto ${banner.imageClassName}`}
+                />
+                {/* Gradiente vertical que esmaece a imagem do banner para a cor do fundo do slide no rodapé */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#071a2f] via-transparent to-transparent" />
+              </div>
+
+              {/* Gradiente horizontal para garantir a legibilidade do texto à esquerda */}
               <div className="absolute inset-0 z-10 bg-gradient-to-r from-navy via-navy/80 to-transparent" />
+
               <div className="relative z-20 mx-auto flex h-full max-w-[1200px] items-center px-10 pb-12">
                 <div className="max-w-2xl">
                   <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#9ad7ff]">
@@ -13510,6 +17843,9 @@ export function Banner() {
           </SwiperSlide>
         ))}
       </Swiper>
+
+      {/* Camada do degradê esmaecendo no finalzinho do fundo estendido (fundo da página) */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-75 bg-gradient-to-b from-transparent to-[#f7f9fc]" />
     </section>
   );
 }
@@ -13519,7 +17855,7 @@ export function Banner() {
 ## src\components\BlogBanner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -13576,7 +17912,7 @@ export function BlogBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 6000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
@@ -13978,7 +18314,7 @@ export function Header() {
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 text-lg font-bold">
-                    W
+                    WM
                   </div>
 
                   <div>
@@ -14936,7 +19272,7 @@ export function getCategoryIcon(slug: string): IconType {
 ## src\components\OffersBanner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -14964,7 +19300,7 @@ export function OffersBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
@@ -15528,7 +19864,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  console.log("PRODUTO DO CARD:", product);
   const formattedPrice = formatCurrencyBRL(product.price);
 
   const formattedOriginalPrice = product.originalPrice
@@ -15665,55 +20000,78 @@ export function SearchBar({ className = "", onSearch }: SearchBarProps) {
 ## src\components\Session\index.tsx
 
 ```tsx
-import React from "react";
-import { FiBox } from "react-icons/fi";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import { v4 as uuidv4 } from "uuid";
+import React, { useRef, useState } from "react";
+import { FiArrowUpRight, FiBox } from "react-icons/fi";
 
 interface SessionProps {
   title?: string;
-  children: React.ReactNode | React.ReactNode[];
+  children: React.ReactNode;
 }
 
 export function Session({ title, children }: SessionProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => setIsDown(false);
+  const handleMouseUp = () => setIsDown(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   return (
-    <section className="mx-auto w-full md:max-w-[1200px] bg-gradient-to-b from-gray-100 to-gray-50 p-6 shadow-md">
+    <div className="mx-auto w-full bg-gradient-to-b from-gray-100 to-gray-50 p-6 shadow-md md:max-w-[1200px]">
       {/* Cabeçalho */}
-      <header className="flex items-center justify-between mb-6">
+      <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FiBox className="text-white text-xl" />
-          <h2 className="text-blue text-lg font-bold">{title}</h2>
+          <FiBox className="text-xl text-blue-600" />
+          <h2 className="text-lg font-bold text-navy">{title}</h2>
         </div>
-        <a href="##" className="text-sm font-medium text-navy hover:underline">
-          Ver todos
+        <a
+          href="##"
+          className="hidden items-center gap-1 text-sm font-semibold text-navy transition hover:text-blue sm:flex"
+        >
+          Ver todos <FiArrowUpRight />
         </a>
       </header>
 
-      {/* Carrossel */}
-      <Swiper
-        spaceBetween={16}
-        slidesPerView={1}
-        breakpoints={{
-          640: { slidesPerView: 2 },
-          1024: { slidesPerView: 4 },
-        }}
+      {/* Usando <section> semântica em vez de <div role="region"> */}
+      <section
+        ref={scrollRef}
+        aria-label={title ?? "Carrossel de itens"}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        className="no-scrollbar flex w-full select-none gap-4 overflow-x-auto pb-2 scroll-smooth cursor-grab active:cursor-grabbing touch-pan-x"
       >
-        {React.Children.map(children, (child) =>
+        {React.Children.map(children, (child, index) =>
           React.isValidElement(child) ? (
-            <SwiperSlide
-              key={uuidv4()}
-              id={uuidv4()}
-              className="!flex !h-auto !items-stretch"
+            <div
+              key={child.key ?? index}
+              className="flex h-auto w-[260px] shrink-0 items-stretch md:w-[280px]"
             >
               {child}
-            </SwiperSlide>
+            </div>
           ) : (
             child
           ),
         )}
-      </Swiper>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -15722,7 +20080,7 @@ export function Session({ title, children }: SessionProps) {
 ## src\components\SocialBanner\index.tsx
 
 ```tsx
-import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
 import { Icon } from "../Icon";
@@ -15779,7 +20137,7 @@ export function SocialBanner() {
       className="w-full overflow-hidden bg-navy mt-10"
     >
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         navigation
         pagination={{ clickable: true }}
@@ -15995,6 +20353,734 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+```
+
+## src\contexts\BlogCategoriesContext.ts
+
+```ts
+import { createContext } from "react";
+
+import type {
+  BlogCategory,
+  BlogCategoryFilters,
+  BlogCategoryFormData,
+  BlogCategoryUpdateData,
+} from "../types/Blog";
+
+export type BlogCategoriesContextValue = {
+  categories: BlogCategory[];
+  loading: boolean;
+  error: string | null;
+
+  fetchCategories: (filters?: BlogCategoryFilters) => Promise<void>;
+
+  getCategoryById: (id: string, token: string) => Promise<BlogCategory | null>;
+
+  getCategoryBySlug: (slug: string) => Promise<BlogCategory | null>;
+
+  createCategory: (
+    data: BlogCategoryFormData,
+    token: string,
+  ) => Promise<BlogCategory>;
+
+  updateCategory: (
+    id: string,
+    data: BlogCategoryUpdateData,
+    token: string,
+  ) => Promise<BlogCategory>;
+
+  deleteCategory: (id: string, token: string) => Promise<void>;
+};
+
+export const BlogCategoriesContext = createContext<
+  BlogCategoriesContextValue | undefined
+>(undefined);
+
+```
+
+## src\contexts\BlogCategoriesProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type {
+  BlogCategory,
+  BlogCategoryFilters,
+  BlogCategoryFormData,
+  BlogCategoryUpdateData,
+} from "../types/Blog";
+import { BlogCategoriesContext } from "./BlogCategoriesContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function BlogCategoriesProvider({ children }: { children: ReactNode }) {
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Listagem pública das categorias do Blog.
+   */
+  const fetchCategories = useCallback(async (filters?: BlogCategoryFilters) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (filters?.search) {
+        params.set("search", filters.search);
+      }
+
+      if (filters?.active !== undefined) {
+        params.set("active", String(filters.active));
+      }
+
+      const queryString = params.toString();
+
+      const response = await fetch(
+        `${apiUrl}/blog/categories${queryString ? `?${queryString}` : ""}`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar as categorias do Blog.",
+        );
+      }
+
+      setCategories(data.categories ?? []);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar categorias do Blog.",
+      );
+
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Busca uma categoria pelo ID.
+   * Operação administrativa.
+   */
+  const getCategoryById = useCallback(
+    async (id: string, token: string): Promise<BlogCategory | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/categories/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a categoria do Blog.",
+          );
+        }
+
+        return data.category ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  /**
+   * Busca uma categoria pelo slug.
+   * Operação pública.
+   */
+  const getCategoryBySlug = useCallback(
+    async (slug: string): Promise<BlogCategory | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/categories/slug/${encodeURIComponent(slug)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar a categoria do Blog.",
+          );
+        }
+
+        return data.category ?? null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  /**
+   * Cria uma categoria.
+   */
+  const createCategory = useCallback(
+    async (
+      categoryData: BlogCategoryFormData,
+      token: string,
+    ): Promise<BlogCategory> => {
+      const response = await fetch(`${apiUrl}/blog/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar categoria do Blog.");
+      }
+
+      setCategories((currentCategories) => [
+        ...currentCategories,
+        data.category,
+      ]);
+
+      return data.category;
+    },
+    [],
+  );
+
+  /**
+   * Atualiza uma categoria.
+   */
+  const updateCategory = useCallback(
+    async (
+      id: string,
+      categoryData: BlogCategoryUpdateData,
+      token: string,
+    ): Promise<BlogCategory> => {
+      const response = await fetch(
+        `${apiUrl}/blog/categories/${encodeURIComponent(id)}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(categoryData),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar categoria do Blog.");
+      }
+
+      setCategories((currentCategories) =>
+        currentCategories.map((category) =>
+          category.id === id ? data.category : category,
+        ),
+      );
+
+      return data.category;
+    },
+    [],
+  );
+
+  /**
+   * Exclui uma categoria.
+   */
+  const deleteCategory = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(
+        `${apiUrl}/blog/categories/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao excluir categoria do Blog.");
+      }
+
+      setCategories((currentCategories) =>
+        currentCategories.filter((category) => category.id !== id),
+      );
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      getCategoryBySlug,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    }),
+    [
+      categories,
+      loading,
+      error,
+      fetchCategories,
+      getCategoryById,
+      getCategoryBySlug,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+    ],
+  );
+
+  return (
+    <BlogCategoriesContext.Provider value={value}>
+      {children}
+    </BlogCategoriesContext.Provider>
+  );
+}
+
+```
+
+## src\contexts\BlogContext.ts
+
+```ts
+import { createContext } from "react";
+
+export type BlogPostStatus = "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED";
+
+export type BlogAuthor = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type BlogPostProduct = {
+  id: string;
+  sortOrder: number;
+  product: {
+    id: string;
+    title: string;
+    slug: string;
+    shortDescription?: string | null;
+    imageUrl?: string | null;
+    price: number | string;
+    originalPrice?: number | string | null;
+    currency?: string | null;
+    rating?: number | string | null;
+    reviewsCount?: number | null;
+    affiliateUrl: string;
+    available: boolean;
+    featured: boolean;
+    active: boolean;
+  };
+};
+
+export type BlogPostCategory = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  content: string;
+  coverImage?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  status: BlogPostStatus;
+  publishedAt?: string | null;
+  scheduledAt?: string | null;
+  authorId: string;
+  categoryId?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+
+  author?: BlogAuthor | null;
+  category?: BlogPostCategory | null;
+  products?: BlogPostProduct[];
+};
+
+export type BlogPostProductFormData = {
+  productId: string;
+  sortOrder?: number;
+};
+
+export type BlogPostFormData = {
+  title: string;
+  excerpt?: string;
+  content: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  categoryId?: string;
+  products?: BlogPostProductFormData[];
+};
+
+export type BlogPostFilters = {
+  search?: string;
+  categoryId?: string;
+};
+
+export type BlogPostAdminFilters = {
+  search?: string;
+  categoryId?: string;
+  status?: BlogPostStatus;
+};
+
+export type BlogContextValue = {
+  posts: BlogPost[];
+  loading: boolean;
+  error: string | null;
+
+  fetchPosts: (filters?: BlogPostFilters) => Promise<void>;
+
+  getPostBySlug: (slug: string) => Promise<BlogPost | null>;
+
+  getPostById: (id: string, token: string) => Promise<BlogPost | null>;
+
+  fetchAdminPosts: (
+    token: string,
+    filters?: BlogPostAdminFilters,
+  ) => Promise<void>;
+
+  createPost: (data: BlogPostFormData, token: string) => Promise<BlogPost>;
+
+  updatePost: (
+    id: string,
+    data: Partial<BlogPostFormData>,
+    token: string,
+  ) => Promise<BlogPost>;
+
+  deletePost: (id: string, token: string) => Promise<void>;
+};
+
+export const BlogContext = createContext<BlogContextValue | undefined>(
+  undefined,
+);
+
+```
+
+## src\contexts\BlogProvider.tsx
+
+```tsx
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+
+import type {
+  BlogContextValue,
+  BlogPost,
+  BlogPostAdminFilters,
+  BlogPostFilters,
+  BlogPostFormData,
+} from "./BlogContext";
+
+import { BlogContext } from "./BlogContext";
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export function BlogProvider({ children }: { children: ReactNode }) {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPosts = useCallback(async (filters?: BlogPostFilters) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+
+      if (filters?.search) {
+        params.set("search", filters.search);
+      }
+
+      if (filters?.categoryId) {
+        params.set("categoryId", filters.categoryId);
+      }
+
+      const queryString = params.toString();
+
+      const response = await fetch(
+        `${apiUrl}/blog${queryString ? `?${queryString}` : ""}`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ?? "Não foi possível carregar os posts do blog.",
+        );
+      }
+
+      setPosts(Array.isArray(data) ? data : (data.posts ?? []));
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Erro ao carregar os posts do blog.",
+      );
+
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getPostBySlug = useCallback(
+    async (slug: string): Promise<BlogPost | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/${encodeURIComponent(slug)}`,
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message ?? "Não foi possível carregar o post.");
+        }
+
+        return data.post ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const getPostById = useCallback(
+    async (id: string, token: string): Promise<BlogPost | null> => {
+      try {
+        const response = await fetch(
+          `${apiUrl}/blog/id/${encodeURIComponent(id)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          return null;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message ?? "Não foi possível carregar o post.");
+        }
+
+        return data.post ?? data;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const fetchAdminPosts = useCallback(
+    async (token: string, filters?: BlogPostAdminFilters) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams();
+
+        if (filters?.search) {
+          params.set("search", filters.search);
+        }
+
+        if (filters?.categoryId) {
+          params.set("categoryId", filters.categoryId);
+        }
+
+        if (filters?.status) {
+          params.set("status", filters.status);
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${apiUrl}/blog/admin${queryString ? `?${queryString}` : ""}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ??
+              "Não foi possível carregar os posts administrativos.",
+          );
+        }
+
+        setPosts(Array.isArray(data) ? data : (data.posts ?? []));
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Erro ao carregar os posts administrativos.",
+        );
+
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  const createPost = useCallback(
+    async (postData: BlogPostFormData, token: string): Promise<BlogPost> => {
+      const response = await fetch(`${apiUrl}/blog`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(postData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao criar post.");
+      }
+
+      const post = data.post ?? data;
+
+      setPosts((previous) => [post, ...previous]);
+
+      return post;
+    },
+    [],
+  );
+
+  const updatePost = useCallback(
+    async (
+      id: string,
+      postData: Partial<BlogPostFormData>,
+      token: string,
+    ): Promise<BlogPost> => {
+      const response = await fetch(`${apiUrl}/blog/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(postData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Erro ao atualizar post.");
+      }
+
+      const post = data.post ?? data;
+
+      setPosts((previous) =>
+        previous.map((item) => (item.id === id ? post : item)),
+      );
+
+      return post;
+    },
+    [],
+  );
+
+  const deletePost = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(`${apiUrl}/blog/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Erro ao excluir post.";
+
+        try {
+          const data = await response.json();
+
+          message = data.message ?? message;
+        } catch {
+          // Resposta 204 não possui corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setPosts((previous) => previous.filter((post) => post.id !== id));
+    },
+    [],
+  );
+
+  const value = useMemo<BlogContextValue>(
+    () => ({
+      posts,
+      loading,
+      error,
+      fetchPosts,
+      getPostBySlug,
+      getPostById,
+      fetchAdminPosts,
+      createPost,
+      updatePost,
+      deletePost,
+    }),
+    [
+      posts,
+      loading,
+      error,
+      fetchPosts,
+      getPostBySlug,
+      getPostById,
+      fetchAdminPosts,
+      createPost,
+      updatePost,
+      deletePost,
+    ],
+  );
+
+  return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;
 }
 
 ```
@@ -16659,7 +21745,16 @@ export type Product = {
   category?: string | null;
 
   available: boolean;
+
+  // Status de destaque existente no sistema
   featured: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller: boolean;
+
   active: boolean;
 
   seoTitle?: string | null;
@@ -16688,7 +21783,15 @@ export type ProductFormData = {
   subcategoryId: string;
   marketplaceId: string;
 
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
+
   available?: boolean;
   active?: boolean;
 
@@ -16718,7 +21821,15 @@ export type ProductUpdateData = {
   subcategoryId?: string;
   marketplaceId?: string;
 
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
+
   available?: boolean;
   active?: boolean;
 
@@ -16729,7 +21840,15 @@ export type ProductUpdateData = {
 export type ProductStatusData = {
   active?: boolean;
   available?: boolean;
+
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
 };
 
 export type ProductsContextValue = {
@@ -16745,7 +21864,14 @@ export type ProductsContextValue = {
       search?: string;
       subcategoryId?: string;
       marketplaceId?: string;
+
+      // Status de destaque existente no sistema
       featured?: boolean;
+
+      // Filtros das seções da loja
+      destaque?: boolean;
+      bestSeller?: boolean;
+
       active?: boolean;
       available?: boolean;
     },
@@ -16850,6 +21976,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         subcategoryId?: string;
         marketplaceId?: string;
         featured?: boolean;
+        bestSeller?: boolean;
         active?: boolean;
         available?: boolean;
       },
@@ -16874,6 +22001,10 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
         if (filters?.featured !== undefined) {
           params.set("featured", String(filters.featured));
+        }
+
+        if (filters?.bestSeller !== undefined) {
+          params.set("bestSeller", String(filters.bestSeller));
         }
 
         if (filters?.active !== undefined) {
@@ -17387,6 +22518,46 @@ export function useAuth() {
 
 ```
 
+## src\contexts\useBlog.ts
+
+```ts
+import { useContext } from "react";
+
+import { BlogContext } from "./BlogContext";
+
+export function useBlog() {
+  const context = useContext(BlogContext);
+
+  if (!context) {
+    throw new Error("useBlog deve ser utilizado dentro de BlogProvider.");
+  }
+
+  return context;
+}
+
+```
+
+## src\contexts\useBlogCategories.ts
+
+```ts
+import { useContext } from "react";
+
+import { BlogCategoriesContext } from "./BlogCategoriesContext";
+
+export function useBlogCategories() {
+  const context = useContext(BlogCategoriesContext);
+
+  if (!context) {
+    throw new Error(
+      "useBlogCategories deve ser usado dentro de BlogCategoriesProvider",
+    );
+  }
+
+  return context;
+}
+
+```
+
 ## src\contexts\useCategories.ts
 
 ```ts
@@ -17514,13 +22685,14 @@ declare module "*.svg?react" {
   --color-white: #ffffff;
   --color-gray-50: #f7f9fc;
   --color-gray-100: #eef2f6;
+  --color-gray-200: #cccccc;
   --color-gray-500: #667085;
   --color-gray-700: #344054;
   --color-gray-900: #101828;
   --color-yellow: #f5b700;
 
   --color-danger: #d92d20;
-  --color-danger-light: #d8756d;
+  --color-danger-light: #f1b1a1;
 }
 
 .home-banner .swiper-button-prev,
@@ -17556,6 +22728,16 @@ declare module "*.svg?react" {
 .home-banner .swiper-pagination-bullet-active {
   background: #20b35b;
   opacity: 1;
+}
+/* Esconde a barra de rolagem no Chrome, Safari e Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Esconde a barra de rolagem no IE, Edge e Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE e Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 
@@ -17735,6 +22917,983 @@ export function AboutPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+```
+
+## src\pages\admin\AdminBlogFormPage.tsx
+
+```tsx
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { RichTextEditor } from "../../components/admin/products/RichTextEditor";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+import { useBlogCategories } from "../../contexts/useBlogCategories";
+import { useProducts } from "../../contexts/useProducts";
+import type {
+  BlogPostFormData,
+  BlogPostProductFormData,
+  BlogPostStatus,
+} from "../../types/Blog";
+
+const STATUS_OPTIONS: Array<{
+  value: BlogPostStatus;
+  label: string;
+}> = [
+  { value: "DRAFT", label: "Rascunho" },
+  { value: "PUBLISHED", label: "Publicado" },
+  { value: "SCHEDULED", label: "Agendado" },
+  { value: "ARCHIVED", label: "Arquivado" },
+];
+
+function formatDateTimeLocal(value?: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+
+  return localDate.toISOString().slice(0, 16);
+}
+
+function toISOStringOrUndefined(value: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return date.toISOString();
+}
+
+function isRichTextEmpty(value: string) {
+  const normalized = value
+    .replace(/<p>\s*<\/p>/gi, "")
+    .replace(/<br\s*\/?>/gi, "")
+    .replace(/&nbsp;/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+
+  return normalized.length === 0;
+}
+
+export function AdminBlogFormPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const {
+    getPostById,
+    createPost,
+    updatePost,
+    loading: blogLoading,
+  } = useBlog();
+
+  const {
+    categories,
+    fetchCategories,
+    loading: categoriesLoading,
+  } = useBlogCategories();
+
+  const {
+    products,
+    fetchAdminProducts,
+    loading: productsLoading,
+  } = useProducts();
+
+  const isEditMode = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [content, setContent] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [status, setStatus] = useState<BlogPostStatus>("DRAFT");
+  const [publishedAt, setPublishedAt] = useState("");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loadingPost, setLoadingPost] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    void fetchCategories();
+    void fetchAdminProducts(token);
+  }, [token, fetchCategories, fetchAdminProducts]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const postId = id;
+    const authToken = token;
+
+    let cancelled = false;
+
+    async function loadPost() {
+      setLoadingPost(true);
+      setError(null);
+
+      try {
+        const post = await getPostById(postId, authToken);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!post) {
+          setError("Artigo não encontrado.");
+          return;
+        }
+
+        setTitle(post.title);
+        setExcerpt(post.excerpt ?? "");
+        setContent(post.content);
+        setCoverImage(post.coverImage ?? "");
+        setCategoryId(post.categoryId ?? "");
+        setStatus(post.status);
+        setPublishedAt(formatDateTimeLocal(post.publishedAt));
+        setScheduledAt(formatDateTimeLocal(post.scheduledAt));
+        setSeoTitle(post.seoTitle ?? "");
+        setSeoDescription(post.seoDescription ?? "");
+
+        setSelectedProductIds(
+          (post.products ?? [])
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((item) => item.product.id),
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar o artigo.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPost(false);
+        }
+      }
+    }
+
+    void loadPost();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, token, getPostById]);
+
+  function handleProductToggle(productId: string) {
+    setSelectedProductIds((currentIds) => {
+      if (currentIds.includes(productId)) {
+        return currentIds.filter((currentId) => currentId !== productId);
+      }
+
+      return [...currentIds, productId];
+    });
+  }
+
+  function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
+    setStatus(event.target.value as BlogPostStatus);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sessão expirada. Faça login novamente.");
+      return;
+    }
+
+    if (!title.trim()) {
+      setError("Informe o título do artigo.");
+      return;
+    }
+
+    if (isRichTextEmpty(content)) {
+      setError("Informe o conteúdo do artigo.");
+      return;
+    }
+
+    if (status === "PUBLISHED" && !publishedAt) {
+      setError("Informe a data de publicação para um artigo publicado.");
+      return;
+    }
+
+    if (status === "SCHEDULED" && !scheduledAt) {
+      setError("Informe a data de agendamento para um artigo agendado.");
+      return;
+    }
+
+    const productsData: BlogPostProductFormData[] = selectedProductIds.map(
+      (productId, index) => ({
+        productId,
+        sortOrder: index,
+      }),
+    );
+
+    const cleanContent = content === "<p></p>" ? undefined : content.trim();
+
+    const postData: BlogPostFormData = {
+      title: title.trim(),
+      excerpt: excerpt.trim() || undefined,
+      content: cleanContent ?? "",
+      coverImage: coverImage.trim() || undefined,
+      categoryId: categoryId || undefined,
+      status,
+      publishedAt:
+        status === "PUBLISHED"
+          ? toISOStringOrUndefined(publishedAt)
+          : undefined,
+      scheduledAt:
+        status === "SCHEDULED"
+          ? toISOStringOrUndefined(scheduledAt)
+          : undefined,
+      seoTitle: seoTitle.trim() || undefined,
+      seoDescription: seoDescription.trim() || undefined,
+      products: productsData,
+    };
+
+    setSaving(true);
+
+    try {
+      if (isEditMode && id) {
+        await updatePost(id, postData, token);
+      } else {
+        await createPost(postData, token);
+      }
+
+      navigate("/admin/blog");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível salvar o artigo.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isLoading =
+    loadingPost || blogLoading || categoriesLoading || productsLoading;
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/blog"
+          className="text-sm font-medium text-navy transition hover:text-blue"
+        >
+          ← Voltar para o Blog
+        </Link>
+
+        <h1 className="mt-3 text-2xl font-bold text-gray-900">
+          {isEditMode ? "Editar artigo" : "Novo artigo"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-700">
+          {isEditMode
+            ? "Atualize as informações do artigo do Blog."
+            : "Cadastre um novo artigo para o Blog do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      )}
+
+      {isLoading && isEditMode && loadingPost ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
+          Carregando artigo...
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">
+              Informações do artigo
+            </h2>
+
+            <div className="space-y-5">
+              <div>
+                <label
+                  htmlFor="title"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Título *
+                </label>
+
+                <input
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Digite o título do artigo"
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="excerpt"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Resumo
+                </label>
+
+                <textarea
+                  id="excerpt"
+                  value={excerpt}
+                  onChange={(event) => setExcerpt(event.target.value)}
+                  placeholder="Breve resumo do artigo"
+                  rows={3}
+                  className="w-full resize-y rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="content"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Conteúdo *
+                </label>
+
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  disabled={saving || loadingPost}
+                  placeholder="Escreva o conteúdo completo do artigo..."
+                />
+
+                <p className="mt-2 text-xs text-gray-500">
+                  Use títulos, negrito, listas, links e outros recursos para
+                  deixar o artigo mais organizado e agradável para o leitor.
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="coverImage"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Imagem de capa
+                </label>
+
+                <input
+                  id="coverImage"
+                  type="url"
+                  value={coverImage}
+                  onChange={(event) => setCoverImage(event.target.value)}
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">
+              Publicação
+            </h2>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="categoryId"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Categoria
+                </label>
+
+                <select
+                  id="categoryId"
+                  value={categoryId}
+                  onChange={(event) => setCategoryId(event.target.value)}
+                  className="w-full rounded-lg border border-gray-500 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                >
+                  <option value="">Sem categoria</option>
+
+                  {categories
+                    .filter((category) => category.active)
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="status"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Status *
+                </label>
+
+                <select
+                  id="status"
+                  value={status}
+                  onChange={handleStatusChange}
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {status === "PUBLISHED" && (
+                <div>
+                  <label
+                    htmlFor="publishedAt"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Data de publicação *
+                  </label>
+
+                  <input
+                    id="publishedAt"
+                    type="datetime-local"
+                    value={publishedAt}
+                    onChange={(event) => setPublishedAt(event.target.value)}
+                    className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                  />
+                </div>
+              )}
+
+              {status === "SCHEDULED" && (
+                <div>
+                  <label
+                    htmlFor="scheduledAt"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Data de agendamento *
+                  </label>
+
+                  <input
+                    id="scheduledAt"
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(event) => setScheduledAt(event.target.value)}
+                    className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-2 text-lg font-semibold text-gray-900">
+              Produtos relacionados
+            </h2>
+
+            <p className="mb-5 text-sm text-gray-600">
+              Selecione os produtos que deseja apresentar relacionados ao
+              artigo.
+            </p>
+
+            {products.length === 0 ? (
+              <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+                Nenhum produto disponível para seleção.
+              </p>
+            ) : (
+              <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
+                {products.map((product) => {
+                  const selected = selectedProductIds.includes(product.id);
+
+                  return (
+                    <label
+                      key={product.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-transparent p-3 transition hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => handleProductToggle(product.id)}
+                        className="h-4 w-4 rounded border-gray-500 text-blue-600 focus:ring-blue-500"
+                      />
+
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.title}
+                          className="h-12 w-12 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500">
+                          Sem imagem
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">
+                          {product.title}
+                        </p>
+
+                        <p className="text-xs text-gray-500">
+                          {product.currency}{" "}
+                          {Number(product.price).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="mt-3 text-xs text-gray-500">
+              {selectedProductIds.length} produto(s) selecionado(s).
+            </p>
+          </section>
+
+          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
+
+            <div className="space-y-5">
+              <div>
+                <label
+                  htmlFor="seoTitle"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Título SEO
+                </label>
+
+                <input
+                  id="seoTitle"
+                  type="text"
+                  value={seoTitle}
+                  onChange={(event) => setSeoTitle(event.target.value)}
+                  placeholder="Título otimizado para mecanismos de busca"
+                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="seoDescription"
+                  className="mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Descrição SEO
+                </label>
+
+                <textarea
+                  id="seoDescription"
+                  value={seoDescription}
+                  onChange={(event) => setSeoDescription(event.target.value)}
+                  placeholder="Descrição otimizada para mecanismos de busca"
+                  rows={4}
+                  className="w-full resize-y rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
+                />
+              </div>
+            </div>
+          </section>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Link
+              to="/admin/blog"
+              className="rounded-lg border border-gray-500 px-5 py-2.5 text-center text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              Cancelar
+            </Link>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving
+                ? "Salvando..."
+                : isEditMode
+                  ? "Salvar alterações"
+                  : "Criar artigo"}
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\admin\AdminBlogPage.tsx
+
+```tsx
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+
+export function AdminBlogPage() {
+  const { posts, loading, error, fetchAdminPosts, deletePost } = useBlog();
+
+  const { user, token } = useAuth();
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const loadPosts = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    await fetchAdminPosts(token);
+  }, [fetchAdminPosts, token]);
+
+  useEffect(() => {
+    void loadPosts();
+  }, [loadPosts]);
+
+  async function handleDelete(id: string, title: string) {
+    if (!token) {
+      setActionError("Sessão não encontrada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir o artigo "${title}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      setActionError(null);
+
+      await deletePost(id, token);
+    } catch (err) {
+      console.error("Erro ao excluir artigo:", err);
+
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível excluir o artigo.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function getStatusLabel(status: string) {
+    switch (status) {
+      case "PUBLISHED":
+        return "Publicado";
+
+      case "DRAFT":
+        return "Rascunho";
+
+      case "SCHEDULED":
+        return "Agendado";
+
+      case "ARCHIVED":
+        return "Arquivado";
+
+      default:
+        return status;
+    }
+  }
+
+  function getStatusClass(status: string) {
+    switch (status) {
+      case "PUBLISHED":
+        return "bg-green-100 text-green-700";
+
+      case "DRAFT":
+        return "bg-yellow-100 text-yellow-700";
+
+      case "SCHEDULED":
+        return "bg-blue-100 text-blue-700";
+
+      case "ARCHIVED":
+        return "bg-gray-100 text-gray-700";
+
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  }
+
+  function formatDate(date: string | null | undefined) {
+    if (!date) {
+      return "-";
+    }
+
+    return new Date(date).toLocaleDateString("pt-BR");
+  }
+
+  if (!user || !token) {
+    return (
+      <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-xl border border-danger bg-danger-light p-6 text-center">
+            <h1 className="text-xl font-semibold text-danger">
+              Acesso não autorizado
+            </h1>
+
+            <p className="mt-2 text-sm text-red-600">
+              Você precisa estar autenticado para acessar o gerenciamento do
+              Blog.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Cabeçalho */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              Blog
+            </h1>
+
+            <p className="mt-1 text-sm text-gray-600">
+              Gerencie os artigos publicados e os rascunhos do WorldMix360.
+            </p>
+          </div>
+
+          <Link
+            to="/admin/blog/novo"
+            className="inline-flex items-center justify-center rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue"
+          >
+            + Novo artigo
+          </Link>
+        </div>
+
+        {/* Erro de ação */}
+        {actionError && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {actionError}
+          </div>
+        )}
+
+        {/* Erro da API */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+            <p className="text-sm text-red-700">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => void loadPosts()}
+              className="mt-3 rounded-lg bg-danger-light px-4 py-2 text-sm font-semibold text-danger transition hover:bg-danger hover:text-navy"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {/* Carregamento */}
+        {loading ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <p className="text-gray-600">Carregando artigos...</p>
+          </div>
+        ) : posts.length === 0 ? (
+          /* Nenhum post */
+          <div className="rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Nenhum artigo encontrado
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-600">
+              Comece criando o primeiro artigo do Blog.
+            </p>
+
+            <Link
+              to="/admin/blog/novo"
+              className="mt-5 inline-flex rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Criar primeiro artigo
+            </Link>
+          </div>
+        ) : (
+          /* Tabela */
+          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-left">
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Artigo
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Categoria
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Autor
+                    </th>
+
+                    <th className="px-5 py-4 text-sm font-semibold text-gray-700">
+                      Data
+                    </th>
+
+                    <th className="px-5 py-4 text-right text-sm font-semibold text-gray-700">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {posts.map((post) => (
+                    <tr
+                      key={post.id}
+                      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
+                    >
+                      {/* Artigo */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {post.coverImage ? (
+                            <img
+                              src={post.coverImage}
+                              alt={post.title}
+                              className="h-14 w-20 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-14 w-20 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                              Sem imagem
+                            </div>
+                          )}
+
+                          <div className="max-w-sm">
+                            <p className="font-semibold text-gray-900">
+                              {post.title}
+                            </p>
+
+                            <p className="mt-1 truncate text-xs text-gray-500">
+                              /blog/{post.slug}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Categoria */}
+                      <td className="px-5 py-4 text-sm text-gray-600">
+                        {post.category?.name ?? "Sem categoria"}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusClass(
+                            post.status,
+                          )}`}
+                        >
+                          {getStatusLabel(post.status)}
+                        </span>
+                      </td>
+
+                      {/* Autor */}
+                      <td className="px-5 py-4 text-sm text-gray-600">
+                        {post.author?.name ?? "-"}
+                      </td>
+
+                      {/* Data */}
+                      <td className="px-5 py-4 text-sm text-gray-600">
+                        {formatDate(post.publishedAt ?? post.createdAt)}
+                      </td>
+
+                      {/* Ações */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/blog/${encodeURIComponent(post.slug)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+                          >
+                            Ver
+                          </Link>
+
+                          <Link
+                            to={`/admin/blog/editar/${post.id}`}
+                            className="rounded-lg bg-navy px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue"
+                          >
+                            Editar
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleDelete(post.id, post.title)
+                            }
+                            disabled={deletingId === post.id}
+                            className="rounded-lg bg-danger px-3 py-2 text-xs font-semibold text-white transition hover:bg-danger-light disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === post.id
+                              ? "Excluindo..."
+                              : "Excluir"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Rodapé */}
+            <div className="border-t border-gray-200 bg-gray-50 px-5 py-3">
+              <p className="text-sm text-gray-600">
+                Total de artigos:{" "}
+                <span className="font-semibold text-gray-900">
+                  {posts.length}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
 
@@ -18031,501 +24190,14 @@ export function AdminCategoryFormPage() {
 
 ```
 
-## src\pages\admin\AdminProductsFormPage.tsx
-
-```tsx
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-
-import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
-import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
-import { ProductGallery } from "../../components/admin/products/ProductGallery";
-import { ProductPricing } from "../../components/admin/products/ProductPricing";
-import { ProductRelationships } from "../../components/admin/products/ProductRelationships";
-import { ProductSeo } from "../../components/admin/products/ProductSeo";
-import { ProductStatus } from "../../components/admin/products/ProductStatus";
-import type { ProductImageForm } from "../../components/admin/products/types";
-import { useAuth } from "../../contexts/useAuth";
-import { useMarketplaces } from "../../contexts/useMarketplaces";
-import { useProducts } from "../../contexts/useProducts";
-import { useSubcategories } from "../../contexts/useSubcategories";
-import { parseCurrencyBRL } from "../../utils/formatCurrency";
-
-export function AdminProductsFormPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const { token } = useAuth();
-
-  const { getProductById, createProduct, updateProduct } = useProducts();
-
-  const { subcategories, fetchSubcategories } = useSubcategories();
-
-  const { marketplaces, fetchMarketplaces } = useMarketplaces();
-
-  const isEditing = Boolean(id);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-
-  const [imageUrl, setImageUrl] = useState("");
-
-  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
-
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-
-  const [currency, setCurrency] = useState("BRL");
-
-  const [rating, setRating] = useState("");
-  const [reviewsCount, setReviewsCount] = useState("0");
-
-  const [affiliateUrl, setAffiliateUrl] = useState("");
-
-  const [subcategoryId, setSubcategoryId] = useState("");
-  const [marketplaceId, setMarketplaceId] = useState("");
-
-  const [featured, setFeatured] = useState(false);
-  const [available, setAvailable] = useState(true);
-  const [active, setActive] = useState(true);
-
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDescription, setSeoDescription] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(isEditing);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchSubcategories();
-    void fetchMarketplaces();
-  }, [fetchSubcategories, fetchMarketplaces]);
-
-  useEffect(() => {
-    if (!id || !token) {
-      return;
-    }
-
-    const productId = id;
-    const authToken = token;
-
-    let isMounted = true;
-
-    async function loadProduct() {
-      try {
-        const product = await getProductById(productId, authToken);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (!product) {
-          setError("Produto não encontrado.");
-          setLoadingData(false);
-          return;
-        }
-
-        setTitle(product.title ?? "");
-        setDescription(product.description ?? "");
-        setShortDescription(product.shortDescription ?? "");
-        setImageUrl(product.imageUrl ?? "");
-
-        setGalleryImages(
-          Array.isArray(product.images)
-            ? product.images
-                .map((image, index) => ({
-                  id: image.id ?? crypto.randomUUID(),
-                  imageUrl: image.imageUrl ?? "",
-                  sortOrder:
-                    typeof image.sortOrder === "number"
-                      ? image.sortOrder
-                      : index,
-                }))
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-            : [],
-        );
-
-        setPrice(
-          product.price !== null && product.price !== undefined
-            ? Number(product.price).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
-            : "",
-        );
-
-        setOriginalPrice(
-          product.originalPrice !== null && product.originalPrice !== undefined
-            ? Number(product.originalPrice).toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
-            : "",
-        );
-
-        setCurrency(product.currency ?? "BRL");
-
-        setRating(
-          product.rating !== null && product.rating !== undefined
-            ? String(product.rating)
-            : "",
-        );
-
-        setReviewsCount(String(product.reviewsCount ?? 0));
-
-        setAffiliateUrl(product.affiliateUrl ?? "");
-
-        setSubcategoryId(product.subcategoryId ?? "");
-        setMarketplaceId(product.marketplaceId ?? "");
-
-        setFeatured(Boolean(product.featured));
-        setAvailable(Boolean(product.available));
-        setActive(Boolean(product.active));
-
-        setSeoTitle(product.seoTitle ?? "");
-        setSeoDescription(product.seoDescription ?? "");
-      } catch {
-        if (isMounted) {
-          setError("Não foi possível carregar o produto.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingData(false);
-        }
-      }
-    }
-
-    void loadProduct();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [id, token, getProductById]);
-
-  function handleAddGalleryImage() {
-    setGalleryImages((currentImages) => [
-      ...currentImages,
-      {
-        id: crypto.randomUUID(),
-        imageUrl: "",
-        sortOrder: currentImages.length,
-      },
-    ]);
-  }
-
-  function handleGalleryImageChange(id: string, value: string) {
-    setGalleryImages((currentImages) =>
-      currentImages.map((image) =>
-        image.id === id
-          ? {
-              ...image,
-              imageUrl: value,
-            }
-          : image,
-      ),
-    );
-  }
-
-  function handleRemoveGalleryImage(id: string) {
-    setGalleryImages((currentImages) =>
-      currentImages
-        .filter((image) => image.id !== id)
-        .map((image, index) => ({
-          ...image,
-          sortOrder: index,
-        })),
-    );
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setError(null);
-
-    if (!token) {
-      setError("Sua sessão não está autenticada.");
-      return;
-    }
-
-    if (!title.trim()) {
-      setError("Informe o título do produto.");
-      return;
-    }
-
-    if (!imageUrl.trim()) {
-      setError("Informe a URL da imagem.");
-      return;
-    }
-
-    if (!affiliateUrl.trim()) {
-      setError("Informe o link de afiliado.");
-      return;
-    }
-
-    if (!subcategoryId) {
-      setError("Selecione uma subcategoria.");
-      return;
-    }
-
-    if (!marketplaceId) {
-      setError("Selecione um marketplace.");
-      return;
-    }
-
-    const parsedPrice = parseCurrencyBRL(price);
-
-    if (!price.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      setError("Informe um preço válido.");
-      return;
-    }
-
-    let parsedOriginalPrice: number | undefined;
-
-    if (originalPrice.trim()) {
-      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
-
-      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
-        setError("Informe um preço original válido.");
-        return;
-      }
-    }
-
-    let parsedRating: number | undefined;
-
-    if (rating.trim()) {
-      parsedRating = Number(rating);
-
-      if (
-        !Number.isFinite(parsedRating) ||
-        parsedRating < 0 ||
-        parsedRating > 5
-      ) {
-        setError("A avaliação deve estar entre 0 e 5.");
-        return;
-      }
-    }
-
-    const parsedReviewsCount = Number(reviewsCount);
-
-    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
-      setError("A quantidade de avaliações deve ser um número inteiro.");
-      return;
-    }
-
-    try {
-      new URL(imageUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para a imagem.");
-      return;
-    }
-
-    try {
-      new URL(affiliateUrl.trim());
-    } catch {
-      setError("Informe uma URL válida para o link de afiliado.");
-      return;
-    }
-
-    const cleanGalleryImages = galleryImages
-      .map((image) => ({
-        imageUrl: image.imageUrl.trim(),
-        sortOrder: image.sortOrder,
-      }))
-      .filter((image) => image.imageUrl);
-
-    for (const image of cleanGalleryImages) {
-      try {
-        new URL(image.imageUrl);
-      } catch {
-        setError(
-          `Informe uma URL válida para a imagem da galeria na posição ${
-            image.sortOrder + 1
-          }.`,
-        );
-        return;
-      }
-    }
-
-    setLoading(true);
-
-    try {
-      const cleanDescription =
-        description === "<p></p>" ? undefined : description.trim();
-
-      const productData = {
-        title: title.trim(),
-        description: cleanDescription,
-        shortDescription: shortDescription.trim() || undefined,
-
-        imageUrl: imageUrl.trim(),
-
-        images: cleanGalleryImages,
-
-        price: parsedPrice,
-        originalPrice: parsedOriginalPrice,
-
-        currency: currency.trim().toUpperCase() || "BRL",
-
-        rating: parsedRating,
-        reviewsCount: parsedReviewsCount,
-
-        affiliateUrl: affiliateUrl.trim(),
-
-        subcategoryId,
-        marketplaceId,
-
-        featured,
-        available,
-        active,
-
-        seoTitle: seoTitle.trim() || undefined,
-        seoDescription: seoDescription.trim() || undefined,
-      };
-
-      if (isEditing && id) {
-        await updateProduct(id, productData, token);
-      } else {
-        await createProduct(productData, token);
-      }
-
-      navigate("/admin/products");
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : isEditing
-            ? "Não foi possível atualizar o produto."
-            : "Não foi possível criar o produto.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loadingData) {
-    return (
-      <section className="mx-auto w-full max-w-5xl">
-        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-          <p className="text-gray-500">Carregando produto...</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="mx-auto w-full max-w-5xl">
-      <div className="mb-6">
-        <Link
-          to="/admin/products"
-          className="text-sm font-semibold text-blue hover:underline"
-        >
-          ← Voltar para produtos
-        </Link>
-
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          {isEditing ? "Editar produto" : "Novo produto"}
-        </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
-          {isEditing
-            ? "Atualize os dados do produto."
-            : "Cadastre um novo produto no catálogo do WorldMix360."}
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <form
-        onSubmit={(event) => void handleSubmit(event)}
-        className="space-y-6"
-      >
-        <ProductBasicInfo
-          title={title}
-          description={description}
-          shortDescription={shortDescription}
-          imageUrl={imageUrl}
-          loading={loading}
-          onTitleChange={setTitle}
-          onDescriptionChange={setDescription}
-          onShortDescriptionChange={setShortDescription}
-          onImageUrlChange={setImageUrl}
-        />
-
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <ProductGallery
-            galleryImages={galleryImages}
-            loading={loading}
-            onAdd={handleAddGalleryImage}
-            onChange={handleGalleryImageChange}
-            onRemove={handleRemoveGalleryImage}
-          />
-        </div>
-
-        <ProductPricing
-          price={price}
-          originalPrice={originalPrice}
-          currency={currency}
-          rating={rating}
-          reviewsCount={reviewsCount}
-          loading={loading}
-          onPriceChange={setPrice}
-          onOriginalPriceChange={setOriginalPrice}
-          onCurrencyChange={setCurrency}
-          onRatingChange={setRating}
-          onReviewsCountChange={setReviewsCount}
-        />
-
-        <ProductRelationships
-          subcategories={subcategories}
-          marketplaces={marketplaces}
-          subcategoryId={subcategoryId}
-          marketplaceId={marketplaceId}
-          affiliateUrl={affiliateUrl}
-          loading={loading}
-          onSubcategoryChange={setSubcategoryId}
-          onMarketplaceChange={setMarketplaceId}
-          onAffiliateUrlChange={setAffiliateUrl}
-        />
-
-        <ProductStatus
-          featured={featured}
-          available={available}
-          active={active}
-          loading={loading}
-          onFeaturedChange={setFeatured}
-          onAvailableChange={setAvailable}
-          onActiveChange={setActive}
-        />
-
-        <ProductSeo
-          seoTitle={seoTitle}
-          seoDescription={seoDescription}
-          loading={loading}
-          onSeoTitleChange={setSeoTitle}
-          onSeoDescriptionChange={setSeoDescription}
-        />
-
-        <ProductFormActions loading={loading} isEditing={isEditing} />
-      </form>
-    </section>
-  );
-}
-
-```
-
-## src\pages\AdminCategoriesPage.tsx
+## src\pages\admin\AdminCategoriesPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
 
 export function AdminCategoriesPage() {
   const { token } = useAuth();
@@ -18827,7 +24499,7 @@ export function AdminCategoriesPage() {
 
 ```
 
-## src\pages\AdminDashboarPage.tsx
+## src\pages\admin\AdminDashboarPage.tsx
 
 ```tsx
 // src/pages/admin/AdminDashboardPage.tsx
@@ -18835,13 +24507,14 @@ export function AdminCategoriesPage() {
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
-import { useMarketplaces } from "../contexts/useMarketplaces";
-import { useProducts } from "../contexts/useProducts";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useBlog } from "../../contexts/useBlog";
+import { useCategories } from "../../contexts/useCategories";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
-export default function AdminDashboardPage() {
+export function AdminDashboardPage() {
   const { token } = useAuth();
 
   const {
@@ -18872,10 +24545,17 @@ export default function AdminDashboardPage() {
     error: marketplacesError,
   } = useMarketplaces();
 
+  const {
+    posts,
+    fetchAdminPosts,
+    loading: blogLoading,
+    error: blogError,
+  } = useBlog();
+
   /**
    * Carrega os dados necessários para o Dashboard.
    *
-   * Produtos administrativos precisam do token.
+   * Produtos e Blog administrativos precisam do token.
    * Categorias, subcategorias e marketplaces possuem
    * endpoints públicos de leitura.
    */
@@ -18889,6 +24569,7 @@ export default function AdminDashboardPage() {
       fetchCategories(),
       fetchSubcategories(),
       fetchMarketplaces(),
+      fetchAdminPosts(token),
     ]);
   }, [
     token,
@@ -18896,6 +24577,7 @@ export default function AdminDashboardPage() {
     fetchCategories,
     fetchSubcategories,
     fetchMarketplaces,
+    fetchAdminPosts,
   ]);
 
   // ================================
@@ -18944,17 +24626,35 @@ export default function AdminDashboardPage() {
     (marketplace) => marketplace.active,
   ).length;
 
+  // ================================
+  // Estatísticas do Blog
+  // ================================
+
+  const totalPosts = posts.length;
+
+  const publishedPosts = posts.filter(
+    (post) => post.status === "PUBLISHED",
+  ).length;
+
+  const draftPosts = posts.filter((post) => post.status === "DRAFT").length;
+
+  const scheduledPosts = posts.filter(
+    (post) => post.status === "SCHEDULED",
+  ).length;
+
   const isLoading =
     productsLoading ||
     categoriesLoading ||
     subcategoriesLoading ||
-    marketplacesLoading;
+    marketplacesLoading ||
+    blogLoading;
 
   const errors = [
     productsError,
     categoriesError,
     subcategoriesError,
     marketplacesError,
+    blogError,
   ].filter(Boolean);
 
   return (
@@ -18973,7 +24673,8 @@ export default function AdminDashboardPage() {
             </h1>
 
             <p className="mt-2 text-sm text-gray-500 sm:text-base">
-              Visão geral do catálogo e das principais áreas do sistema.
+              Visão geral do catálogo, conteúdo e das principais áreas do
+              sistema.
             </p>
           </div>
 
@@ -19027,7 +24728,7 @@ export default function AdminDashboardPage() {
           CARDS PRINCIPAIS
       ======================================== */}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {/* Produtos */}
 
         <Link
@@ -19137,6 +24838,33 @@ export default function AdminDashboardPage() {
 
           <div className="mt-5 flex items-center justify-between text-xs">
             <span className="text-gray-500">{activeMarketplaces} ativos</span>
+
+            <span className="font-semibold text-blue group-hover:underline">
+              Gerenciar →
+            </span>
+          </div>
+        </Link>
+
+        {/* Blog */}
+
+        <Link
+          to="/admin/blog"
+          className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Blog</p>
+
+              <p className="mt-2 text-3xl font-bold text-navy">{totalPosts}</p>
+            </div>
+
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-light text-xl">
+              📝
+            </span>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <span className="text-gray-500">{publishedPosts} publicados</span>
 
             <span className="font-semibold text-blue group-hover:underline">
               Gerenciar →
@@ -19288,6 +25016,59 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ========================================
+          RESUMO DO BLOG
+      ======================================== */}
+
+      <section className="mt-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-navy">Resumo do Blog</h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Situação atual dos conteúdos publicados e em produção.
+            </p>
+          </div>
+
+          <Link
+            to="/admin/blog"
+            className="text-sm font-semibold text-blue hover:underline"
+          >
+            Gerenciar Blog →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Total</p>
+
+            <p className="mt-1 text-2xl font-bold text-navy">{totalPosts}</p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Publicados</p>
+
+            <p className="mt-1 text-2xl font-bold text-green">
+              {publishedPosts}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Rascunhos</p>
+
+            <p className="mt-1 text-2xl font-bold text-yellow">{draftPosts}</p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-xs font-medium text-gray-500">Agendados</p>
+
+            <p className="mt-1 text-2xl font-bold text-blue">
+              {scheduledPosts}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================
           AÇÕES RÁPIDAS
       ======================================== */}
 
@@ -19300,7 +25081,7 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Link
             to="/admin/products/new"
             className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
@@ -19352,6 +25133,19 @@ export default function AdminDashboardPage() {
               Adicionar um canal de venda.
             </p>
           </Link>
+
+          <Link
+            to="/admin/blog"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-blue hover:bg-blue-light"
+          >
+            <span className="text-xl">📝</span>
+
+            <p className="mt-2 font-semibold text-navy">Gerenciar Blog</p>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Gerenciar os artigos e conteúdos.
+            </p>
+          </Link>
         </div>
       </section>
     </section>
@@ -19360,14 +25154,14 @@ export default function AdminDashboardPage() {
 
 ```
 
-## src\pages\AdminMarketplaceFormPage.tsx
+## src\pages\admin\AdminMarketplaceFormPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
 
 export function AdminMarketplaceFormPage() {
   const { id } = useParams();
@@ -19777,14 +25571,14 @@ export function AdminMarketplaceFormPage() {
 
 ```
 
-## src\pages\AdminMarketplacesPage.tsx
+## src\pages\admin\AdminMarketplacesPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useMarketplaces } from "../contexts/useMarketplaces";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
 
 export function AdminMarketplacesPage() {
   const { token } = useAuth();
@@ -20134,14 +25928,1151 @@ export function AdminMarketplacesPage() {
 
 ```
 
-## src\pages\AdminProductsPage.tsx
+## src\pages\admin\AdminProductsFormPage.tsx
+
+```tsx
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { MercadoLivreOfferModal } from "../../components/admin/products/MercadoLivreOfferModal";
+import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
+import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
+import { ProductGallery } from "../../components/admin/products/ProductGallery";
+import { ProductPricing } from "../../components/admin/products/ProductPricing";
+import { ProductRelationships } from "../../components/admin/products/ProductRelationships";
+import { ProductSeo } from "../../components/admin/products/ProductSeo";
+import { ProductStatus } from "../../components/admin/products/ProductStatus";
+import type { ProductImageForm } from "../../components/admin/products/types";
+import { useAuth } from "../../contexts/useAuth";
+import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { useProducts } from "../../contexts/useProducts";
+import { useSubcategories } from "../../contexts/useSubcategories";
+import {
+  analyzeMercadoLivreProduct,
+  importMercadoLivreProduct,
+  type MercadoLivreAnalyzeResult,
+  type MercadoLivreOffer,
+  updateMercadoLivreProductOffer,
+} from "../../services/mercadoLivreService";
+import { parseCurrencyBRL } from "../../utils/formatCurrency";
+
+const MERCADO_LIVRE_MARKETPLACE_ID = "c255826b-2073-4c76-8966-b87f22403090";
+
+type ProductMarketplaceLink = {
+  id?: string;
+  marketplaceId?: string | null;
+  externalLink?: string | null;
+  affiliateUrl?: string | null;
+};
+
+type ProductWithMarketplaceLinks = {
+  marketplaceProducts?: ProductMarketplaceLink[] | null;
+};
+
+export function AdminProductsFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const { token } = useAuth();
+
+  const { getProductById, createProduct, updateProduct } = useProducts();
+
+  const { subcategories, fetchSubcategories } = useSubcategories();
+
+  const { marketplaces, fetchMarketplaces } = useMarketplaces();
+
+  const isEditing = Boolean(id);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  const [galleryImages, setGalleryImages] = useState<ProductImageForm[]>([]);
+
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+
+  const [currency, setCurrency] = useState("BRL");
+
+  const [rating, setRating] = useState("");
+  const [reviewsCount, setReviewsCount] = useState("0");
+
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+  const [externalLink, setExternalLink] = useState("");
+
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [marketplaceId, setMarketplaceId] = useState("");
+
+  // Mantido: comportamento original do featured.
+  const [featured, setFeatured] = useState(false);
+
+  // Novas opções independentes.
+  const [destaque, setDestaque] = useState(false);
+  const [bestSeller, setBestSeller] = useState(false);
+
+  const [available, setAvailable] = useState(true);
+  const [active, setActive] = useState(true);
+
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(isEditing);
+  const [error, setError] = useState<string | null>(null);
+
+  const [mercadoLivreAnalysis, setMercadoLivreAnalysis] =
+    useState<MercadoLivreAnalyzeResult | null>(null);
+
+  const [mercadoLivreModalOpen, setMercadoLivreModalOpen] = useState(false);
+
+  const [mercadoLivreImporting, setMercadoLivreImporting] = useState(false);
+
+  useEffect(() => {
+    void fetchSubcategories();
+    void fetchMarketplaces();
+  }, [fetchSubcategories, fetchMarketplaces]);
+
+  useEffect(() => {
+    if (!id || !token) {
+      return;
+    }
+
+    const productId = id;
+    const authToken = token;
+
+    let isMounted = true;
+
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId, authToken);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!product) {
+          setError("Produto não encontrado.");
+          setLoadingData(false);
+          return;
+        }
+
+        setTitle(product.title ?? "");
+        setDescription(product.description ?? "");
+        setShortDescription(product.shortDescription ?? "");
+        setImageUrl(product.imageUrl ?? "");
+
+        setGalleryImages(
+          Array.isArray(product.images)
+            ? product.images
+                .map((image, index) => ({
+                  id: image.id ?? crypto.randomUUID(),
+                  imageUrl: image.imageUrl ?? "",
+                  sortOrder:
+                    typeof image.sortOrder === "number"
+                      ? image.sortOrder
+                      : index,
+                }))
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+            : [],
+        );
+
+        setPrice(
+          product.price !== null && product.price !== undefined
+            ? Number(product.price).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setOriginalPrice(
+          product.originalPrice !== null && product.originalPrice !== undefined
+            ? Number(product.originalPrice).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            : "",
+        );
+
+        setCurrency(product.currency ?? "BRL");
+
+        setRating(
+          product.rating !== null && product.rating !== undefined
+            ? String(product.rating)
+            : "",
+        );
+
+        setReviewsCount(String(product.reviewsCount ?? 0));
+
+        setAffiliateUrl(product.affiliateUrl ?? "");
+
+        setSubcategoryId(product.subcategoryId ?? "");
+        setMarketplaceId(product.marketplaceId ?? "");
+
+        const productWithMarketplaceLinks = product as typeof product &
+          ProductWithMarketplaceLinks;
+
+        const marketplaceProducts =
+          productWithMarketplaceLinks.marketplaceProducts;
+
+        if (Array.isArray(marketplaceProducts)) {
+          const mercadoLivreProduct = marketplaceProducts.find(
+            (marketplaceProduct) =>
+              marketplaceProduct.marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID,
+          );
+
+          const currentExternalLink = mercadoLivreProduct?.externalLink ?? "";
+
+          setExternalLink(currentExternalLink);
+        } else {
+          setExternalLink("");
+        }
+
+        // featured permanece independente de destaque e bestSeller.
+        setFeatured(Boolean(product.featured));
+        setDestaque(Boolean(product.destaque));
+        setBestSeller(Boolean(product.bestSeller));
+        setAvailable(Boolean(product.available));
+        setActive(Boolean(product.active));
+
+        setSeoTitle(product.seoTitle ?? "");
+        setSeoDescription(product.seoDescription ?? "");
+      } catch {
+        if (isMounted) {
+          setError("Não foi possível carregar o produto.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, token, getProductById]);
+
+  function handleAddGalleryImage() {
+    setGalleryImages((currentImages) => [
+      ...currentImages,
+      {
+        id: crypto.randomUUID(),
+        imageUrl: "",
+        sortOrder: currentImages.length,
+      },
+    ]);
+  }
+
+  function handleGalleryImageChange(imageId: string, value: string) {
+    setGalleryImages((currentImages) =>
+      currentImages.map((image) =>
+        image.id === imageId
+          ? {
+              ...image,
+              imageUrl: value,
+            }
+          : image,
+      ),
+    );
+  }
+
+  function handleRemoveGalleryImage(imageId: string) {
+    setGalleryImages((currentImages) =>
+      currentImages
+        .filter((image) => image.id !== imageId)
+        .map((image, index) => ({
+          ...image,
+          sortOrder: index,
+        })),
+    );
+  }
+
+  async function handleMercadoLivreImport(selectedOffer: MercadoLivreOffer) {
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!mercadoLivreAnalysis) {
+      setError("A análise do Mercado Livre não está disponível.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria antes de importar o produto.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado antes de importar o produto.");
+      return;
+    }
+
+    if (!externalLink.trim()) {
+      setError(
+        "Informe o link de referência do Mercado Livre antes de importar.",
+      );
+      return;
+    }
+
+    setMercadoLivreImporting(true);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const cleanDescription =
+        description.trim() === "<p></p>"
+          ? undefined
+          : description.trim() || undefined;
+
+      const parsedManualPrice = price.trim()
+        ? parseCurrencyBRL(price)
+        : undefined;
+
+      const parsedManualOriginalPrice = originalPrice.trim()
+        ? parseCurrencyBRL(originalPrice)
+        : undefined;
+
+      const parsedManualRating = rating.trim() ? Number(rating) : undefined;
+
+      const parsedManualReviewsCount = Number(reviewsCount);
+
+      const cleanGalleryImages = galleryImages
+        .map((image) => ({
+          imageUrl: image.imageUrl.trim(),
+          sortOrder: image.sortOrder,
+        }))
+        .filter((image) => image.imageUrl);
+
+      await importMercadoLivreProduct(
+        {
+          affiliateUrl: affiliateUrl.trim(),
+          externalLink: externalLink.trim(),
+
+          catalogProductId: mercadoLivreAnalysis.catalogProductId,
+
+          itemId: selectedOffer.itemId,
+          sellerId: selectedOffer.sellerId,
+
+          subcategoryId,
+
+          title: title.trim() || undefined,
+          description: cleanDescription,
+          shortDescription: shortDescription.trim() || undefined,
+          imageUrl: imageUrl.trim() || undefined,
+
+          images:
+            cleanGalleryImages.length > 0 ? cleanGalleryImages : undefined,
+
+          price:
+            parsedManualPrice !== undefined &&
+            Number.isFinite(parsedManualPrice) &&
+            parsedManualPrice >= 0
+              ? parsedManualPrice
+              : undefined,
+
+          originalPrice:
+            parsedManualOriginalPrice !== undefined &&
+            Number.isFinite(parsedManualOriginalPrice) &&
+            parsedManualOriginalPrice >= 0
+              ? parsedManualOriginalPrice
+              : undefined,
+
+          currency: currency.trim().toUpperCase() || undefined,
+
+          rating:
+            parsedManualRating !== undefined &&
+            Number.isFinite(parsedManualRating) &&
+            parsedManualRating >= 0 &&
+            parsedManualRating <= 5
+              ? parsedManualRating
+              : undefined,
+
+          reviewsCount:
+            Number.isInteger(parsedManualReviewsCount) &&
+            parsedManualReviewsCount >= 0
+              ? parsedManualReviewsCount
+              : undefined,
+
+          // Os três campos são independentes.
+          featured,
+          destaque,
+          bestSeller,
+          available,
+          active,
+
+          seoTitle: seoTitle.trim() || undefined,
+
+          seoDescription: seoDescription.trim() || undefined,
+        },
+        token,
+      );
+
+      setMercadoLivreModalOpen(false);
+      setMercadoLivreAnalysis(null);
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível importar o produto do Mercado Livre.",
+      );
+    } finally {
+      setMercadoLivreImporting(false);
+      setLoading(false);
+    }
+  }
+
+  function handleMercadoLivreModalCancel() {
+    if (mercadoLivreImporting) {
+      return;
+    }
+
+    setMercadoLivreModalOpen(false);
+    setMercadoLivreAnalysis(null);
+    setLoading(false);
+  }
+
+  async function handleMercadoLivreModalConfirm(
+    selectedOffer: MercadoLivreOffer | null,
+  ) {
+    if (!selectedOffer) {
+      handleMercadoLivreModalCancel();
+      return;
+    }
+
+    if (isEditing && id) {
+      await saveEditedProductWithMercadoLivreOffer(selectedOffer);
+      return;
+    }
+
+    await handleMercadoLivreImport(selectedOffer);
+  }
+
+  async function saveEditedProductWithMercadoLivreOffer(
+    selectedOffer: MercadoLivreOffer,
+  ) {
+    if (!token || !id) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!mercadoLivreAnalysis) {
+      setError("A análise do Mercado Livre não está disponível.");
+      return;
+    }
+
+    setMercadoLivreImporting(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const selectedOfferPrice = Number(selectedOffer.price);
+
+      if (!Number.isFinite(selectedOfferPrice) || selectedOfferPrice < 0) {
+        throw new Error("O preço da oferta selecionada é inválido.");
+      }
+
+      const selectedOfferOriginalPrice =
+        selectedOffer.originalPrice !== null &&
+        selectedOffer.originalPrice !== undefined
+          ? Number(selectedOffer.originalPrice)
+          : null;
+
+      if (
+        selectedOfferOriginalPrice !== null &&
+        (!Number.isFinite(selectedOfferOriginalPrice) ||
+          selectedOfferOriginalPrice < 0)
+      ) {
+        throw new Error("O preço original da oferta selecionada é inválido.");
+      }
+
+      await updateMercadoLivreProductOffer(
+        id,
+        {
+          externalLink: externalLink.trim(),
+          catalogProductId: mercadoLivreAnalysis.catalogProductId,
+          itemId: selectedOffer.itemId,
+          sellerId: selectedOffer.sellerId,
+        },
+        token,
+      );
+
+      await saveNormalProductUpdate(
+        id,
+        token,
+        selectedOfferPrice,
+        selectedOfferOriginalPrice,
+      );
+
+      setPrice(
+        selectedOfferPrice.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      );
+
+      if (selectedOfferOriginalPrice !== null) {
+        setOriginalPrice(
+          selectedOfferOriginalPrice.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+        );
+      } else {
+        setOriginalPrice("");
+      }
+
+      setMercadoLivreModalOpen(false);
+      setMercadoLivreAnalysis(null);
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Não foi possível atualizar a oferta do Mercado Livre.",
+      );
+    } finally {
+      setMercadoLivreImporting(false);
+      setLoading(false);
+    }
+  }
+
+  async function saveNormalProductUpdate(
+    productId: string,
+    authToken: string,
+    mercadoLivrePrice?: number,
+    mercadoLivreOriginalPrice?: number | null,
+  ) {
+    const parsedPrice =
+      mercadoLivrePrice !== undefined
+        ? mercadoLivrePrice
+        : price.trim()
+          ? parseCurrencyBRL(price)
+          : undefined;
+
+    if (
+      parsedPrice === undefined ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice < 0
+    ) {
+      throw new Error("Informe um preço válido.");
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (mercadoLivreOriginalPrice !== undefined) {
+      if (
+        mercadoLivreOriginalPrice !== null &&
+        Number.isFinite(mercadoLivreOriginalPrice) &&
+        mercadoLivreOriginalPrice >= 0
+      ) {
+        parsedOriginalPrice = mercadoLivreOriginalPrice;
+      }
+    } else if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        throw new Error("Informe um preço original válido.");
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        throw new Error("A avaliação deve estar entre 0 e 5.");
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      throw new Error("A quantidade de avaliações deve ser um número inteiro.");
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    const cleanDescription =
+      description.trim() === "<p></p>"
+        ? undefined
+        : description.trim() || undefined;
+
+    const productData = {
+      title: title.trim(),
+      description: cleanDescription,
+      shortDescription: shortDescription.trim() || undefined,
+
+      imageUrl: imageUrl.trim(),
+
+      images: cleanGalleryImages,
+
+      price: parsedPrice,
+
+      originalPrice: parsedOriginalPrice,
+
+      currency: currency.trim().toUpperCase() || "BRL",
+
+      rating: parsedRating,
+      reviewsCount: parsedReviewsCount,
+
+      affiliateUrl: affiliateUrl.trim(),
+
+      subcategoryId,
+      marketplaceId,
+
+      featured,
+      destaque,
+      bestSeller,
+      available,
+      active,
+
+      seoTitle: seoTitle.trim() || undefined,
+
+      seoDescription: seoDescription.trim() || undefined,
+    };
+
+    await updateProduct(productId, productData, authToken);
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setError(null);
+
+    if (!token) {
+      setError("Sua sessão não está autenticada.");
+      return;
+    }
+
+    if (!affiliateUrl.trim()) {
+      setError("Informe o link de afiliado.");
+      return;
+    }
+
+    if (!subcategoryId) {
+      setError("Selecione uma subcategoria.");
+      return;
+    }
+
+    if (!marketplaceId) {
+      setError("Selecione um marketplace.");
+      return;
+    }
+
+    const isMercadoLivre = marketplaceId === MERCADO_LIVRE_MARKETPLACE_ID;
+
+    /*
+     * ============================================================
+     * NOVO PRODUTO DO MERCADO LIVRE
+     * ============================================================
+     */
+    if (!isEditing && isMercadoLivre) {
+      if (!externalLink.trim()) {
+        setError("Informe o link de referência do Mercado Livre.");
+        return;
+      }
+
+      try {
+        new URL(affiliateUrl.trim());
+      } catch {
+        setError("Informe uma URL válida para o link de afiliado.");
+        return;
+      }
+
+      try {
+        new URL(externalLink.trim());
+      } catch {
+        setError(
+          "Informe uma URL válida para o link de referência do Mercado Livre.",
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const analysis = await analyzeMercadoLivreProduct(
+          externalLink.trim(),
+          token,
+        );
+
+        if (analysis.noOffersFound || analysis.offers.length === 0) {
+          setError(
+            "Nenhuma oferta foi encontrada para este produto no Mercado Livre.",
+          );
+          return;
+        }
+
+        setMercadoLivreAnalysis(analysis);
+
+        if (analysis.requiresOfferSelection || analysis.offers.length > 1) {
+          setMercadoLivreModalOpen(true);
+          return;
+        }
+
+        const selectedOffer =
+          analysis.selectedOffer ?? analysis.offers[0] ?? null;
+
+        if (!selectedOffer) {
+          setError(
+            "Não foi possível identificar uma oferta válida do Mercado Livre.",
+          );
+          return;
+        }
+
+        await handleMercadoLivreImport(selectedOffer);
+
+        return;
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Não foi possível analisar o produto do Mercado Livre.",
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    /*
+     * ============================================================
+     * EDIÇÃO DE PRODUTO DO MERCADO LIVRE
+     * ============================================================
+     *
+     * Toda atualização de produto do Mercado Livre:
+     *   -> exige externalLink;
+     *   -> analisa novamente o link;
+     *   -> busca as ofertas;
+     *   -> 0 ofertas: não salva;
+     *   -> 1 oferta: atualiza automaticamente;
+     *   -> várias ofertas: abre o modal para seleção.
+     *
+     * O externalLink atual é preservado mesmo quando o usuário
+     * não alterou o campo.
+     */
+    if (isEditing && isMercadoLivre) {
+      if (!externalLink.trim()) {
+        setError(
+          "O link de referência do Mercado Livre é obrigatório para atualizar este produto.",
+        );
+        return;
+      }
+
+      try {
+        new URL(externalLink.trim());
+      } catch {
+        setError(
+          "Informe uma URL válida para o link de referência do Mercado Livre.",
+        );
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        /*
+         * Sempre analisa novamente o produto no Mercado Livre,
+         * mesmo que o externalLink não tenha sido alterado.
+         */
+        const analysis = await analyzeMercadoLivreProduct(
+          externalLink.trim(),
+          token,
+        );
+
+        if (analysis.noOffersFound || analysis.offers.length === 0) {
+          setError(
+            "Nenhuma oferta foi encontrada para este produto no Mercado Livre. A atualização foi cancelada.",
+          );
+          return;
+        }
+
+        setMercadoLivreAnalysis(analysis);
+
+        /*
+         * Mais de uma oferta:
+         * deixa o usuário escolher no modal.
+         */
+        if (analysis.requiresOfferSelection || analysis.offers.length > 1) {
+          setMercadoLivreModalOpen(true);
+          return;
+        }
+
+        /*
+         * Apenas uma oferta:
+         * usa automaticamente.
+         */
+        const selectedOffer =
+          analysis.selectedOffer ?? analysis.offers[0] ?? null;
+
+        if (!selectedOffer) {
+          setError(
+            "Não foi possível identificar uma oferta válida do Mercado Livre.",
+          );
+          return;
+        }
+
+        await updateMercadoLivreProductOffer(
+          id!,
+          {
+            externalLink: externalLink.trim(),
+            catalogProductId: analysis.catalogProductId,
+            itemId: selectedOffer.itemId,
+            sellerId: selectedOffer.sellerId,
+          },
+          token,
+        );
+
+        /*
+         * Depois que a oferta foi validada e vinculada,
+         * salva os demais dados normalmente.
+         */
+        await saveNormalProductUpdate(id!, token);
+
+        setMercadoLivreAnalysis(null);
+        setMercadoLivreModalOpen(false);
+
+        navigate("/admin/products");
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Não foi possível analisar e atualizar a oferta do Mercado Livre.",
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    /*
+     * ============================================================
+     * CADASTRO / EDIÇÃO NORMAL
+     * ============================================================
+     */
+
+    if (!title.trim()) {
+      setError("Informe o título do produto.");
+      return;
+    }
+
+    if (!imageUrl.trim()) {
+      setError("Informe a URL da imagem.");
+      return;
+    }
+
+    const parsedPrice = price.trim() ? parseCurrencyBRL(price) : undefined;
+
+    if (
+      parsedPrice === undefined ||
+      !Number.isFinite(parsedPrice) ||
+      parsedPrice < 0
+    ) {
+      setError("Informe um preço válido.");
+      return;
+    }
+
+    let parsedOriginalPrice: number | undefined;
+
+    if (originalPrice.trim()) {
+      parsedOriginalPrice = parseCurrencyBRL(originalPrice);
+
+      if (!Number.isFinite(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        setError("Informe um preço original válido.");
+        return;
+      }
+    }
+
+    let parsedRating: number | undefined;
+
+    if (rating.trim()) {
+      parsedRating = Number(rating);
+
+      if (
+        !Number.isFinite(parsedRating) ||
+        parsedRating < 0 ||
+        parsedRating > 5
+      ) {
+        setError("A avaliação deve estar entre 0 e 5.");
+        return;
+      }
+    }
+
+    const parsedReviewsCount = Number(reviewsCount);
+
+    if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
+      setError("A quantidade de avaliações deve ser um número inteiro.");
+      return;
+    }
+
+    try {
+      new URL(imageUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para a imagem.");
+      return;
+    }
+
+    try {
+      new URL(affiliateUrl.trim());
+    } catch {
+      setError("Informe uma URL válida para o link de afiliado.");
+      return;
+    }
+
+    const cleanGalleryImages = galleryImages
+      .map((image) => ({
+        imageUrl: image.imageUrl.trim(),
+        sortOrder: image.sortOrder,
+      }))
+      .filter((image) => image.imageUrl);
+
+    for (const image of cleanGalleryImages) {
+      try {
+        new URL(image.imageUrl);
+      } catch {
+        setError(
+          `Informe uma URL válida para a imagem da galeria na posição ${
+            image.sortOrder + 1
+          }.`,
+        );
+        return;
+      }
+    }
+
+    const cleanDescription =
+      description.trim() === "<p></p>"
+        ? undefined
+        : description.trim() || undefined;
+
+    const productData = {
+      title: title.trim(),
+      description: cleanDescription,
+      shortDescription: shortDescription.trim() || undefined,
+
+      imageUrl: imageUrl.trim(),
+
+      images: cleanGalleryImages,
+
+      price: parsedPrice,
+
+      originalPrice: parsedOriginalPrice,
+
+      currency: currency.trim().toUpperCase() || "BRL",
+
+      rating: parsedRating,
+      reviewsCount: parsedReviewsCount,
+
+      affiliateUrl: affiliateUrl.trim(),
+
+      subcategoryId,
+      marketplaceId,
+
+      // Mantidos os três campos independentes.
+      featured,
+      destaque,
+      bestSeller,
+      available,
+      active,
+
+      seoTitle: seoTitle.trim() || undefined,
+
+      seoDescription: seoDescription.trim() || undefined,
+    };
+
+    setLoading(true);
+
+    try {
+      if (isEditing && id) {
+        await updateProduct(id, productData, token);
+      } else {
+        await createProduct(productData, token);
+      }
+
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : isEditing
+            ? "Não foi possível atualizar o produto."
+            : "Não foi possível criar o produto.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loadingData) {
+    return (
+      <section className="mx-auto w-full max-w-5xl">
+        <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+          <p className="text-gray-500">Carregando produto...</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mx-auto w-full max-w-5xl">
+      <div className="mb-6">
+        <Link
+          to="/admin/products"
+          className="text-sm font-semibold text-blue hover:underline"
+        >
+          ← Voltar para produtos
+        </Link>
+
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+          {isEditing ? "Editar produto" : "Novo produto"}
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {isEditing
+            ? "Atualize os dados do produto."
+            : "Cadastre um novo produto no catálogo do WorldMix360."}
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="space-y-6"
+      >
+        <ProductBasicInfo
+          title={title}
+          description={description}
+          shortDescription={shortDescription}
+          imageUrl={imageUrl}
+          loading={loading}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onShortDescriptionChange={setShortDescription}
+          onImageUrlChange={setImageUrl}
+        />
+
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <ProductGallery
+            galleryImages={galleryImages}
+            loading={loading}
+            onAdd={handleAddGalleryImage}
+            onChange={handleGalleryImageChange}
+            onRemove={handleRemoveGalleryImage}
+          />
+        </div>
+
+        <ProductPricing
+          price={price}
+          originalPrice={originalPrice}
+          currency={currency}
+          rating={rating}
+          reviewsCount={reviewsCount}
+          loading={loading}
+          onPriceChange={setPrice}
+          onOriginalPriceChange={setOriginalPrice}
+          onCurrencyChange={setCurrency}
+          onRatingChange={setRating}
+          onReviewsCountChange={setReviewsCount}
+        />
+
+        <ProductRelationships
+          subcategories={subcategories}
+          marketplaces={marketplaces}
+          subcategoryId={subcategoryId}
+          marketplaceId={marketplaceId}
+          affiliateUrl={affiliateUrl}
+          externalLink={externalLink}
+          loading={loading}
+          isEditing={isEditing}
+          onSubcategoryChange={setSubcategoryId}
+          onMarketplaceChange={setMarketplaceId}
+          onAffiliateUrlChange={setAffiliateUrl}
+          onExternalLinkChange={setExternalLink}
+        />
+
+        <ProductStatus
+          featured={featured}
+          destaque={destaque}
+          bestSeller={bestSeller}
+          available={available}
+          active={active}
+          loading={loading}
+          onFeaturedChange={setFeatured}
+          onDestaqueChange={setDestaque}
+          onBestSellerChange={setBestSeller}
+          onAvailableChange={setAvailable}
+          onActiveChange={setActive}
+        />
+
+        <ProductSeo
+          seoTitle={seoTitle}
+          seoDescription={seoDescription}
+          loading={loading}
+          onSeoTitleChange={setSeoTitle}
+          onSeoDescriptionChange={setSeoDescription}
+        />
+        {error && (
+          <div className="mb-6 rounded-lg bg-danger-light px-4 py-3 text-sm text-danger">
+            {error}
+          </div>
+        )}
+        <ProductFormActions loading={loading} isEditing={isEditing} />
+      </form>
+
+      {mercadoLivreAnalysis && (
+        <MercadoLivreOfferModal
+          open={mercadoLivreModalOpen}
+          title={
+            mercadoLivreAnalysis.title || "Produto do catálogo do Mercado Livre"
+          }
+          offers={mercadoLivreAnalysis.offers}
+          loading={mercadoLivreImporting}
+          onCancel={handleMercadoLivreModalCancel}
+          onConfirm={(selectedOffer) =>
+            void handleMercadoLivreModalConfirm(selectedOffer)
+          }
+        />
+      )}
+    </section>
+  );
+}
+
+```
+
+## src\pages\admin\AdminProductsPage.tsx
 
 ```tsx
 // src/pages/admin/AdminProductsPage.tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth";
-import { useProducts } from "../contexts/useProducts";
+import { useAuth } from "../../contexts/useAuth";
+import { useProducts } from "../../contexts/useProducts";
 
 export function AdminProductsPage() {
   const { products, fetchAdminProducts, updateProductStatus, loading, error } =
@@ -20150,6 +27081,7 @@ export function AdminProductsPage() {
   const { token } = useAuth();
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [syncingMercadoLivre, setSyncingMercadoLivre] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -20186,6 +27118,48 @@ export function AdminProductsPage() {
     }
   }
 
+  async function handleMercadoLivreSync() {
+    if (!token || syncingMercadoLivre) {
+      return;
+    }
+
+    try {
+      setSyncingMercadoLivre(true);
+
+      const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+      const response = await fetch(`${apiUrl}/mercado-livre/sync`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Não foi possível sincronizar os produtos do Mercado Livre.",
+        );
+      }
+
+      await fetchAdminProducts(token);
+
+      alert(
+        data?.message || "Produtos do Mercado Livre sincronizados com sucesso.",
+      );
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível sincronizar os produtos do Mercado Livre.",
+      );
+    } finally {
+      setSyncingMercadoLivre(false);
+    }
+  }
+
   if (loading) {
     return <p className="p-6">Carregando produtos...</p>;
   }
@@ -20199,12 +27173,25 @@ export function AdminProductsPage() {
       <header className="flex justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
 
-        <Link
-          to="/admin/products/new"
-          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
-        >
-          + Cadastrar Produto
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void handleMercadoLivreSync()}
+            disabled={!token || syncingMercadoLivre}
+            className="bg-green/80 text-white px-4 py-2 rounded-lg hover:bg-green transition whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {syncingMercadoLivre
+              ? "Sincronizando..."
+              : "🔄 Sincronizar Mercado Livre"}
+          </button>
+
+          <Link
+            to="/admin/products/new"
+            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
+          >
+            + Cadastrar Produto
+          </Link>
+        </div>
       </header>
 
       <div className="overflow-x-auto">
@@ -20334,14 +27321,14 @@ export function AdminProductsPage() {
 
 ```
 
-## src\pages\AdminSubcategoriesPage.tsx
+## src\pages\admin\AdminSubcategoriesPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
 export function AdminSubcategoriesPage() {
   const { token } = useAuth();
@@ -20698,15 +27685,15 @@ export function AdminSubcategoriesPage() {
 
 ```
 
-## src\pages\AdminSubcategoryFormPage.tsx
+## src\pages\admin\AdminSubcategoryFormPage.tsx
 
 ```tsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "../contexts/useAuth";
-import { useCategories } from "../contexts/useCategories";
-import { useSubcategories } from "../contexts/useSubcategories";
+import { useAuth } from "../../contexts/useAuth";
+import { useCategories } from "../../contexts/useCategories";
+import { useSubcategories } from "../../contexts/useSubcategories";
 
 export function AdminSubcategoryFormPage() {
   const { id } = useParams();
@@ -21074,7 +28061,7 @@ export function AdminSubcategoryFormPage() {
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Link
             to="/admin/subcategories"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
             Cancelar
           </Link>
@@ -21103,46 +28090,605 @@ export function AdminSubcategoryFormPage() {
 ## src\pages\BlogPage.tsx
 
 ```tsx
-import { CategoryPage } from "./ContentPages";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+
+import { useBlog } from "../contexts/useBlog";
 
 export function BlogPage() {
+  const { posts, loading, error, fetchPosts } = useBlog();
+
+  useEffect(() => {
+    void fetchPosts();
+  }, [fetchPosts]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex min-h-[300px] items-center justify-center">
+            <p className="text-gray-600">Carregando artigos...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+            <h1 className="mb-2 text-xl font-semibold text-red-700">
+              Não foi possível carregar o Blog
+            </h1>
+
+            <p className="text-sm text-red-600">{error}</p>
+
+            <button
+              type="button"
+              onClick={() => void fetchPosts()}
+              className="mt-4 rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-red-700"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <CategoryPage
-      title="Blog"
-      summary="Conteúdos úteis para ajudar você a comprar melhor e descobrir novas tendências."
-      image="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=85"
-      imageAlt="Caderno, café e notebook em uma mesa de trabalho"
-      highlights={[
-        {
-          title: "Dicas de consumo",
-          description: "Informação para comprar com mais consciência.",
-          image:
-            "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Caderno com anotações e caneta",
-        },
-        {
-          title: "Guias de compras",
-          description: "Critérios práticos para encontrar o produto certo.",
-          image:
-            "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Pessoa pesquisando em um notebook",
-        },
-        {
-          title: "Tendências e novidades",
-          description: "O que está mudando no mundo dos produtos e serviços.",
-          image:
-            "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Notebook em uma mesa de trabalho",
-        },
-        {
-          title: "Conteúdo confiável",
-          description: "Leituras úteis, diretas e feitas para ajudar você.",
-          image:
-            "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=85",
-          imageAlt: "Pessoa lendo notícias em um jornal",
-        },
-      ]}
-    />
+    <main className="min-h-screen bg-white px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Cabeçalho */}
+        <header className="mb-10 text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
+            WorldMix360
+          </p>
+
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">Blog</h1>
+
+          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+            Dicas, informações e conteúdos para ajudar você a encontrar produtos
+            úteis para o seu dia a dia.
+          </p>
+        </header>
+
+        {/* Nenhum artigo */}
+        {posts.length === 0 ? (
+          <section className="rounded-xl border border-gray-200 bg-gray-50 p-10 text-center">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Nenhum artigo publicado
+            </h2>
+
+            <p className="mt-2 text-gray-600">
+              Em breve teremos novos conteúdos no WorldMix360.
+            </p>
+          </section>
+        ) : (
+          <section>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  {/* Imagem */}
+                  {post.coverImage ? (
+                    <Link
+                      to={`/blog/${encodeURIComponent(post.slug)}`}
+                      className="block overflow-hidden"
+                    >
+                      <img
+                        src={post.coverImage}
+                        alt={post.title}
+                        className="h-52 w-full object-cover transition duration-300 hover:scale-105"
+                      />
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/blog/${encodeURIComponent(post.slug)}`}
+                      className="flex h-52 items-center justify-center bg-gray-100"
+                    >
+                      <span className="text-sm text-gray-400">WorldMix360</span>
+                    </Link>
+                  )}
+
+                  {/* Conteúdo */}
+                  <div className="flex flex-1 flex-col p-5">
+                    {/* Categoria */}
+                    {post.category && (
+                      <span className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
+                        {post.category.name}
+                      </span>
+                    )}
+
+                    <h2 className="text-xl font-bold leading-tight text-gray-900">
+                      <Link
+                        to={`/blog/${encodeURIComponent(post.slug)}`}
+                        className="transition hover:text-blue-600"
+                      >
+                        {post.title}
+                      </Link>
+                    </h2>
+
+                    {/* Excerpt */}
+                    {post.excerpt && (
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600">
+                        {post.excerpt}
+                      </p>
+                    )}
+
+                    {/* Rodapé do card */}
+                    <div className="mt-auto pt-5">
+                      <Link
+                        to={`/blog/${encodeURIComponent(post.slug)}`}
+                        className="inline-flex items-center text-sm font-semibold text-blue-600 transition hover:text-blue-800"
+                      >
+                        Ler artigo
+                        <span className="ml-1" aria-hidden="true">
+                          →
+                        </span>
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
+
+```
+
+## src\pages\BlogPostPage.tsx
+
+```tsx
+import DOMPurify from "dompurify";
+import { createElement, type ReactNode, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import type { BlogPost } from "../contexts/BlogContext";
+import { useBlog } from "../contexts/useBlog";
+
+function decodeHtmlEntities(value: string) {
+  const textarea = document.createElement("textarea");
+
+  textarea.innerHTML = value;
+
+  return textarea.value;
+}
+
+function normalizeContent(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  return decodeHtmlEntities(value)
+    .replaceAll("<p></p>", "")
+    .replaceAll("<div></div>", "")
+    .trim();
+}
+function renderContent(value: string): ReactNode[] {
+  const normalizedContent = normalizeContent(value);
+
+  if (!normalizedContent) {
+    return [];
+  }
+
+  const sanitizedContent = DOMPurify.sanitize(normalizedContent, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "h2",
+      "h3",
+      "h4",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "hr",
+      "a",
+    ],
+    ALLOWED_ATTR: ["href", "target", "rel"],
+  });
+
+  const document = new DOMParser().parseFromString(
+    sanitizedContent,
+    "text/html",
+  );
+
+  function renderNode(node: ChildNode, key: string): ReactNode {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent;
+    }
+
+    if (!(node instanceof HTMLElement)) {
+      return null;
+    }
+
+    const props: Record<string, string> = {};
+
+    for (const attribute of ["href", "target", "rel"]) {
+      const value = node.getAttribute(attribute);
+
+      if (value) {
+        props[attribute] = value;
+      }
+    }
+
+    return createElement(
+      node.tagName.toLowerCase(),
+      { ...props, key },
+      ...Array.from(node.childNodes).map((child, index) =>
+        renderNode(child, `${key}-${index}`),
+      ),
+    );
+  }
+
+  return Array.from(document.body.childNodes).map((node, index) =>
+    renderNode(node, String(index)),
+  );
+}
+
+function formatPrice(price: number | string, currency?: string | null) {
+  const numericPrice = typeof price === "number" ? price : Number(price);
+
+  if (!Number.isFinite(numericPrice)) {
+    return "Preço indisponível";
+  }
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: currency || "BRL",
+  }).format(numericPrice);
+}
+
+function formatDate(date?: string | null) {
+  if (!date) {
+    return "";
+  }
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function BlogPostPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const { getPostBySlug } = useBlog();
+
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPost() {
+      if (!slug) {
+        setError("Artigo não encontrado.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await getPostBySlug(slug);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (!result) {
+          setPost(null);
+          setError("Artigo não encontrado.");
+          return;
+        }
+
+        setPost(result);
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
+
+        setPost(null);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível carregar o artigo.",
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadPost();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, getPostBySlug]);
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        {" "}
+        <div className="animate-pulse">
+          {" "}
+          <div className="mb-4 h-5 w-32 rounded bg-gray-200" />
+          <div className="mb-3 h-10 w-3/4 rounded bg-gray-200" />
+          <div className="mb-8 h-5 w-1/2 rounded bg-gray-200" />
+          <div className="mb-10 h-72 rounded-xl bg-gray-200" />
+          <div className="space-y-4">
+            <div className="h-4 w-full rounded bg-gray-200" />
+            <div className="h-4 w-full rounded bg-gray-200" />
+            <div className="h-4 w-5/6 rounded bg-gray-200" />
+            <div className="h-4 w-4/6 rounded bg-gray-200" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
+        {" "}
+        <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+          {" "}
+          <h1 className="text-2xl font-bold text-gray-900">
+            Artigo não encontrado{" "}
+          </h1>
+          <p className="mt-3 text-gray-600">
+            {error ?? "O artigo que você procura não existe."}
+          </p>
+          <Link
+            to="/blog"
+            className="mt-6 inline-flex rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy"
+          >
+            Voltar para o Blog
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const contentNodes = renderContent(post.content);
+
+  return (
+    <main className="bg-gray-50">
+      {" "}
+      <article className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        {" "}
+        <div className="mb-6">
+          {" "}
+          <Link
+            to="/blog"
+            className="inline-flex items-center text-sm font-medium text-blue transition hover:text-navy"
+          >
+            ← Voltar para o Blog{" "}
+          </Link>{" "}
+        </div>
+        {post.category && (
+          <div className="mb-4">
+            <span className="inline-flex rounded-full bg-green px-3 py-1 text-xs font-semibold text-white">
+              {post.category.name}
+            </span>
+          </div>
+        )}
+        <header>
+          <h1 className="max-w-4xl text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
+            {post.title}
+          </h1>
+
+          {post.excerpt && (
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-gray-500 sm:text-xl">
+              {post.excerpt}
+            </p>
+          )}
+
+          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+            {post.author && (
+              <span>
+                Por{" "}
+                <strong className="font-semibold text-gray-700">
+                  {post.author.name}
+                </strong>
+              </span>
+            )}
+
+            {post.publishedAt && (
+              <>
+                <span className="hidden sm:inline">•</span>
+
+                <time dateTime={post.publishedAt}>
+                  {formatDate(post.publishedAt)}
+                </time>
+              </>
+            )}
+          </div>
+        </header>
+        {post.coverImage && (
+          <div className="mt-8 overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              className="h-auto max-h-[520px] w-full object-cover"
+            />
+          </div>
+        )}
+        <div className="mt-10 rounded-2xl bg-white p-5 shadow-sm sm:p-8 lg:p-10">
+          {contentNodes.length > 0 ? (
+            <div
+              className="
+            text-base
+            leading-8
+            text-gray-700
+            sm:text-lg
+            [&_a]:font-medium
+            [&_a]:text-blue
+            [&_a]:underline
+            [&_a]:underline-offset-2
+            [&_a:hover]:text-navy
+            [&_blockquote]:my-6
+            [&_blockquote]:border-l-4
+            [&_blockquote]:border-blue
+            [&_blockquote]:bg-blue
+            [&_blockquote]:px-5
+            [&_blockquote]:py-4
+            [&_blockquote]:italic
+            [&_blockquote]:text-gray-700
+            [&_b]:font-bold
+            [&_b]:text-gray-900
+            [&_em]:italic
+            [&_h2]:mb-4
+            [&_h2]:mt-10
+            [&_h2]:text-2xl
+            [&_h2]:font-bold
+            [&_h2]:leading-tight
+            [&_h2]:text-gray-900
+            [&_h3]:mb-3
+            [&_h3]:mt-8
+            [&_h3]:text-xl
+            [&_h3]:font-bold
+            [&_h3]:leading-tight
+            [&_h3]:text-gray-900
+            [&_h4]:mb-2
+            [&_h4]:mt-6
+            [&_h4]:text-lg
+            [&_h4]:font-bold
+            [&_h4]:text-gray-900
+            [&_hr]:my-8
+            [&_hr]:border-gray-100
+            [&_i]:italic
+            [&_i]:text-gray-700
+            [&_li]:my-1
+            [&_ol]:my-5
+            [&_ol]:list-decimal
+            [&_ol]:space-y-1
+            [&_ol]:pl-6
+            [&_p]:my-4
+            [&_strong]:font-bold
+            [&_strong]:text-gray-900
+            [&_u]:underline
+            [&_ul]:my-5
+            [&_ul]:list-disc
+            [&_ul]:space-y-1
+            [&_ul]:pl-6            
+          "
+            >
+              {contentNodes}
+            </div>
+          ) : (
+            <p className="text-gray-500">
+              Este artigo ainda não possui conteúdo.
+            </p>
+          )}
+        </div>
+        {post.products && post.products.length > 0 && (
+          <section className="mt-10 rounded-2xl bg-white p-5 shadow-sm sm:p-8">
+            <div className="mb-5">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Produtos relacionados
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Confira alguns produtos relacionados a este artigo.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {post.products.map((item) => {
+                const product = item.product;
+
+                return (
+                  <article
+                    key={item.id}
+                    className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-100 bg-gray-50 transition hover:-translate-y-0.5 shadow-2xl"
+                  >
+                    <div className="h-32 overflow-hidden bg-gray-100">
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                          Sem imagem
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col p-3">
+                      <h3 className="line-clamp-2 text-sm font-semibold text-gray-900">
+                        {product.title}
+                      </h3>
+
+                      {product.shortDescription && (
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">
+                          {product.shortDescription}
+                        </p>
+                      )}
+
+                      <div className="mt-auto pt-3">
+                        <p className="text-base font-bold text-gray-900">
+                          {formatPrice(product.price, product.currency)}
+                        </p>
+
+                        {product.originalPrice &&
+                          Number(product.originalPrice) >
+                            Number(product.price) && (
+                            <p className="text-xs text-gray-500 line-through">
+                              {formatPrice(
+                                product.originalPrice,
+                                product.currency,
+                              )}
+                            </p>
+                          )}
+
+                        {product.affiliateUrl && (
+                          <a
+                            href={product.affiliateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-blue px-3 py-2 text-xs font-semibold text-white transition hover:bg-navy"
+                          >
+                            Ver produto
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </article>
+    </main>
   );
 }
 
@@ -21864,31 +29410,68 @@ export function FashionPage() {
 ## src\pages\HomePage.tsx
 
 ```tsx
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiArrowUpRight,
-  FiBookOpen,
-  FiCheckCircle,
-  FiGrid,
+  FiCreditCard,
   FiHeart,
+  FiLock,
   FiSearch,
   FiShield,
   FiShoppingBag,
-  FiStar,
   FiTool,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Banner } from "../components/Banner";
 import { BlogBanner } from "../components/BlogBanner";
-
 import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
 import { SocialBanner } from "../components/SocialBanner";
 import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 
+// Array de garantias
+const trustBadges = [
+  {
+    icon: FiShoppingBag,
+    title: "Compra na loja oficial",
+    description:
+      "Você é redirecionado para Mercado Livre, Amazon ou Shopee. O pagamento acontece diretamente no ambiente da loja parceira, nunca no WorldMix360.",
+  },
+  {
+    icon: FiLock,
+    title: "Conexão segura (HTTPS)",
+    description:
+      "O WorldMix360 utiliza conexão HTTPS para proteger a comunicação entre seu navegador e o site. Não coletamos dados de cartão de crédito.",
+  },
+  {
+    icon: FiCreditCard,
+    title: "Pagamentos protegidos",
+    description:
+      "O pagamento é realizado diretamente na plataforma da loja parceira, utilizando as opções e os meios de pagamento disponibilizados por ela.",
+  },
+  {
+    icon: FiShield,
+    title: "Garantia e suporte da loja parceira",
+    description:
+      "Após o redirecionamento, a compra, a emissão da nota fiscal, o suporte e as políticas de troca e devolução são tratados diretamente com a loja ou marketplace.",
+  },
+];
+
+const categoryIcons = {
+  tecnologia: FiShoppingBag,
+  "casa-utilidades": FiTool,
+  moda: FiShoppingBag,
+  pets: FiHeart,
+  "produtos-digitais": FiSearch,
+};
+
 export function HomePage() {
+  const [skeletonKeys] = useState(() =>
+    Array.from({ length: 7 }, () => crypto.randomUUID()),
+  );
+
   const {
     categories,
     loading: categoriesLoading,
@@ -21897,6 +29480,35 @@ export function HomePage() {
   } = useCategories();
 
   const { products, loading, error, fetchProducts } = useProducts();
+
+  // Ref e Estados para permitir ARRASTAR com o mouse
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Velocidade do arrasto
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   useEffect(() => {
     void fetchCategories();
@@ -21910,13 +29522,8 @@ export function HomePage() {
     .filter((category) => category.active)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const categoryIcons = {
-    tecnologia: FiGrid,
-    "casa-utilidades": FiTool,
-    moda: FiShoppingBag,
-    pets: FiHeart,
-    "produtos-digitais": FiGrid,
-  };
+  const destaqueProducts = products.filter((product) => product.destaque);
+  const bestSellerProducts = products.filter((product) => product.bestSeller);
 
   return (
     <>
@@ -21928,108 +29535,108 @@ export function HomePage() {
         </div>
       )}
 
-      <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-14">
+      <div className="relative z-20 mx-auto max-w-[1200px] px-6 pb-10 -mt-40 md:-mt-55 md:pb-14">
         <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d66]">
-              Explore por interesse
-            </p>
-
-            <h2 className="text-2xl font-bold text-[#071a2f] md:text-3xl">
-              Encontre o que combina com você
-            </h2>
-          </div>
+          <div></div>
 
           <Link
             to="/ofertas"
-            className="hidden items-center gap-1 text-sm font-semibold text-[#0b3d66] transition hover:text-[#1769e0] sm:flex"
+            className="hidden items-center gap-1 text-sm font-semibold text-navy transition hover:text-white sm:flex"
           >
-            Ver ofertas <FiArrowUpRight />
+            Ver todas as categorias <FiArrowUpRight />
           </Link>
         </div>
 
         {categoriesLoading ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
-            {[
-              "category-skeleton-1",
-              "category-skeleton-2",
-              "category-skeleton-3",
-              "category-skeleton-4",
-              "category-skeleton-5",
-              "category-skeleton-6",
-              "category-skeleton-7",
-            ].map((skeletonKey) => (
+          <div className="flex w-full gap-3 overflow-x-auto pb-4 no-scrollbar">
+            {skeletonKeys.map((key) => (
               <div
-                key={skeletonKey}
-                className="aspect-square animate-pulse rounded-2xl border border-[#e7edf5] bg-[#f7f9fc]"
+                key={key}
+                className="h-36 w-36 shrink-0 animate-pulse rounded-2xl bg-[#f7f9fc] md:h-40 md:w-40"
               />
             ))}
           </div>
         ) : activeCategories.length === 0 ? (
-          <div className="rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
+          <div className="rounded-2xl bg-[#f7f9fc] p-6 text-center text-sm text-[#52657c]">
             Nenhuma categoria disponível no momento.
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+          /* USANDO <section> SEMÂNTICA EM VEZ DE <div role="region"> */
+          <section
+            ref={scrollRef}
+            aria-label="Carrossel de categorias"
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            className="flex w-full select-none gap-3 overflow-x-auto pb-4 no-scrollbar cursor-grab active:cursor-grabbing scroll-smooth touch-pan-x"
+          >
+            <Link
+              to="/blog"
+              draggable={false}
+              className="group flex h-36 w-36 shrink-0 flex-col items-center justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-0 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1 md:h-40 md:w-40 md:p-0"
+            >
+              <span className="flex h-12 w-full items-center justify-center bg-white/15 text-2xl text-[#9ad7ff] transition group-hover:scale-110 md:h-27 md:text-3xl">
+                <img
+                  src="https://img.magnific.com/fotos-gratis/blog-online_53876-123696.jpg?semt=ais_hybrid&w=740&q=80"
+                  alt="Blog"
+                  className="h-full w-full object-cover"
+                />
+              </span>
+
+              <span className="text-lg font-semibold leading-4 text-white">
+                Blog
+              </span>
+
+              <span className="mb-2 text-[9px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff] md:text-[10px]">
+                Conteúdos
+              </span>
+            </Link>
+
             {activeCategories.map((category) => {
-              const Icon =
+              const IconComponent =
                 categoryIcons[category.slug as keyof typeof categoryIcons] ??
-                FiGrid;
+                FiSearch;
 
               return (
                 <Link
                   key={category.id}
                   to={`/categoria/${category.slug}`}
-                  className="group flex aspect-square flex-col items-center justify-between overflow-hidden rounded-2xl border border-[#e7edf5] bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
+                  draggable={false}
+                  className="group flex h-36 w-36 shrink-0 flex-col items-center justify-between overflow-hidden rounded-2xl bg-white text-center shadow-sm transition hover:-translate-y-1 hover:border-[#b9d6f4] hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] md:h-40 md:w-40"
                 >
-                  <span className="flex h-40 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-30 md:w-full">
+                  <span className="flex h-24 w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#edf5ff] text-[#1769e0] transition group-hover:scale-110 group-hover:bg-[#1769e0] group-hover:text-white md:h-28">
                     {category.image ? (
                       <img
                         src={category.image}
                         alt={category.name}
+                        draggable={false}
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Icon className="text-3xl md:text-4xl" />
+                      <IconComponent className="text-3xl md:text-4xl" />
                     )}
                   </span>
 
-                  <span className="text-sm font-semibold leading-5 text-[#071a2f] my-5">
+                  <span className="my-auto px-2 text-xs font-semibold leading-4 text-[#071a2f] md:text-sm">
                     {category.name}
                   </span>
                 </Link>
               );
             })}
-
-            <Link
-              to="/blog"
-              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-[#1769e0] bg-gradient-to-br from-[#071a2f] to-[#1769e0] p-4 text-center text-white shadow-[0_14px_30px_rgba(23,105,224,0.25)] transition hover:-translate-y-1"
-            >
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl text-[#9ad7ff] transition group-hover:scale-110 md:h-20 md:w-20 md:text-4xl">
-                <FiBookOpen />
-              </span>
-
-              <span className="text-sm font-semibold leading-5 text-white">
-                Blog
-              </span>
-
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ad7ff]">
-                Conteúdos
-              </span>
-            </Link>
-          </div>
+          </section>
         )}
-      </section>
+      </div>
 
       <Session title="Ofertas em destaque">
         {loading ? (
           <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
-        ) : products.length === 0 ? (
+        ) : destaqueProducts.length === 0 ? (
           <p className="px-6 text-sm text-[#52657c]">
-            Nenhum produto disponível no momento.
+            Nenhuma oferta em destaque disponível no momento.
           </p>
         ) : (
-          products.map((product) => (
+          destaqueProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
@@ -22038,51 +29645,35 @@ export function HomePage() {
       <BlogBanner />
 
       <Session title="Produtos mais vendidos">
-        {products.map((product) => (
-          <ProductCard key={`${product.id}-secondary`} product={product} />
-        ))}
+        {loading ? (
+          <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
+        ) : bestSellerProducts.length === 0 ? (
+          <p className="px-6 text-sm text-[#52657c]">
+            Nenhum produto mais vendido disponível no momento.
+          </p>
+        ) : (
+          bestSellerProducts.map((product) => (
+            <ProductCard key={`${product.id}-secondary`} product={product} />
+          ))
+        )}
       </Session>
 
       <SocialBanner />
 
       <section className="mx-auto grid max-w-[1200px] gap-4 px-6 py-10 md:grid-cols-4 md:py-14">
-        {[
-          [
-            FiSearch,
-            "Pesquisa fácil",
-            "Encontre ideias em diferentes categorias.",
-          ],
-          [
-            FiShield,
-            "Escolhas claras",
-            "Veja informações antes de acessar a oferta.",
-          ],
-          [
-            FiStar,
-            "Curadoria",
-            "Descubra produtos selecionados para sua rotina.",
-          ],
-          [
-            FiCheckCircle,
-            "Parceiros confiáveis",
-            "A compra acontece diretamente no marketplace.",
-          ],
-        ].map(([Icon, title, description]) => (
+        {trustBadges.map(({ icon: BadgeIcon, title, description }) => (
           <div
-            key={title as string}
+            key={title}
             className="flex gap-3 rounded-2xl border border-[#e7edf5] bg-[#f7f9fc] p-5"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dff5e8] text-[#159447]">
-              <Icon />
+              <BadgeIcon />
             </span>
 
             <div>
-              <h3 className="font-semibold text-[#071a2f]">
-                {title as string}
-              </h3>
-
+              <h3 className="font-semibold text-[#071a2f]">{title}</h3>
               <p className="mt-1 text-sm leading-5 text-[#52657c]">
-                {description as string}
+                {description}
               </p>
             </div>
           </div>
@@ -23395,7 +30986,7 @@ export function SubcategoryPage() {
             <div className="mt-8 flex justify-center">
               <Link
                 to={`/categoria/${category.slug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                className="inline-flex items-center gap-2 rounded-full border border-blue bg-white px-5 py-3 text-sm font-semibold text-navy transition hover:border-blue hover:text-navy/20"
               >
                 Voltar para a categoria
                 <FiArrowRight />
@@ -23507,15 +31098,17 @@ export function TermsOfUsePage() {
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
-import AdminDashboardPage from "../pages/AdminDashboarPage";
-import { AdminMarketplaceFormPage } from "../pages/AdminMarketplaceFormPage";
-import { AdminMarketplacesPage } from "../pages/AdminMarketplacesPage";
-import { AdminProductsPage } from "../pages/AdminProductsPage";
-import { AdminSubcategoriesPage } from "../pages/AdminSubcategoriesPage";
-import { AdminSubcategoryFormPage } from "../pages/AdminSubcategoryFormPage";
+import { AdminBlogFormPage } from "../pages/admin/AdminBlogFormPage";
+import { AdminBlogPage } from "../pages/admin/AdminBlogPage";
 import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
+import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage";
+import { AdminDashboardPage } from "../pages/admin/AdminDashboarPage";
+import { AdminMarketplaceFormPage } from "../pages/admin/AdminMarketplaceFormPage";
+import { AdminMarketplacesPage } from "../pages/admin/AdminMarketplacesPage";
 import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
+import { AdminProductsPage } from "../pages/admin/AdminProductsPage";
+import { AdminSubcategoriesPage } from "../pages/admin/AdminSubcategoriesPage";
+import { AdminSubcategoryFormPage } from "../pages/admin/AdminSubcategoryFormPage";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
@@ -23531,6 +31124,7 @@ export const adminRoutes: RouteObject[] = [
         path: "dashboard",
         element: <AdminDashboardPage />,
       },
+
       {
         path: "products",
         element: <AdminProductsPage />,
@@ -23548,30 +31142,28 @@ export const adminRoutes: RouteObject[] = [
         path: "categories",
         element: <AdminCategoriesPage />,
       },
-
       {
         path: "categories/new",
         element: <AdminCategoryFormPage />,
       },
-
       {
         path: "categories/:id/edit",
         element: <AdminCategoryFormPage />,
       },
+
       {
         path: "subcategories",
         element: <AdminSubcategoriesPage />,
       },
-
       {
         path: "subcategories/new",
         element: <AdminSubcategoryFormPage />,
       },
-
       {
         path: "subcategories/:id/edit",
         element: <AdminSubcategoryFormPage />,
       },
+
       {
         path: "marketplaces",
         element: <AdminMarketplacesPage />,
@@ -23583,6 +31175,19 @@ export const adminRoutes: RouteObject[] = [
       {
         path: "marketplaces/:id/edit",
         element: <AdminMarketplaceFormPage />,
+      },
+
+      {
+        path: "blog",
+        element: <AdminBlogPage />,
+      },
+      {
+        path: "blog/novo",
+        element: <AdminBlogFormPage />,
+      },
+      {
+        path: "blog/editar/:id",
+        element: <AdminBlogFormPage />,
       },
     ],
   },
@@ -23746,6 +31351,7 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
 import type { RouteObject } from "react-router-dom";
 
 import { BlogPage } from "../pages/BlogPage";
+import { BlogPostPage } from "../pages/BlogPostPage";
 import { CategoryPage } from "../pages/CategoriesPage";
 import { DigitalProductsPage } from "../pages/DigitalProductsPage";
 import { FashionPage } from "../pages/FashionPage";
@@ -23759,13 +31365,22 @@ import { TechnologyPage } from "../pages/TechnologyPage";
 
 export const productRoutes: RouteObject[] = [
   // Busca de produtos
-  { path: "produtos", element: <ProductsPage /> },
+  {
+    path: "produtos",
+    element: <ProductsPage />,
+  },
 
   // Detalhes do produto
-  { path: "produto/:slug", element: <ProductPage /> },
+  {
+    path: "produto/:slug",
+    element: <ProductPage />,
+  },
 
   // Categoria
-  { path: "categoria/:slug", element: <CategoryPage /> },
+  {
+    path: "categoria/:slug",
+    element: <CategoryPage />,
+  },
 
   // Subcategoria - rota hierárquica
   {
@@ -23774,13 +31389,42 @@ export const productRoutes: RouteObject[] = [
   },
 
   // Rotas de categorias legadas
-  { path: "tecnologia", element: <TechnologyPage /> },
-  { path: "casa-utilidades", element: <HomeUtilitiesPage /> },
-  { path: "moda", element: <FashionPage /> },
-  { path: "pets", element: <PetsPage /> },
-  { path: "produtos-digitais", element: <DigitalProductsPage /> },
-  { path: "ofertas", element: <OffersPage /> },
-  { path: "blog", element: <BlogPage /> },
+  {
+    path: "tecnologia",
+    element: <TechnologyPage />,
+  },
+  {
+    path: "casa-utilidades",
+    element: <HomeUtilitiesPage />,
+  },
+  {
+    path: "moda",
+    element: <FashionPage />,
+  },
+  {
+    path: "pets",
+    element: <PetsPage />,
+  },
+  {
+    path: "produtos-digitais",
+    element: <DigitalProductsPage />,
+  },
+  {
+    path: "ofertas",
+    element: <OffersPage />,
+  },
+
+  // Blog
+  {
+    path: "blog",
+    element: <BlogPage />,
+  },
+
+  // Artigo individual do Blog
+  {
+    path: "blog/:slug",
+    element: <BlogPostPage />,
+  },
 
   // Compatibilidade com URLs antigas
   {
@@ -23788,6 +31432,178 @@ export const productRoutes: RouteObject[] = [
     element: <SubcategoryPage />,
   },
 ];
+
+```
+
+## src\services\mercadoLivreService.ts
+
+```ts
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+export type MercadoLivreOffer = {
+  itemId: string;
+  sellerId: string;
+  price: number;
+  originalPrice?: number | null;
+  currencyId: string;
+
+  categoryId?: string;
+  warranty?: string;
+  condition?: string;
+  listingTypeId?: string;
+  officialStoreId?: string | null;
+
+  freeShipping?: boolean;
+
+  shipping?: {
+    freeShipping?: boolean;
+    logisticType?: string;
+  };
+
+  userProductId?: string;
+};
+
+export type MercadoLivreAnalyzeResult = {
+  externalLink: string;
+  catalogProductId: string;
+  requestedItemId: string | null;
+  requestedWid: string | null;
+  catalogStatus: string | null;
+  title: string;
+  permalink: string | null;
+  imageUrls: string[];
+  offers: MercadoLivreOffer[];
+  selectedOffer: MercadoLivreOffer | null;
+  requiresOfferSelection: boolean;
+  noOffersFound: boolean;
+};
+
+export type ImportMercadoLivreProductInput = {
+  affiliateUrl: string;
+  externalLink: string;
+
+  catalogProductId: string;
+  itemId: string;
+  sellerId: string;
+
+  subcategoryId: string;
+
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+
+  imageUrl?: string;
+
+  images?: Array<{
+    imageUrl: string;
+    sortOrder?: number;
+  }>;
+
+  price?: number;
+  originalPrice?: number;
+  currency?: string;
+
+  rating?: number;
+  reviewsCount?: number;
+
+  featured?: boolean;
+  destaque?: boolean;
+  bestSeller?: boolean;
+  available?: boolean;
+  active?: boolean;
+
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+export type UpdateMercadoLivreProductOfferInput = {
+  externalLink: string;
+  catalogProductId: string;
+  itemId: string;
+  sellerId: string;
+};
+
+async function parseResponse(response: Response) {
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ?? "Não foi possível concluir a operação no Mercado Livre.",
+    );
+  }
+
+  return data;
+}
+
+export async function analyzeMercadoLivreProduct(
+  externalLink: string,
+  token: string,
+): Promise<MercadoLivreAnalyzeResult> {
+  const response = await fetch(`${apiUrl}/mercado-livre/products/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      externalLink,
+    }),
+  });
+
+  const data = await parseResponse(response);
+
+  return {
+    ...data,
+
+    offers: Array.isArray(data.offers)
+      ? data.offers.map((offer: MercadoLivreOffer) => ({
+          ...offer,
+          freeShipping:
+            offer.freeShipping ?? offer.shipping?.freeShipping ?? false,
+        }))
+      : [],
+  };
+}
+
+export async function importMercadoLivreProduct(
+  data: ImportMercadoLivreProductInput,
+  token: string,
+) {
+  const response = await fetch(`${apiUrl}/mercado-livre/products/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await parseResponse(response);
+
+  return result.product;
+}
+
+export async function updateMercadoLivreProductOffer(
+  productId: string,
+  data: UpdateMercadoLivreProductOfferInput,
+  token: string,
+) {
+  const response = await fetch(
+    `${apiUrl}/mercado-livre/products/${encodeURIComponent(productId)}/offer`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    },
+  );
+
+  const result = await parseResponse(response);
+
+  return result.product;
+}
 
 ```
 
@@ -23806,6 +31622,146 @@ export type AffiliateProduct = {
   marketplace: Marketplace;
   affiliateUrl: string;
   category?: string;
+};
+
+```
+
+## src\types\Blog.ts
+
+```ts
+export type BlogPostStatus = "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED";
+
+export type BlogProduct = {
+  id: string;
+  sortOrder: number;
+  product: {
+    id: string;
+    title: string;
+    slug: string;
+    shortDescription?: string | null;
+    imageUrl?: string | null;
+    price: number | string;
+    originalPrice?: number | string | null;
+    currency?: string | null;
+    rating?: number | string | null;
+    reviewsCount?: number | null;
+    affiliateUrl: string;
+    available: boolean;
+    featured: boolean;
+    active: boolean;
+  };
+};
+
+export type BlogAuthor = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type BlogCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  active: boolean;
+  sortOrder: number;
+  postsCount?: number;
+  createdAt?: string;
+  updatedAt?: string | null;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  content: string;
+  coverImage?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  status: BlogPostStatus;
+  publishedAt?: string | null;
+  scheduledAt?: string | null;
+  authorId: string;
+  categoryId?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+
+  author?: BlogAuthor | null;
+
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+
+  products?: BlogProduct[];
+};
+
+export type BlogPostProductFormData = {
+  productId: string;
+  sortOrder?: number;
+};
+
+export type BlogPostFormData = {
+  title: string;
+  excerpt?: string;
+  content: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  categoryId?: string;
+  products?: BlogPostProductFormData[];
+};
+
+export type BlogPostUpdateData = {
+  title?: string;
+  excerpt?: string;
+  content?: string;
+  coverImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  status?: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  categoryId?: string;
+  products?: BlogPostProductFormData[];
+};
+
+export type BlogPostListFilters = {
+  search?: string;
+  categoryId?: string;
+};
+
+export type BlogPostAdminFilters = {
+  search?: string;
+  categoryId?: string;
+  status?: BlogPostStatus;
+};
+
+export type BlogCategoryFormData = {
+  name: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type BlogCategoryUpdateData = {
+  name?: string;
+  description?: string;
+  image?: string;
+  active?: boolean;
+  sortOrder?: number;
+};
+
+export type BlogCategoryFilters = {
+  search?: string;
+  active?: boolean;
 };
 
 ```

@@ -9,7 +9,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  console.log("PRODUTO DO CARD:", product);
   const formattedPrice = formatCurrencyBRL(product.price);
 
   const formattedOriginalPrice = product.originalPrice

@@ -11,6 +11,7 @@ export function AdminProductsPage() {
   const { token } = useAuth();
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [syncingMercadoLivre, setSyncingMercadoLivre] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -47,6 +48,48 @@ export function AdminProductsPage() {
     }
   }
 
+  async function handleMercadoLivreSync() {
+    if (!token || syncingMercadoLivre) {
+      return;
+    }
+
+    try {
+      setSyncingMercadoLivre(true);
+
+      const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+      const response = await fetch(`${apiUrl}/mercado-livre/sync`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Não foi possível sincronizar os produtos do Mercado Livre.",
+        );
+      }
+
+      await fetchAdminProducts(token);
+
+      alert(
+        data?.message || "Produtos do Mercado Livre sincronizados com sucesso.",
+      );
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível sincronizar os produtos do Mercado Livre.",
+      );
+    } finally {
+      setSyncingMercadoLivre(false);
+    }
+  }
+
   if (loading) {
     return <p className="p-6">Carregando produtos...</p>;
   }
@@ -60,12 +103,25 @@ export function AdminProductsPage() {
       <header className="flex justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Painel Administrativo - Produtos</h1>
 
-        <Link
-          to="/admin/products/new"
-          className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
-        >
-          + Cadastrar Produto
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void handleMercadoLivreSync()}
+            disabled={!token || syncingMercadoLivre}
+            className="bg-green/80 text-white px-4 py-2 rounded-lg hover:bg-green transition whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {syncingMercadoLivre
+              ? "Sincronizando..."
+              : "🔄 Sincronizar Mercado Livre"}
+          </button>
+
+          <Link
+            to="/admin/products/new"
+            className="bg-blue text-white px-4 py-2 rounded-lg hover:bg-navy transition whitespace-nowrap"
+          >
+            + Cadastrar Produto
+          </Link>
+        </div>
       </header>
 
       <div className="overflow-x-auto">

@@ -39,7 +39,16 @@ export type Product = {
   category?: string | null;
 
   available: boolean;
+
+  // Status de destaque existente no sistema
   featured: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller: boolean;
+
   active: boolean;
 
   seoTitle?: string | null;
@@ -68,7 +77,15 @@ export type ProductFormData = {
   subcategoryId: string;
   marketplaceId: string;
 
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
+
   available?: boolean;
   active?: boolean;
 
@@ -98,7 +115,15 @@ export type ProductUpdateData = {
   subcategoryId?: string;
   marketplaceId?: string;
 
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
+
   available?: boolean;
   active?: boolean;
 
@@ -109,7 +134,15 @@ export type ProductUpdateData = {
 export type ProductStatusData = {
   active?: boolean;
   available?: boolean;
+
+  // Status de destaque existente no sistema
   featured?: boolean;
+
+  // Seção "Ofertas em destaque"
+  destaque?: boolean;
+
+  // Seção "Produtos mais vendidos"
+  bestSeller?: boolean;
 };
 
 export type ProductsContextValue = {
@@ -125,7 +158,14 @@ export type ProductsContextValue = {
       search?: string;
       subcategoryId?: string;
       marketplaceId?: string;
+
+      // Status de destaque existente no sistema
       featured?: boolean;
+
+      // Filtros das seções da loja
+      destaque?: boolean;
+      bestSeller?: boolean;
+
       active?: boolean;
       available?: boolean;
     },

@@ -1,19 +1,27 @@
 type ProductStatusProps = {
   featured: boolean;
+  destaque: boolean;
+  bestSeller: boolean;
   available: boolean;
   active: boolean;
   loading: boolean;
   onFeaturedChange: (value: boolean) => void;
+  onDestaqueChange: (value: boolean) => void;
+  onBestSellerChange: (value: boolean) => void;
   onAvailableChange: (value: boolean) => void;
   onActiveChange: (value: boolean) => void;
 };
 
 export function ProductStatus({
   featured,
+  destaque,
+  bestSeller,
   available,
   active,
   loading,
   onFeaturedChange,
+  onDestaqueChange,
+  onBestSellerChange,
   onAvailableChange,
   onActiveChange,
 }: ProductStatusProps) {
@@ -23,7 +31,7 @@ export function ProductStatus({
         Status do produto
       </h2>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
           <input
             type="checkbox"
@@ -39,7 +47,47 @@ export function ProductStatus({
             </span>
 
             <span className="block text-xs text-gray-500">
-              Exibir como produto destacado.
+              Define se o produto possui o status de destaque no sistema.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={destaque}
+            onChange={(event) => onDestaqueChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Ofertas em destaque
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir o produto na seção de ofertas em destaque.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
+          <input
+            type="checkbox"
+            checked={bestSeller}
+            onChange={(event) => onBestSellerChange(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4"
+          />
+
+          <span>
+            <span className="block text-sm font-semibold text-gray-700">
+              Produtos mais vendidos
+            </span>
+
+            <span className="block text-xs text-gray-500">
+              Exibir o produto na seção de produtos mais vendidos.
             </span>
           </span>
         </label>
