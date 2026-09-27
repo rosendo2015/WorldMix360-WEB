@@ -163,10 +163,10 @@ export function Menu({
           .filter(Boolean)
           .join(" ")}
       >
-        <span className="h-8 w-24 animate-pulse rounded-full bg-slate-100" />
-        <span className="h-8 w-32 animate-pulse rounded-full bg-slate-100" />
-        <span className="h-8 w-20 animate-pulse rounded-full bg-slate-100" />
-        <span className="h-8 w-20 animate-pulse rounded-full bg-slate-100" />
+        <span className="h-8 w-24 animate-pulse rounded-full bg-gray-500" />
+        <span className="h-8 w-32 animate-pulse rounded-full bg-gray-500" />
+        <span className="h-8 w-20 animate-pulse rounded-full bg-gray-500" />
+        <span className="h-8 w-20 animate-pulse rounded-full bg-gray-500" />
       </nav>
     );
   }

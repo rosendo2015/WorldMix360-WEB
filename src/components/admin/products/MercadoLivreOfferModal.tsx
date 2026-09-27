@@ -80,7 +80,6 @@ export function MercadoLivreOfferModal({
           >
             Selecionar oferta{" "}
           </h2>
-          ```
           <p className="mt-1 text-sm text-gray-600">{title}</p>
           <p className="mt-2 text-sm text-gray-500">
             Encontramos {offers.length} ofertas para este produto. Selecione
