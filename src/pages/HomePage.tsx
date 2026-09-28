@@ -133,7 +133,7 @@ export function HomePage() {
           <div></div>
 
           <Link
-            to="/ofertas"
+            to="/categorias"
             className="hidden items-center gap-1 text-sm font-semibold text-navy transition hover:text-white sm:flex"
           >
             Ver todas as categorias <FiArrowUpRight />
@@ -220,7 +220,11 @@ export function HomePage() {
         )}
       </div>
 
-      <Session title="Ofertas em destaque">
+      <Session
+        title="Ofertas em destaque"
+        viewAllLink="/ofertas-destaque"
+        viewAllLabel="Ver todas"
+      >
         {loading ? (
           <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
         ) : destaqueProducts.length === 0 ? (
@@ -236,7 +240,11 @@ export function HomePage() {
 
       <BlogBanner />
 
-      <Session title="Produtos mais vendidos">
+      <Session
+        title="Produtos mais vendidos"
+        viewAllLink="/mais-vendidos"
+        viewAllLabel="Ver todos"
+      >
         {loading ? (
           <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
         ) : bestSellerProducts.length === 0 ? (

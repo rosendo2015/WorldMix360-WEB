@@ -1,10 +1,12 @@
 import type { RouteObject } from "react-router-dom";
-
+import { AllCategoriesPage } from "../pages/AllCategoriesPage";
+import { BestSellersPage } from "../pages/BestSellersPage";
 import { BlogPage } from "../pages/BlogPage";
 import { BlogPostPage } from "../pages/BlogPostPage";
 import { CategoryPage } from "../pages/CategoriesPage";
 import { DigitalProductsPage } from "../pages/DigitalProductsPage";
 import { FashionPage } from "../pages/FashionPage";
+import { FeaturedOffersPage } from "../pages/FeaturedOffersPage";
 import { HomeUtilitiesPage } from "../pages/HomeUtilitiesPage";
 import { OffersPage } from "../pages/OffersPage";
 import { PetsPage } from "../pages/PetsPage";
@@ -24,6 +26,12 @@ export const productRoutes: RouteObject[] = [
   {
     path: "produto/:slug",
     element: <ProductPage />,
+  },
+
+  // Todas as categorias
+  {
+    path: "categorias",
+    element: <AllCategoriesPage />,
   },
 
   // Categoria
@@ -58,6 +66,14 @@ export const productRoutes: RouteObject[] = [
   {
     path: "produtos-digitais",
     element: <DigitalProductsPage />,
+  },
+  {
+    path: "ofertas-destaque",
+    element: <FeaturedOffersPage />,
+  },
+  {
+    path: "mais-vendidos",
+    element: <BestSellersPage />,
   },
   {
     path: "ofertas",
