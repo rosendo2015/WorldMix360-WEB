@@ -55,9 +55,13 @@ const categoryIcons = {
   "produtos-digitais": FiSearch,
 };
 
+// TESTE: true = Skeleton sempre visível
+//        false = funcionamento normal
+const FORCE_SKELETON = false;
+
 export function HomePage() {
   const [skeletonKeys] = useState(() =>
-    Array.from({ length: 7 }, () => crypto.randomUUID()),
+    Array.from({ length: 8 }, () => crypto.randomUUID()),
   );
 
   const {
@@ -140,12 +144,12 @@ export function HomePage() {
           </Link>
         </div>
 
-        {categoriesLoading ? (
+        {FORCE_SKELETON || categoriesLoading ? (
           <div className="flex w-full gap-3 overflow-x-auto pb-4 no-scrollbar">
             {skeletonKeys.map((key) => (
               <div
                 key={key}
-                className="h-36 w-36 shrink-0 animate-pulse rounded-2xl bg-[#f7f9fc] md:h-40 md:w-40"
+                className="h-36 w-36 shrink-0 animate-pulse rounded-2xl bg-gray-200 md:h-40 md:w-40"
               />
             ))}
           </div>
@@ -225,8 +229,15 @@ export function HomePage() {
         viewAllLink="/ofertas-destaque"
         viewAllLabel="Ver todas"
       >
-        {loading ? (
-          <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
+        {FORCE_SKELETON || loading ? (
+          <div className="flex gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {skeletonKeys.map((key) => (
+              <div
+                key={`latest-product-skeleton-${key + 1}`}
+                className="h-[420px] w-[270px] animate-pulse rounded-2xl bg-gray-200"
+              />
+            ))}
+          </div>
         ) : destaqueProducts.length === 0 ? (
           <p className="px-6 text-sm text-[#52657c]">
             Nenhuma oferta em destaque disponível no momento.
@@ -245,8 +256,15 @@ export function HomePage() {
         viewAllLink="/mais-vendidos"
         viewAllLabel="Ver todos"
       >
-        {loading ? (
-          <p className="px-6 text-sm text-[#52657c]">Carregando produtos...</p>
+        {FORCE_SKELETON || loading ? (
+          <div className="flex gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {skeletonKeys.map((key) => (
+              <div
+                key={`latest-product-skeleton-${key + 1}`}
+                className="h-[420px] w-[270px] animate-pulse rounded-2xl bg-gray-200"
+              />
+            ))}
+          </div>
         ) : bestSellerProducts.length === 0 ? (
           <p className="px-6 text-sm text-[#52657c]">
             Nenhum produto mais vendido disponível no momento.
@@ -279,12 +297,12 @@ export function HomePage() {
           </Link>
         </div>
 
-        {loading ? (
+        {FORCE_SKELETON || loading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {skeletonKeys.map((key) => (
               <div
                 key={`latest-product-skeleton-${key + 1}`}
-                className="h-[420px] animate-pulse rounded-2xl bg-gray-100"
+                className="h-[420px] animate-pulse rounded-2xl bg-gray-200"
               />
             ))}
           </div>

@@ -13,7 +13,7 @@ const offersBanners = [
     image:
       "https://images.unsplash.com/photo-1585386959984-a4155223f9c8?auto=format&fit=crop&w=1600&q=85",
     imageAlt: "Produtos em promoção com grandes descontos",
-    href: "/ofertas",
+    href: "/ofertas-destaque",
     cta: "Aproveitar agora",
     imageClassName: "inset-0 h-full w-full object-cover",
   },
