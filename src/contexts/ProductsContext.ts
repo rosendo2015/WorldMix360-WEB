@@ -16,6 +16,8 @@ export type Product = {
   title: string;
   slug: string;
 
+  createdAt: string;
+
   description?: string | null;
   shortDescription?: string | null;
 

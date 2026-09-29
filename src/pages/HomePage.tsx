@@ -125,13 +125,11 @@ export function HomePage() {
   return (
     <>
       <Banner />
-
       {(error || categoriesError) && (
         <div className="mx-auto max-w-[1200px] px-6 pb-2 pt-4 text-sm text-red-600">
           {error ?? categoriesError}
         </div>
       )}
-
       <div className="relative z-20 mx-auto -mt-40 max-w-[1200px] px-6 pb-10 md:-mt-55 md:pb-14">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div></div>
@@ -223,7 +221,6 @@ export function HomePage() {
           </section>
         )}
       </div>
-
       <Session
         title="Ofertas em destaque"
         viewAllLink="/ofertas-destaque"
@@ -248,9 +245,7 @@ export function HomePage() {
           ))
         )}
       </Session>
-
       <BlogBanner />
-
       <Session
         title="Produtos mais vendidos"
         viewAllLink="/mais-vendidos"
@@ -275,7 +270,6 @@ export function HomePage() {
           ))
         )}
       </Session>
-
       <section className="mx-auto max-w-[1200px] px-6 py-10 md:py-14">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -318,9 +312,7 @@ export function HomePage() {
           </div>
         )}
       </section>
-
       <SocialBanner />
-
       <section className="mx-auto grid max-w-[1200px] gap-4 px-6 py-10 md:grid-cols-4 md:py-14">
         {trustBadges.map(({ icon: BadgeIcon, title, description }) => (
           <div

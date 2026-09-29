@@ -72,6 +72,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         bestSeller?: boolean;
         active?: boolean;
         available?: boolean;
+        destaque?: boolean;
       },
     ) => {
       try {
@@ -106,6 +107,9 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
         if (filters?.available !== undefined) {
           params.set("available", String(filters.available));
+        }
+        if (filters?.destaque !== undefined) {
+          params.set("destaque", String(filters.destaque));
         }
 
         const queryString = params.toString();
