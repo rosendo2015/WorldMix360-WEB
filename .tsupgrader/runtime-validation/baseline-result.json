@@ -1,0 +1,114 @@
+{
+  "planHash": "1bd3fdbddc56ec60c1c0db3e094f4be2684f54f4e9e1bf19e174fe16f7c1c5f5",
+  "phase": "baseline",
+  "recordedAtUtc": "2026-09-30T22:54:30.0706396Z",
+  "retryCount": 0,
+  "resetBaseline": true,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 27969,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "project-builds",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E worldmix360@0.0.0 build\r\n\u003E tsc -b \u0026\u0026 vite build\r\n\r\n\u001B[36mvite v8.2.2 \u001B[32mbuilding client environment for production...\u001B[36m\u001B[39m\r\ntransforming...\r\n\u2713 231 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\ndist/index.html                                0.46 kB \u2502 gzip:   0.29 kB\r\ndist/assets/WorldMix360-logo-CmqjMs4c.png    491.12 kB\r\ndist/assets/banner1-DIXWCh1X.png           9,117.31 kB\r\ndist/assets/index-BNadOShe.css                74.99 kB \u2502 gzip:  12.43 kB\r\ndist/assets/index-BBSBJQS4.js              1,053.63 kB \u2502 gzip: 302.48 kB\r\n\r\n\u001B[32m\u2713 built in 5.00s\u001B[39m\r\n\u001B[33m[plugin builtin:vite-reporter] \r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001B[39m\r\n\u001B[33m\u001B[33m[PLUGIN_TIMINGS] \u001B[0mYour build spent 89% of 5.0s inside plugin hooks (4.4s).\r\nMeasured inside the callback, so queue time is excluded and time the callback itself awaited is not:\r\n  - vite:css transform (38%, 1.9s, 4 calls)\r\nThose rows are 38% of the build; the rest of the 89% is below.\r\nNot measurable \u2014 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with \u0060node --cpu-prof\u0060:\r\n  - vite-plugin-svgr load (230 calls)\r\n  - vite:asset load (2 calls)\r\nSee https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.\r\n\u001B[39m\r\n",
+        "durationMs": 25558
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E worldmix360@0.0.0 test\r\n\u003E node --import tsx --test src/utils/formatCurrency.test.ts src/routes/homeRoutes.test.tsx src/components/admin/products/RichTextEditor.test.tsx\r\n\r\n\u25B6 React and Tiptap APIs\r\n  \u2714 renders React server markup (15.5701ms)\r\n  \u2714 exposes the editor extensions (0.9415ms)\r\n\u2714 React and Tiptap APIs (19.2639ms)\r\n\u25B6 home route\r\n  \u2714 extracts a dynamic route parameter (5.5686ms)\r\n\u2714 home route (8.0805ms)\r\n\u25B6 currency formatting\r\n  \u2714 formats numeric and empty values as Brazilian reais (59.2855ms)\r\n  \u2714 parses formatted Brazilian currency (0.5581ms)\r\n  \u2714 formats typed digits as a currency input (0.7688ms)\r\n\u2714 currency formatting (64.3732ms)\r\n\u2139 tests 6\r\n\u2139 suites 3\r\n\u2139 pass 6\r\n\u2139 fail 0\r\n\u2139 cancelled 0\r\n\u2139 skipped 0\r\n\u2139 todo 0\r\n\u2139 duration_ms 2042.3573\r\n",
+        "durationMs": 3213,
+        "testResults": {
+          "testFramework": "unknown",
+          "runnerDetectedFrom": "none",
+          "testsTotal": 0,
+          "testsPassed": 0,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": true
+        }
+      },
+      {
+        "name": "home-route-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!doctype html\u003E\n\u003Chtml lang=\u0022en\u0022\u003E\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\n    \u003Clink rel=\u0022icon\u0022 type=\u0022image/png\u0022 href=\u0022/favicon.png\u0022 /\u003E\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\n\n    \u003Ctitle\u003EWorld Mix 360\u003C/title\u003E\n  \u003C/head\u003E\n  \u003Cbody\u003E\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.tsx\u0022\u003E\u003C/script\u003E\n  \u003C/body\u003E\n\u003C/html\u003E\n\n--- server output ---\n\r\n\u003E worldmix360@0.0.0 dev\r\n\u003E vite --host 127.0.0.1 --port 5173 --strictPort\r\n\r\n\r\n  \u001B[32m\u001B[1mVITE\u001B[22m v8.2.2\u001B[39m  \u001B[2mready in \u001B[0m\u001B[1m869\u001B[22m\u001B[2m\u001B[0m ms\u001B[22m\r\n\r\n  \u001B[32m\u279C\u001B[39m  \u001B[1mLocal\u001B[22m:   \u001B[36mhttp://127.0.0.1:\u001B[1m5173\u001B[22m/\u001B[39m\r\n",
+        "durationMs": 2182
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "ci"
+        ],
+        "cwd": "c:\\xampp\\htdocs\\WorldMix360-WEB",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "project-builds",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "c:\\xampp\\htdocs\\WorldMix360-WEB",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "c:\\xampp\\htdocs\\WorldMix360-WEB",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "home-route-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev",
+          "--",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "5173",
+          "--strictPort"
+        ],
+        "cwd": "c:\\xampp\\htdocs\\WorldMix360-WEB",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}
