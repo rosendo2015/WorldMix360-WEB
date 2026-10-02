@@ -1,4 +1,5 @@
 /* src/routes/index.tsx */
+import { Suspense } from "react";
 import { Navigate, type RouteObject, useRoutes } from "react-router-dom";
 
 import { AppLayout } from "../components/AppLayout";
@@ -26,5 +27,5 @@ const routes: RouteObject[] = [
 ];
 
 export function AppRoutes() {
-  return useRoutes(routes);
+  return <Suspense fallback={null}>{useRoutes(routes)}</Suspense>;
 }

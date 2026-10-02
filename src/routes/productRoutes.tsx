@@ -1,19 +1,22 @@
 import type { RouteObject } from "react-router-dom";
-import { AllCategoriesPage } from "../pages/AllCategoriesPage";
-import { BestSellersPage } from "../pages/BestSellersPage";
-import { BlogPage } from "../pages/BlogPage";
-import { BlogPostPage } from "../pages/BlogPostPage";
-import { CategoryPage } from "../pages/CategoriesPage";
-import { DigitalProductsPage } from "../pages/DigitalProductsPage";
-import { FashionPage } from "../pages/FashionPage";
-import { FeaturedOffersPage } from "../pages/FeaturedOffersPage";
-import { HomeUtilitiesPage } from "../pages/HomeUtilitiesPage";
-import { OffersPage } from "../pages/OffersPage";
-import { PetsPage } from "../pages/PetsPage";
-import { ProductPage } from "../pages/ProductPage";
-import { ProductsPage } from "../pages/ProductsPage";
-import { SubcategoryPage } from "../pages/SubcategoryPage";
-import { TechnologyPage } from "../pages/TechnologyPage";
+
+import {
+  AllCategoriesPage,
+  BestSellersPage,
+  BlogPage,
+  BlogPostPage,
+  CategoryPage,
+  DigitalProductsPage,
+  FashionPage,
+  FeaturedOffersPage,
+  HomeUtilitiesPage,
+  OffersPage,
+  PetsPage,
+  ProductPage,
+  ProductsPage,
+  SubcategoryPage,
+  TechnologyPage,
+} from "./lazyPages";
 
 export const productRoutes: RouteObject[] = [
   // Busca de produtos

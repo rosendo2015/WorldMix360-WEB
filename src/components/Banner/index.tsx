@@ -5,7 +5,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 import ArrowRight from "../../assets/icons/arrow-right-bold.svg?react";
-import ProdutosBunner from "../../assets/images/banner1.png";
+import ProdutosBunner from "../../assets/images/banner1.webp";
 import { Icon } from "../Icon";
 
 const banners = [

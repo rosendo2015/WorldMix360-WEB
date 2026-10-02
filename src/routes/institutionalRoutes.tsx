@@ -1,10 +1,12 @@
 import type { RouteObject } from "react-router-dom";
 
-import { AboutPage } from "../pages/AboutPage";
-import { ContactPage } from "../pages/ContactPage";
-import { HowItWorksPage } from "../pages/HowItWorksPage";
-import { PrivacyPolicyPage } from "../pages/PrivacyPolicyPage";
-import { TermsOfUsePage } from "../pages/TermsOfUsePage";
+import {
+  AboutPage,
+  ContactPage,
+  HowItWorksPage,
+  PrivacyPolicyPage,
+  TermsOfUsePage,
+} from "./lazyPages";
 
 export const institutionalRoutes: RouteObject[] = [
   { path: "sobre", element: <AboutPage /> },

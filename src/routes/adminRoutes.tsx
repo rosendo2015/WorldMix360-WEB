@@ -1,17 +1,19 @@
 import type { RouteObject } from "react-router-dom";
 
 import { AdminLayout } from "../components/AdminLayout";
-import { AdminBlogFormPage } from "../pages/admin/AdminBlogFormPage";
-import { AdminBlogPage } from "../pages/admin/AdminBlogPage";
-import { AdminCategoryFormPage } from "../pages/admin/AdminCategoriesFormPage";
-import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage";
-import { AdminDashboardPage } from "../pages/admin/AdminDashboarPage";
-import { AdminMarketplaceFormPage } from "../pages/admin/AdminMarketplaceFormPage";
-import { AdminMarketplacesPage } from "../pages/admin/AdminMarketplacesPage";
-import { AdminProductsFormPage } from "../pages/admin/AdminProductsFormPage";
-import { AdminProductsPage } from "../pages/admin/AdminProductsPage";
-import { AdminSubcategoriesPage } from "../pages/admin/AdminSubcategoriesPage";
-import { AdminSubcategoryFormPage } from "../pages/admin/AdminSubcategoryFormPage";
+import {
+  AdminBlogFormPage,
+  AdminBlogPage,
+  AdminCategoriesPage,
+  AdminCategoryFormPage,
+  AdminDashboardPage,
+  AdminMarketplaceFormPage,
+  AdminMarketplacesPage,
+  AdminProductsFormPage,
+  AdminProductsPage,
+  AdminSubcategoriesPage,
+  AdminSubcategoryFormPage,
+} from "./lazyPages";
 import PrivateRoute from "./PrivateRoute";
 
 export const adminRoutes: RouteObject[] = [
