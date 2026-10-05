@@ -1,22 +1,45 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
+import type { Product } from "../contexts/ProductsContext";
 import { useProducts } from "../contexts/useProducts";
 
 export function FeaturedOffersPage() {
-  const { products, loading, error, fetchProducts } = useProducts();
+  const { getPublicProducts } = useProducts();
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchProducts();
-  }, [fetchProducts]);
+    let cancelled = false;
 
-  const featuredProducts = useMemo(() => {
-    return products.filter(
-      (product) => product.active && product.available && product.destaque,
-    );
-  }, [products]);
+    void getPublicProducts({ destaque: true })
+      .then((products) => {
+        if (!cancelled) {
+          setFeaturedProducts(products);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar as ofertas em destaque.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getPublicProducts]);
 
   if (loading) {
     return (

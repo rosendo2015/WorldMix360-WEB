@@ -120,6 +120,12 @@ export function Menu({
             {category.label}
           </Link>
         ))}
+        <Link
+          to="/blog"
+          className="block text-left text-sm transition hover:text-white"
+        >
+          Blog
+        </Link>
       </nav>
     );
   }
@@ -145,6 +151,13 @@ export function Menu({
           <div className="h-11 animate-pulse rounded-lg bg-white/5" />
           <div className="h-11 animate-pulse rounded-lg bg-white/5" />
           <div className="h-11 animate-pulse rounded-lg bg-white/5" />
+          <Link
+            to="/blog"
+            onClick={onNavigate}
+            className="rounded-lg px-3 py-3 text-base font-medium text-white/90 transition hover:bg-white/5"
+          >
+            Blog
+          </Link>
           <div className="h-11 animate-pulse rounded-lg bg-white/5" />
         </nav>
       );
@@ -167,6 +180,12 @@ export function Menu({
         <span className="h-8 w-32 animate-pulse rounded-full bg-gray-500" />
         <span className="h-8 w-20 animate-pulse rounded-full bg-gray-500" />
         <span className="h-8 w-20 animate-pulse rounded-full bg-gray-500" />
+        <Link
+          to="/blog"
+          className="rounded-full px-3 py-2 text-sm font-medium text-[#071a2f] transition hover:bg-slate-50 hover:text-[#0b3d66]"
+        >
+          Blog
+        </Link>
       </nav>
     );
   }
@@ -248,6 +267,13 @@ export function Menu({
             </div>
           );
         })}
+        <Link
+          to="/blog"
+          onClick={onNavigate}
+          className="rounded-lg px-3 py-3 text-left text-base font-medium text-white/90 transition hover:bg-white/5"
+        >
+          Blog
+        </Link>
       </nav>
     );
   }
@@ -341,6 +367,14 @@ export function Menu({
           </div>
         );
       })}
+      {isHeader && (
+        <Link
+          to="/blog"
+          className="flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#071a2f] transition hover:bg-slate-50 hover:text-[#0b3d66]"
+        >
+          Blog
+        </Link>
+      )}
     </nav>
   );
 }

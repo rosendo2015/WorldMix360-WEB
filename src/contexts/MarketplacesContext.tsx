@@ -6,6 +6,7 @@ export type Marketplace = {
   description?: string | null;
   websiteUrl?: string | null;
   logoUrl?: string | null;
+  badgeColor?: string | null;
   active: boolean;
   sortOrder: number;
   products?: Array<{ id: string; name: string; slug: string }>;
@@ -15,6 +16,7 @@ export type MarketplaceFormData = {
   description?: string;
   websiteUrl?: string;
   logoUrl?: string;
+  badgeColor?: string;
   active?: boolean;
   sortOrder?: number;
 };
@@ -23,6 +25,7 @@ export type MarketplaceUpdateData = {
   description?: string;
   websiteUrl?: string;
   logoUrl?: string;
+  badgeColor?: string;
   active?: boolean;
   sortOrder?: number;
 };

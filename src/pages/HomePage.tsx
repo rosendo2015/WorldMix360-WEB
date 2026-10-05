@@ -17,6 +17,7 @@ import { ProductCard } from "../components/ProductCard";
 import { Session } from "../components/Session";
 import { SocialBanner } from "../components/SocialBanner";
 import { useCategories } from "../contexts/useCategories";
+import type { Product } from "../contexts/ProductsContext";
 import { useProducts } from "../contexts/useProducts";
 
 // Array de garantias
@@ -63,6 +64,10 @@ export function HomePage() {
   const [skeletonKeys] = useState(() =>
     Array.from({ length: 8 }, () => crypto.randomUUID()),
   );
+  const [destaqueProducts, setDestaqueProducts] = useState<Product[]>([]);
+  const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
+  const [sectionsError, setSectionsError] = useState<string | null>(null);
 
   const {
     categories,
@@ -71,7 +76,8 @@ export function HomePage() {
     fetchCategories,
   } = useCategories();
 
-  const { products, loading, error, fetchProducts } = useProducts();
+  const { products, loading, error, fetchProducts, getPublicProducts } =
+    useProducts();
 
   // Ref e Estados para permitir ARRASTAR com o mouse
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -111,23 +117,49 @@ export function HomePage() {
   }, [fetchCategories]);
 
   useEffect(() => {
-    void fetchProducts();
-  }, [fetchProducts]);
+    let cancelled = false;
+
+    void Promise.all([
+      getPublicProducts({ destaque: true }),
+      getPublicProducts({ bestSeller: true }),
+      fetchProducts(),
+    ])
+      .then(([featured, bestSellers]) => {
+        if (!cancelled) {
+          setDestaqueProducts(featured);
+          setBestSellerProducts(bestSellers);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setSectionsError(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar as seleções de produtos.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setSectionsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchProducts, getPublicProducts]);
 
   const activeCategories = categories
     .filter((category) => category.active)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
-  const destaqueProducts = products.filter((product) => product.destaque);
-
-  const bestSellerProducts = products.filter((product) => product.bestSeller);
-
   return (
     <>
       <Banner />
-      {(error || categoriesError) && (
+      {(error || categoriesError || sectionsError) && (
         <div className="mx-auto max-w-[1200px] px-6 pb-2 pt-4 text-sm text-red-600">
-          {error ?? categoriesError}
+          {error ?? categoriesError ?? sectionsError}
         </div>
       )}
       <div className="relative z-20 mx-auto -mt-40 max-w-[1200px] px-6 pb-10 md:-mt-55 md:pb-14">
@@ -226,7 +258,7 @@ export function HomePage() {
         viewAllLink="/ofertas-destaque"
         viewAllLabel="Ver todas"
       >
-        {FORCE_SKELETON || loading ? (
+        {FORCE_SKELETON || sectionsLoading ? (
           <div className="flex gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {skeletonKeys.map((key) => (
               <div
@@ -251,7 +283,7 @@ export function HomePage() {
         viewAllLink="/mais-vendidos"
         viewAllLabel="Ver todos"
       >
-        {FORCE_SKELETON || loading ? (
+        {FORCE_SKELETON || sectionsLoading ? (
           <div className="flex gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {skeletonKeys.map((key) => (
               <div

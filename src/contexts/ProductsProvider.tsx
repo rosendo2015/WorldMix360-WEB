@@ -60,6 +60,59 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const getPublicProducts = useCallback(
+    async (filters?: { destaque?: boolean; bestSeller?: boolean }) => {
+      const fetchPage = async (page: number) => {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: "100",
+        });
+
+        if (filters?.destaque !== undefined) {
+          params.set("destaque", String(filters.destaque));
+        }
+
+        if (filters?.bestSeller !== undefined) {
+          params.set("bestSeller", String(filters.bestSeller));
+        }
+
+        const response = await fetch(`${apiUrl}/products?${params}`);
+        const data = (await response.json()) as {
+          products?: Product[];
+          pagination?: { totalPages?: number };
+          message?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ?? "Não foi possível carregar os produtos.",
+          );
+        }
+
+        return data;
+      };
+
+      const firstPage = await fetchPage(1);
+      const totalPages = firstPage.pagination?.totalPages ?? 1;
+
+      if (totalPages <= 1) {
+        return firstPage.products ?? [];
+      }
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, index) =>
+          fetchPage(index + 2),
+        ),
+      );
+
+      return [
+        ...(firstPage.products ?? []),
+        ...remainingPages.flatMap((page) => page.products ?? []),
+      ];
+    },
+    [],
+  );
+
   // Listagem administrativa
   const fetchAdminProducts = useCallback(
     async (
@@ -322,6 +375,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       fetchProducts,
+      getPublicProducts,
       fetchAdminProducts,
       getProductBySlug,
       getProductById,
@@ -335,6 +389,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       fetchProducts,
+      getPublicProducts,
       fetchAdminProducts,
       getProductBySlug,
       getProductById,

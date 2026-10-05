@@ -1,22 +1,45 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { ProductCard } from "../components/ProductCard";
+import type { Product } from "../contexts/ProductsContext";
 import { useProducts } from "../contexts/useProducts";
 
 export function BestSellersPage() {
-  const { products, loading, error, fetchProducts } = useProducts();
+  const { getPublicProducts } = useProducts();
+  const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetchProducts();
-  }, [fetchProducts]);
+    let cancelled = false;
 
-  const bestSellerProducts = useMemo(() => {
-    return products.filter(
-      (product) => product.active && product.available && product.bestSeller,
-    );
-  }, [products]);
+    void getPublicProducts({ bestSeller: true })
+      .then((products) => {
+        if (!cancelled) {
+          setBestSellerProducts(products);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar os produtos mais vendidos.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getPublicProducts]);
 
   if (loading) {
     return (

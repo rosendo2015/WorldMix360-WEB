@@ -11,6 +11,13 @@ export type ProductImageFormData = {
   sortOrder?: number;
 };
 
+export type ProductMarketplace = {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+  badgeColor?: string | null;
+};
+
 export type Product = {
   id: string;
   title: string;
@@ -37,6 +44,7 @@ export type Product = {
 
   subcategoryId?: string;
   marketplaceId?: string;
+  marketplace?: ProductMarketplace | null;
 
   category?: string | null;
 
@@ -141,6 +149,11 @@ export type ProductsContextValue = {
   error: string | null;
 
   fetchProducts: (category?: string, search?: string) => Promise<void>;
+
+  getPublicProducts: (filters?: {
+    destaque?: boolean;
+    bestSeller?: boolean;
+  }) => Promise<Product[]>;
 
   fetchAdminProducts: (
     token: string,

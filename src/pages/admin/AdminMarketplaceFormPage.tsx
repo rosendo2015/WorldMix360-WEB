@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "../../contexts/useAuth";
 import { useMarketplaces } from "../../contexts/useMarketplaces";
+import { getContrastTextColor } from "../../utils/colorContrast";
 
 export function AdminMarketplaceFormPage() {
   const { id } = useParams();
@@ -19,6 +20,7 @@ export function AdminMarketplaceFormPage() {
   const [description, setDescription] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [badgeColor, setBadgeColor] = useState("#f3f4f6");
   const [sortOrder, setSortOrder] = useState("0");
   const [active, setActive] = useState(true);
 
@@ -56,6 +58,7 @@ export function AdminMarketplaceFormPage() {
         setDescription(marketplace.description ?? "");
         setWebsiteUrl(marketplace.websiteUrl ?? "");
         setLogoUrl(marketplace.logoUrl ?? "");
+        setBadgeColor(marketplace.badgeColor ?? "#f3f4f6");
         setSortOrder(String(marketplace.sortOrder ?? 0));
         setActive(marketplace.active);
       } catch {
@@ -134,6 +137,7 @@ export function AdminMarketplaceFormPage() {
             description: description.trim() || undefined,
             websiteUrl: websiteUrl.trim() || undefined,
             logoUrl: logoUrl.trim() || undefined,
+            badgeColor,
             active,
             sortOrder: parsedSortOrder,
           },
@@ -146,6 +150,7 @@ export function AdminMarketplaceFormPage() {
             description: description.trim() || undefined,
             websiteUrl: websiteUrl.trim() || undefined,
             logoUrl: logoUrl.trim() || undefined,
+            badgeColor,
             active,
             sortOrder: parsedSortOrder,
           },
@@ -323,6 +328,45 @@ export function AdminMarketplaceFormPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Cor da etiqueta */}
+            <div>
+              <label
+                htmlFor="badgeColor"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Cor da etiqueta nos produtos
+              </label>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="badgeColor"
+                  type="color"
+                  value={badgeColor}
+                  onChange={(event) => setBadgeColor(event.target.value)}
+                  disabled={loading}
+                  className="h-11 w-16 cursor-pointer rounded-lg border border-gray-300 bg-white p-1 disabled:cursor-not-allowed"
+                  aria-label="Escolher cor da etiqueta do marketplace"
+                />
+                <span className="font-mono text-sm uppercase text-gray-600">
+                  {badgeColor}
+                </span>
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-semibold text-gray-900"
+                  style={{
+                    backgroundColor: badgeColor,
+                    color: getContrastTextColor(badgeColor),
+                  }}
+                >
+                  {name.trim() || "Marketplace"}
+                </span>
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Escolha a cor de fundo da etiqueta exibida nos cards de
+                produtos.
+              </p>
             </div>
 
             {/* Ordem */}

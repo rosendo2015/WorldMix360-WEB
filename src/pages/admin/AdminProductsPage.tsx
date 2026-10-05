@@ -29,6 +29,8 @@ const productStatusOptions = [
   "unavailable",
   "destaque",
   "not-destaque",
+  "best-seller",
+  "not-best-seller",
 ] as const;
 
 type ProductStatusOption = (typeof productStatusOptions)[number];
@@ -54,26 +56,56 @@ export function AdminProductsPage() {
   const [syncingMercadoLivre, setSyncingMercadoLivre] = useState(false);
   const [sortOption, setSortOption] = useState<ProductSortOption>("newest");
   const [statusFilter, setStatusFilter] = useState<ProductStatusOption>("all");
+  const [marketplaceFilter, setMarketplaceFilter] = useState("all");
+
+  const marketplaces = useMemo(() => {
+    const marketplaceMap = new Map<string, string>();
+
+    for (const product of products) {
+      if (product.marketplace) {
+        marketplaceMap.set(product.marketplace.id, product.marketplace.name);
+      }
+    }
+
+    return [...marketplaceMap].sort((first, second) =>
+      first[1].localeCompare(second[1], "pt-BR", { sensitivity: "base" }),
+    );
+  }, [products]);
 
   const sortedProducts = useMemo(() => {
     const filteredProducts = products.filter((product) => {
-      switch (statusFilter) {
-        case "active":
-          return product.active;
-        case "inactive":
-          return !product.active;
-        case "available":
-          return product.available;
-        case "unavailable":
-          return !product.available;
-        case "destaque":
-          return product.destaque;
-        case "not-destaque":
-          return !product.destaque;
-        case "all":
-        default:
-          return true;
-      }
+      const matchesStatus = (() => {
+        switch (statusFilter) {
+          case "active":
+            return product.active;
+          case "inactive":
+            return !product.active;
+          case "available":
+            return product.available;
+          case "unavailable":
+            return !product.available;
+          case "destaque":
+            return product.destaque;
+          case "not-destaque":
+            return !product.destaque;
+          case "best-seller":
+            return product.bestSeller;
+          case "not-best-seller":
+            return !product.bestSeller;
+          case "all":
+          default:
+            return true;
+        }
+      })();
+
+      const productMarketplaceId =
+        product.marketplace?.id ?? product.marketplaceId;
+
+      return (
+        matchesStatus &&
+        (marketplaceFilter === "all" ||
+          productMarketplaceId === marketplaceFilter)
+      );
     });
 
     return filteredProducts.sort((first, second) => {
@@ -103,7 +135,7 @@ export function AdminProductsPage() {
           );
       }
     });
-  }, [products, sortOption, statusFilter]);
+  }, [products, sortOption, statusFilter, marketplaceFilter]);
 
   useEffect(() => {
     if (!token) {
@@ -119,6 +151,7 @@ export function AdminProductsPage() {
       active?: boolean;
       available?: boolean;
       destaque?: boolean;
+      bestSeller?: boolean;
     },
   ) {
     if (!token) {
@@ -249,7 +282,8 @@ export function AdminProductsPage() {
         <p className="text-sm text-gray-600">
           {sortedProducts.length}{" "}
           {sortedProducts.length === 1 ? "produto" : "produtos"}
-          {statusFilter !== "all" && ` de ${products.length}`}
+          {(statusFilter !== "all" || marketplaceFilter !== "all") &&
+            ` de ${products.length}`}
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -277,6 +311,32 @@ export function AdminProductsPage() {
               <option value="unavailable">Indisponíveis</option>
               <option value="destaque">Em ofertas em destaque</option>
               <option value="not-destaque">Fora das ofertas em destaque</option>
+              <option value="best-seller">Em produtos mais vendidos</option>
+              <option value="not-best-seller">
+                Fora dos produtos mais vendidos
+              </option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="product-marketplace-filter"
+              className="whitespace-nowrap text-sm font-medium text-gray-700"
+            >
+              Marketplace:
+            </label>
+            <select
+              id="product-marketplace-filter"
+              value={marketplaceFilter}
+              onChange={(event) => setMarketplaceFilter(event.target.value)}
+              className="min-w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-blue focus:ring-2 focus:ring-blue/20"
+            >
+              <option value="all">Todos os marketplaces</option>
+              {marketplaces.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -309,7 +369,7 @@ export function AdminProductsPage() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1000px] border-collapse">
+        <table className="w-full min-w-[1100px] border-collapse">
           <thead>
             <tr className="bg-gray-100">
               <th className="border-b px-3 py-2 text-left">Produto</th>
@@ -322,6 +382,10 @@ export function AdminProductsPage() {
 
               <th className="border-b px-3 py-2 text-center">
                 Ofertas em destaque
+              </th>
+
+              <th className="border-b px-3 py-2 text-center">
+                Mais vendidos
               </th>
 
               <th className="border-b px-3 py-2 text-center">Ações</th>
@@ -405,6 +469,21 @@ export function AdminProductsPage() {
                       }
                       className="h-5 w-5 cursor-pointer accent-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={`Alterar exibição em ofertas em destaque de ${p.title}`}
+                    />
+                  </td>
+
+                  <td className="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={p.bestSeller}
+                      disabled={isUpdating}
+                      onChange={(event) =>
+                        void handleStatusChange(p.id, {
+                          bestSeller: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 cursor-pointer accent-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Alterar exibição em produtos mais vendidos de ${p.title}`}
                     />
                   </td>
 
