@@ -66,7 +66,6 @@ export type ImportMercadoLivreProductInput = {
   rating?: number;
   reviewsCount?: number;
 
-  featured?: boolean;
   destaque?: boolean;
   bestSeller?: boolean;
   available?: boolean;

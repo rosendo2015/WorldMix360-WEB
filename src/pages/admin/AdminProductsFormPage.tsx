@@ -50,7 +50,6 @@ type ProductFormData = {
   affiliateUrl: string;
   subcategoryId: string;
   marketplaceId: string;
-  featured: boolean;
   destaque: boolean;
   bestSeller: boolean;
   available: boolean;
@@ -193,7 +192,6 @@ export function AdminProductsFormPage() {
   const [subcategoryId, setSubcategoryId] = useState("");
   const [marketplaceId, setMarketplaceId] = useState("");
 
-  const [featured, setFeatured] = useState(false);
   const [destaque, setDestaque] = useState(false);
   const [bestSeller, setBestSeller] = useState(false);
 
@@ -310,7 +308,6 @@ export function AdminProductsFormPage() {
           setExternalLink("");
         }
 
-        setFeatured(Boolean(product.featured));
         setDestaque(Boolean(product.destaque));
         setBestSeller(Boolean(product.bestSeller));
         setAvailable(Boolean(product.available));
@@ -426,7 +423,6 @@ export function AdminProductsFormPage() {
       subcategoryId,
       marketplaceId,
 
-      featured,
       destaque,
       bestSeller,
       available,
@@ -567,7 +563,6 @@ export function AdminProductsFormPage() {
             ? parsedManualReviewsCount
             : undefined,
 
-        featured,
         destaque,
         bestSeller,
         available,
@@ -988,13 +983,11 @@ export function AdminProductsFormPage() {
         />
 
         <ProductStatus
-          featured={featured}
           destaque={destaque}
           bestSeller={bestSeller}
           available={available}
           active={active}
           loading={loading}
-          onFeaturedChange={setFeatured}
           onDestaqueChange={setDestaque}
           onBestSellerChange={setBestSeller}
           onAvailableChange={setAvailable}

@@ -68,7 +68,6 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         search?: string;
         subcategoryId?: string;
         marketplaceId?: string;
-        featured?: boolean;
         bestSeller?: boolean;
         active?: boolean;
         available?: boolean;
@@ -91,10 +90,6 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
         if (filters?.marketplaceId) {
           params.set("marketplaceId", filters.marketplaceId);
-        }
-
-        if (filters?.featured !== undefined) {
-          params.set("featured", String(filters.featured));
         }
 
         if (filters?.bestSeller !== undefined) {
@@ -260,6 +255,36 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const deleteProduct = useCallback(
+    async (id: string, token: string): Promise<void> => {
+      const response = await fetch(
+        `${apiUrl}/products/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        let message = "Erro ao excluir produto.";
+
+        try {
+          const data = await response.json();
+          message = data.message ?? message;
+        } catch {
+          // Resposta sem corpo.
+        }
+
+        throw new Error(message);
+      }
+
+      setProducts((previous) => previous.filter((product) => product.id !== id));
+    },
+    [],
+  );
+
   // Atualizar status
   const updateProductStatus = useCallback(
     async (
@@ -302,6 +327,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       getProductById,
       createProduct,
       updateProduct,
+      deleteProduct,
       updateProductStatus,
     }),
     [
@@ -314,6 +340,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       getProductById,
       createProduct,
       updateProduct,
+      deleteProduct,
       updateProductStatus,
     ],
   );
