@@ -1,17 +1,109 @@
 // src/pages/admin/AdminProductsPage.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import { useProducts } from "../../contexts/useProducts";
+import { formatCurrencyBRL } from "../../utils/formatCurrency";
+
+const productSortOptions = [
+  "newest",
+  "oldest",
+  "title-asc",
+  "title-desc",
+  "price-asc",
+  "price-desc",
+] as const;
+
+type ProductSortOption = (typeof productSortOptions)[number];
+
+function isProductSortOption(value: string): value is ProductSortOption {
+  return productSortOptions.some((option) => option === value);
+}
+
+const productStatusOptions = [
+  "all",
+  "active",
+  "inactive",
+  "available",
+  "unavailable",
+  "destaque",
+  "not-destaque",
+] as const;
+
+type ProductStatusOption = (typeof productStatusOptions)[number];
+
+function isProductStatusOption(value: string): value is ProductStatusOption {
+  return productStatusOptions.some((option) => option === value);
+}
 
 export function AdminProductsPage() {
-  const { products, fetchAdminProducts, updateProductStatus, loading, error } =
-    useProducts();
+  const {
+    products,
+    fetchAdminProducts,
+    updateProductStatus,
+    deleteProduct,
+    loading,
+    error,
+  } = useProducts();
 
   const { token } = useAuth();
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [syncingMercadoLivre, setSyncingMercadoLivre] = useState(false);
+  const [sortOption, setSortOption] = useState<ProductSortOption>("newest");
+  const [statusFilter, setStatusFilter] = useState<ProductStatusOption>("all");
+
+  const sortedProducts = useMemo(() => {
+    const filteredProducts = products.filter((product) => {
+      switch (statusFilter) {
+        case "active":
+          return product.active;
+        case "inactive":
+          return !product.active;
+        case "available":
+          return product.available;
+        case "unavailable":
+          return !product.available;
+        case "destaque":
+          return product.destaque;
+        case "not-destaque":
+          return !product.destaque;
+        case "all":
+        default:
+          return true;
+      }
+    });
+
+    return filteredProducts.sort((first, second) => {
+      switch (sortOption) {
+        case "oldest":
+          return (
+            new Date(first.createdAt).getTime() -
+            new Date(second.createdAt).getTime()
+          );
+        case "title-asc":
+          return first.title.localeCompare(second.title, "pt-BR", {
+            sensitivity: "base",
+          });
+        case "title-desc":
+          return second.title.localeCompare(first.title, "pt-BR", {
+            sensitivity: "base",
+          });
+        case "price-asc":
+          return first.price - second.price;
+        case "price-desc":
+          return second.price - first.price;
+        case "newest":
+        default:
+          return (
+            new Date(second.createdAt).getTime() -
+            new Date(first.createdAt).getTime()
+          );
+      }
+    });
+  }, [products, sortOption, statusFilter]);
 
   useEffect(() => {
     if (!token) {
@@ -26,7 +118,7 @@ export function AdminProductsPage() {
     status: {
       active?: boolean;
       available?: boolean;
-      featured?: boolean;
+      destaque?: boolean;
     },
   ) {
     if (!token) {
@@ -45,6 +137,35 @@ export function AdminProductsPage() {
       );
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function handleDeleteProduct(id: string, title: string) {
+    if (!token) {
+      alert("Sua sessão não está autenticada.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente excluir o produto "${title}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(id);
+
+    try {
+      await deleteProduct(id, token);
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível excluir o produto.",
+      );
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -124,6 +245,69 @@ export function AdminProductsPage() {
         </div>
       </header>
 
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-gray-600">
+          {sortedProducts.length}{" "}
+          {sortedProducts.length === 1 ? "produto" : "produtos"}
+          {statusFilter !== "all" && ` de ${products.length}`}
+        </p>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="product-status-filter"
+              className="whitespace-nowrap text-sm font-medium text-gray-700"
+            >
+              Status:
+            </label>
+            <select
+              id="product-status-filter"
+              value={statusFilter}
+              onChange={(event) => {
+                if (isProductStatusOption(event.target.value)) {
+                  setStatusFilter(event.target.value);
+                }
+              }}
+              className="min-w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-blue focus:ring-2 focus:ring-blue/20"
+            >
+              <option value="all">Todos os status</option>
+              <option value="active">Ativos</option>
+              <option value="inactive">Inativos</option>
+              <option value="available">Disponíveis</option>
+              <option value="unavailable">Indisponíveis</option>
+              <option value="destaque">Em ofertas em destaque</option>
+              <option value="not-destaque">Fora das ofertas em destaque</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="product-sort"
+              className="whitespace-nowrap text-sm font-medium text-gray-700"
+            >
+              Ordenar por:
+            </label>
+            <select
+              id="product-sort"
+              value={sortOption}
+              onChange={(event) => {
+                if (isProductSortOption(event.target.value)) {
+                  setSortOption(event.target.value);
+                }
+              }}
+              className="min-w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-blue focus:ring-2 focus:ring-blue/20"
+            >
+              <option value="newest">Mais recentes</option>
+              <option value="oldest">Mais antigos</option>
+              <option value="title-asc">Nome: A a Z</option>
+              <option value="title-desc">Nome: Z a A</option>
+              <option value="price-asc">Menor preço</option>
+              <option value="price-desc">Maior preço</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1000px] border-collapse">
           <thead>
@@ -136,14 +320,16 @@ export function AdminProductsPage() {
 
               <th className="border-b px-3 py-2 text-center">Ativo</th>
 
-              <th className="border-b px-3 py-2 text-center">Destaque</th>
+              <th className="border-b px-3 py-2 text-center">
+                Ofertas em destaque
+              </th>
 
               <th className="border-b px-3 py-2 text-center">Ações</th>
             </tr>
           </thead>
 
           <tbody>
-            {products.map((p) => {
+            {sortedProducts.map((p) => {
               const isUpdating = updatingId === p.id;
 
               return (
@@ -174,10 +360,7 @@ export function AdminProductsPage() {
                   </td>
 
                   <td className="px-3 py-3">
-                    {p.price.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: p.currency,
-                    })}
+                    {formatCurrencyBRL(p.price)}
                   </td>
 
                   <td className="px-3 py-3 text-center">
@@ -213,25 +396,57 @@ export function AdminProductsPage() {
                   <td className="px-3 py-3 text-center">
                     <input
                       type="checkbox"
-                      checked={p.featured}
+                      checked={p.destaque}
                       disabled={isUpdating}
                       onChange={(event) =>
                         void handleStatusChange(p.id, {
-                          featured: event.target.checked,
+                          destaque: event.target.checked,
                         })
                       }
                       className="h-5 w-5 cursor-pointer accent-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
-                      aria-label={`Alterar destaque de ${p.title}`}
+                      aria-label={`Alterar exibição em ofertas em destaque de ${p.title}`}
                     />
                   </td>
 
                   <td className="px-3 py-3 text-center">
-                    <Link
-                      to={`/admin/products/${p.id}/edit`}
-                      className="text-sm font-semibold text-blue hover:underline"
-                    >
-                      Editar
-                    </Link>
+                    <div className="flex items-center justify-center gap-2">
+                      <Link
+                        to={`/produto/${p.slug}`}
+                        aria-label={`Visualizar ${p.title}`}
+                        title="Visualizar produto"
+                        className="rounded-lg p-2 text-gray-700 transition hover:bg-gray-200 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
+                      >
+                        <FiEye aria-hidden="true" size={18} />
+                      </Link>
+
+                      <Link
+                        to={`/admin/products/${p.id}/edit`}
+                        aria-label={`Editar ${p.title}`}
+                        title="Editar produto"
+                        className="rounded-lg p-2 text-blue transition hover:bg-blue/20 hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
+                      >
+                        <FiEdit2 aria-hidden="true" size={18} />
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteProduct(p.id, p.title)}
+                        disabled={deletingId === p.id}
+                        aria-label={`${deletingId === p.id ? "Excluindo" : "Excluir"} ${p.title}`}
+                        title={
+                          deletingId === p.id
+                            ? "Excluindo produto..."
+                            : "Excluir produto"
+                        }
+                        className="rounded-lg p-2 text-danger transition hover:bg-danger/20 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <FiTrash2
+                          aria-hidden="true"
+                          size={18}
+                          color="#dc2626"
+                        />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -240,9 +455,11 @@ export function AdminProductsPage() {
         </table>
       </div>
 
-      {products.length === 0 && (
+      {sortedProducts.length === 0 && (
         <div className="text-center py-10 text-gray-500">
-          Nenhum produto encontrado.
+          {products.length === 0
+            ? "Nenhum produto encontrado."
+            : "Nenhum produto corresponde a esse status."}
         </div>
       )}
     </section>

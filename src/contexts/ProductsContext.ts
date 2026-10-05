@@ -42,9 +42,6 @@ export type Product = {
 
   available: boolean;
 
-  // Status de destaque existente no sistema
-  featured: boolean;
-
   // Seção "Ofertas em destaque"
   destaque: boolean;
 
@@ -78,9 +75,6 @@ export type ProductFormData = {
 
   subcategoryId: string;
   marketplaceId: string;
-
-  // Status de destaque existente no sistema
-  featured?: boolean;
 
   // Seção "Ofertas em destaque"
   destaque?: boolean;
@@ -117,9 +111,6 @@ export type ProductUpdateData = {
   subcategoryId?: string;
   marketplaceId?: string;
 
-  // Status de destaque existente no sistema
-  featured?: boolean;
-
   // Seção "Ofertas em destaque"
   destaque?: boolean;
 
@@ -136,9 +127,6 @@ export type ProductUpdateData = {
 export type ProductStatusData = {
   active?: boolean;
   available?: boolean;
-
-  // Status de destaque existente no sistema
-  featured?: boolean;
 
   // Seção "Ofertas em destaque"
   destaque?: boolean;
@@ -161,9 +149,6 @@ export type ProductsContextValue = {
       subcategoryId?: string;
       marketplaceId?: string;
 
-      // Status de destaque existente no sistema
-      featured?: boolean;
-
       // Filtros das seções da loja
       destaque?: boolean;
       bestSeller?: boolean;
@@ -184,6 +169,8 @@ export type ProductsContextValue = {
     data: ProductUpdateData,
     token: string,
   ) => Promise<Product>;
+
+  deleteProduct: (id: string, token: string) => Promise<void>;
 
   updateProductStatus: (
     id: string,

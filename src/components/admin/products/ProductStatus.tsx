@@ -1,11 +1,9 @@
 type ProductStatusProps = {
-  featured: boolean;
   destaque: boolean;
   bestSeller: boolean;
   available: boolean;
   active: boolean;
   loading: boolean;
-  onFeaturedChange: (value: boolean) => void;
   onDestaqueChange: (value: boolean) => void;
   onBestSellerChange: (value: boolean) => void;
   onAvailableChange: (value: boolean) => void;
@@ -13,13 +11,11 @@ type ProductStatusProps = {
 };
 
 export function ProductStatus({
-  featured,
   destaque,
   bestSeller,
   available,
   active,
   loading,
-  onFeaturedChange,
   onDestaqueChange,
   onBestSellerChange,
   onAvailableChange,
@@ -28,30 +24,10 @@ export function ProductStatus({
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm">
       <h2 className="mb-5 text-lg font-semibold text-gray-900">
-        Status do produto
+        Visibilidade e classificação
       </h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
-          <input
-            type="checkbox"
-            checked={featured}
-            onChange={(event) => onFeaturedChange(event.target.checked)}
-            disabled={loading}
-            className="h-4 w-4"
-          />
-
-          <span>
-            <span className="block text-sm font-semibold text-gray-700">
-              Destaque
-            </span>
-
-            <span className="block text-xs text-gray-500">
-              Define se o produto possui o status de destaque no sistema.
-            </span>
-          </span>
-        </label>
-
         <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4">
           <input
             type="checkbox"
@@ -63,11 +39,13 @@ export function ProductStatus({
 
           <span>
             <span className="block text-sm font-semibold text-gray-700">
-              Ofertas em destaque
+              Exibir em “Ofertas em destaque”
             </span>
 
             <span className="block text-xs text-gray-500">
-              Exibir o produto na seção de ofertas em destaque.
+              Mostra o produto na seção de ofertas em destaque da página
+              inicial e na página de ofertas, além de incluí-lo na contagem de
+              destaques do painel administrativo.
             </span>
           </span>
         </label>
@@ -83,11 +61,12 @@ export function ProductStatus({
 
           <span>
             <span className="block text-sm font-semibold text-gray-700">
-              Produtos mais vendidos
+              Exibir em “Produtos mais vendidos”
             </span>
 
             <span className="block text-xs text-gray-500">
-              Exibir o produto na seção de produtos mais vendidos.
+              Mostra o produto na seção de mais vendidos da página inicial e na
+              página correspondente.
             </span>
           </span>
         </label>
@@ -103,11 +82,12 @@ export function ProductStatus({
 
           <span>
             <span className="block text-sm font-semibold text-gray-700">
-              Disponível
+              Disponível para compra no marketplace
             </span>
 
             <span className="block text-xs text-gray-500">
-              Produto disponível no catálogo.
+              Desmarque quando o produto não puder ser comprado no marketplace.
+              Produtos indisponíveis não aparecem no catálogo público.
             </span>
           </span>
         </label>
@@ -123,11 +103,12 @@ export function ProductStatus({
 
           <span>
             <span className="block text-sm font-semibold text-gray-700">
-              Ativo
+              Publicado no catálogo WorldMix360
             </span>
 
             <span className="block text-xs text-gray-500">
-              Produto ativo no sistema.
+              Desmarque para ocultar o produto do site sem excluí-lo. Produtos
+              não publicados não aparecem no catálogo público.
             </span>
           </span>
         </label>

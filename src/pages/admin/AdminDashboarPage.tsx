@@ -88,8 +88,8 @@ export function AdminDashboardPage() {
     (product) => product.available,
   ).length;
 
-  const featuredProducts = products.filter(
-    (product) => product.featured,
+  const destaqueProducts = products.filter(
+    (product) => product.destaque,
   ).length;
 
   // ================================
@@ -422,10 +422,12 @@ export function AdminDashboardPage() {
             </div>
 
             <div className="rounded-xl bg-gray-50 p-4">
-              <p className="text-xs font-medium text-gray-500">Destaques</p>
+              <p className="text-xs font-medium text-gray-500">
+                Ofertas em destaque
+              </p>
 
               <p className="mt-1 text-2xl font-bold text-yellow">
-                {featuredProducts}
+                {destaqueProducts}
               </p>
             </div>
           </div>
