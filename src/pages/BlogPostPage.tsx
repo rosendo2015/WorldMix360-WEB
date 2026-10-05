@@ -47,8 +47,9 @@ function renderContent(value: string): ReactNode[] {
       "blockquote",
       "hr",
       "a",
+      "img",
     ],
-    ALLOWED_ATTR: ["href", "target", "rel"],
+    ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title"],
   });
 
   const document = new DOMParser().parseFromString(
@@ -67,7 +68,7 @@ function renderContent(value: string): ReactNode[] {
 
     const props: Record<string, string> = {};
 
-    for (const attribute of ["href", "target", "rel"]) {
+    for (const attribute of ["href", "target", "rel", "src", "alt", "title"]) {
       const value = node.getAttribute(attribute);
 
       if (value) {
@@ -297,6 +298,12 @@ export function BlogPostPage() {
             leading-8
             text-gray-700
             sm:text-lg
+            [&_img]:mx-auto
+            [&_img]:my-6
+            [&_img]:h-auto
+            [&_img]:max-w-full
+            [&_img]:rounded-xl
+            [&_img]:shadow-sm
             [&_a]:font-medium
             [&_a]:text-blue
             [&_a]:underline

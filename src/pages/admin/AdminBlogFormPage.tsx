@@ -369,12 +369,13 @@ export function AdminBlogFormPage() {
                   value={content}
                   onChange={setContent}
                   disabled={saving || loadingPost}
+                  enableImages
                   placeholder="Escreva o conteúdo completo do artigo..."
                 />
 
                 <p className="mt-2 text-xs text-gray-500">
-                  Use títulos, negrito, listas, links e outros recursos para
-                  deixar o artigo mais organizado e agradável para o leitor.
+                  Use a barra de ferramentas para inserir imagens no meio do
+                  texto, adicionar links e formatar o artigo.
                 </p>
               </div>
 

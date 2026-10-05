@@ -1,14 +1,39 @@
+import { mergeAttributes, Node } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 
+const ArticleImage = Node.create({
+  name: "image",
+  group: "block",
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      alt: { default: null },
+      title: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "img[src]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["img", mergeAttributes(HTMLAttributes)];
+  },
+});
+
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  enableImages?: boolean;
 }
 
 export function RichTextEditor({
@@ -16,11 +41,13 @@ export function RichTextEditor({
   onChange,
   disabled = false,
   placeholder = "Escreva a descrição completa do produto...",
+  enableImages = false,
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
+      ...(enableImages ? [ArticleImage] : []),
       Link.configure({
         openOnClick: false,
         autolink: true,
@@ -35,7 +62,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[260px] w-full px-4 py-4 text-sm leading-7 text-gray-700 outline-none",
+          "min-h-[260px] w-full px-4 py-4 text-sm leading-7 text-gray-700 outline-none [&_img]:mx-auto [&_img]:my-5 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg",
         "data-placeholder": placeholder,
       },
     },
@@ -103,6 +130,42 @@ export function RichTextEditor({
       .setLink({
         href: url.trim(),
         target: "_blank",
+      })
+      .run();
+  }
+
+  function insertImage() {
+    const source = window.prompt(
+      "Informe o endereço da imagem (URL https://):",
+      "https://",
+    );
+
+    if (source === null || source.trim() === "") {
+      return;
+    }
+
+    let imageUrl: URL;
+
+    try {
+      imageUrl = new URL(source.trim());
+    } catch {
+      window.alert("Informe um endereço válido para a imagem.");
+      return;
+    }
+
+    if (imageUrl.protocol !== "https:" && imageUrl.protocol !== "http:") {
+      window.alert("A imagem deve usar um endereço HTTP ou HTTPS.");
+      return;
+    }
+
+    const alt = window.prompt("Descrição da imagem (texto alternativo):") ?? "";
+
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "image",
+        attrs: { src: imageUrl.href, alt: alt.trim() },
       })
       .run();
   }
@@ -274,6 +337,18 @@ export function RichTextEditor({
         >
           Link
         </button>
+
+        {enableImages && (
+          <button
+            type="button"
+            onClick={insertImage}
+            disabled={disabled}
+            className="rounded px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+            title="Inserir imagem no conteúdo"
+          >
+            Imagem
+          </button>
+        )}
 
         {/* Remover link */}
         <button
