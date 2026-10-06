@@ -35,6 +35,21 @@ const productStatusOptions = [
 
 type ProductStatusOption = (typeof productStatusOptions)[number];
 
+type MercadoLivreSyncResponse = {
+  message?: string;
+  summary?: {
+    total: number;
+    updated: number;
+    unavailable: number;
+    failed: number;
+  };
+  products?: Array<{
+    productTitle: string;
+    status: "SUCCESS" | "UNAVAILABLE" | "ERROR";
+    error?: string;
+  }>;
+};
+
 function isProductStatusOption(value: string): value is ProductStatusOption {
   return productStatusOptions.some((option) => option === value);
 }
@@ -219,7 +234,9 @@ export function AdminProductsPage() {
         },
       });
 
-      const data = await response.json().catch(() => null);
+      const data = (await response.json().catch(() => null)) as
+        | MercadoLivreSyncResponse
+        | null;
 
       if (!response.ok) {
         throw new Error(
@@ -228,10 +245,35 @@ export function AdminProductsPage() {
         );
       }
 
+      if (!data?.summary || !Array.isArray(data.products)) {
+        throw new Error(
+          "A API retornou uma resposta inválida para a sincronização do Mercado Livre.",
+        );
+      }
+
       await fetchAdminProducts(token);
 
+      const failedProducts = data.products.filter(
+        (product) => product.status === "ERROR",
+      );
+      const errorDetails = failedProducts
+        .slice(0, 5)
+        .map(
+          (product) =>
+            `• ${product.productTitle}: ${product.error || "Erro não informado"}`,
+        );
+      const omittedErrors =
+        failedProducts.length > errorDetails.length
+          ? `\n... e mais ${failedProducts.length - errorDetails.length} falha(s).`
+          : "";
+
       alert(
-        data?.message || "Produtos do Mercado Livre sincronizados com sucesso.",
+        [
+          data.message || "Sincronização do Mercado Livre concluída.",
+          `Resultado: ${data.summary.updated} atualizado(s), ${data.summary.unavailable} indisponível(is), ${data.summary.failed} com falha.`,
+          ...errorDetails,
+          ...(omittedErrors ? [omittedErrors] : []),
+        ].join("\n"),
       );
     } catch (err) {
       alert(
