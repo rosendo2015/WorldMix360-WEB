@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import {
+  FormCheckbox,
+  FormActions,
+  FormErrorMessage,
+  FormInput,
+  FormTextarea,
+} from "../../components/FormControls";
 import type { CategoryFormData } from "../../contexts/CategoriesContext";
 import { useAuth } from "../../contexts/useAuth";
 import { useCategories } from "../../contexts/useCategories";
@@ -145,65 +152,38 @@ export function AdminCategoryFormPage() {
         className="rounded-xl bg-white p-5 shadow-sm md:p-8"
       >
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
+          <FormErrorMessage message={error} className="mb-6" />
         )}
 
         <div className="space-y-6">
-          <div>
-            <label
-              htmlFor="category-name"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Nome
-            </label>
+          <FormInput
+            id="category-name"
+            label="Nome"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ex.: Tecnologia"
+            required
+            minLength={2}
+          />
 
-            <input
-              id="category-name"
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ex.: Tecnologia"
-              required
-              minLength={2}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="category-description"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Descrição
-            </label>
-
-            <textarea
-              id="category-description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Descreva brevemente esta categoria."
-              rows={4}
-              className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
+          <FormTextarea
+            id="category-description"
+            label="Descrição"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Descreva brevemente esta categoria."
+            rows={4}
+          />
 
           <div>
-            <label
-              htmlFor="category-image"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              URL da imagem
-            </label>
-
-            <input
+            <FormInput
               id="category-image"
+              label="URL da imagem"
               type="url"
               value={image}
               onChange={(event) => setImage(event.target.value)}
               placeholder="https://..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
 
             {image && (
@@ -219,66 +199,39 @@ export function AdminCategoryFormPage() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label
-                htmlFor="category-sort-order"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Ordem de exibição
-              </label>
-
-              <input
+              <FormInput
                 id="category-sort-order"
+                label="Ordem de exibição"
                 type="number"
                 step="1"
                 value={sortOrder}
                 onChange={(event) => setSortOrder(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div className="flex items-center">
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={active}
-                  onChange={(event) => setActive(event.target.checked)}
-                  className="h-5 w-5 rounded border-gray-300"
-                />
-
-                <span>
-                  <span className="block text-sm font-semibold text-gray-700">
-                    Categoria ativa
-                  </span>
-
-                  <span className="block text-xs text-gray-500">
-                    Permitir que a categoria seja exibida.
-                  </span>
-                </span>
-              </label>
+              <FormCheckbox
+                label="Categoria ativa"
+                description="Permitir que a categoria seja exibida."
+                checked={active}
+                onCheckedChange={setActive}
+                className="bg-transparent p-0"
+                checkboxClassName="h-5 w-5 rounded border-gray-300"
+              />
             </div>
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
-          <Link
-            to="/admin/categories"
-            className="rounded-lg border border-gray-500 px-5 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Cancelar
-          </Link>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving
-              ? "Salvando..."
-              : isEditing
-                ? "Salvar alterações"
-                : "Cadastrar categoria"}
-          </button>
-        </div>
+        <FormActions
+          cancelTo="/admin/categories"
+          isSubmitting={saving}
+          submitLabel={
+            isEditing ? "Salvar alterações" : "Cadastrar categoria"
+          }
+          submittingLabel="Salvando..."
+          className="mt-8 border-t pt-6"
+          cancelClassName="border-gray-500 text-center"
+        />
       </form>
     </section>
   );

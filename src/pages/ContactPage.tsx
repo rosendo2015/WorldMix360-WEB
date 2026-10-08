@@ -1,6 +1,8 @@
 import { FaInstagram, FaMapMarkerAlt, FaPhoneAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 
+import { FormInput, FormTextarea } from "../components/FormControls";
+
 export function ContactPage() {
   return (
     <section className="mx-auto max-w-[1200px] px-6 py-12 md:py-16">
@@ -71,42 +73,50 @@ export function ContactPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            <label className="flex flex-col gap-2 text-sm font-medium text-[#071a2f]">
-              Nome
-              <input
-                type="text"
-                placeholder="Seu nome"
-                className="rounded-xl border border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] outline-none transition placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
-              />
-            </label>
+            <FormInput
+              id="contact-name"
+              label="Nome"
+              labelClassName="m-0 text-sm font-medium text-[#071a2f]"
+              wrapperClassName="flex flex-col gap-2"
+              type="text"
+              placeholder="Seu nome"
+              focusStyle="border"
+              className="rounded-xl border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
+            />
 
-            <label className="flex flex-col gap-2 text-sm font-medium text-[#071a2f]">
-              E-mail
-              <input
-                type="email"
-                placeholder="seu@email.com"
-                className="rounded-xl border border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] outline-none transition placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
-              />
-            </label>
+            <FormInput
+              id="contact-email"
+              label="E-mail"
+              labelClassName="m-0 text-sm font-medium text-[#071a2f]"
+              wrapperClassName="flex flex-col gap-2"
+              type="email"
+              placeholder="seu@email.com"
+              focusStyle="border"
+              className="rounded-xl border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
+            />
           </div>
 
-          <label className="mt-5 flex flex-col gap-2 text-sm font-medium text-[#071a2f]">
-            Assunto
-            <input
-              type="text"
-              placeholder="Qual o motivo do contato?"
-              className="rounded-xl border border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] outline-none transition placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
-            />
-          </label>
+          <FormInput
+            id="contact-subject"
+            label="Assunto"
+            labelClassName="m-0 text-sm font-medium text-[#071a2f]"
+            wrapperClassName="mt-5 flex flex-col gap-2"
+            type="text"
+            placeholder="Qual o motivo do contato?"
+            focusStyle="border"
+            className="rounded-xl border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
+          />
 
-          <label className="mt-5 flex flex-col gap-2 text-sm font-medium text-[#071a2f]">
-            Mensagem
-            <textarea
-              rows={6}
-              placeholder="Escreva sua mensagem..."
-              className="rounded-xl border border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] outline-none transition placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
-            />
-          </label>
+          <FormTextarea
+            id="contact-message"
+            label="Mensagem"
+            labelClassName="m-0 text-sm font-medium text-[#071a2f]"
+            wrapperClassName="mt-5 flex flex-col gap-2"
+            rows={6}
+            placeholder="Escreva sua mensagem..."
+            focusStyle="border"
+            className="rounded-xl border-[#dfe7f3] bg-[#f7f9fc] px-4 py-3 text-sm text-[#071a2f] placeholder:text-[#7a8596] focus:border-[#0b3d66] focus:bg-white"
+          />
 
           <div className="mt-6 flex flex-col items-start justify-between gap-4 border-t border-[#edf2f7] pt-5 md:flex-row md:items-center">
             <p className="text-xs text-[#52657c]">

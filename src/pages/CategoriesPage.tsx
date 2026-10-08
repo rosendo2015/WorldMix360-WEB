@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { ProductCard } from "../components/ProductCard";
+import { ProductGrid } from "../components/ProductGrid";
 import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 import { useSubcategories } from "../contexts/useSubcategories";
@@ -218,11 +218,7 @@ export function CategoryPage() {
         </div>
 
         {categoryProducts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {categoryProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid products={categoryProducts} />
         ) : (
           <div className="rounded-2xl border border-[#e7edf5] bg-white p-10 text-center shadow-sm">
             <h3 className="text-lg font-semibold text-[#071a2f]">

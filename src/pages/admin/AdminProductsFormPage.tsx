@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { FormErrorMessage } from "../../components/FormControls";
 import { MercadoLivreOfferModal } from "../../components/admin/products/MercadoLivreOfferModal";
 import { ProductBasicInfo } from "../../components/admin/products/ProductBasicInfo";
 import { ProductFormActions } from "../../components/admin/products/ProductFormActions";
@@ -10,10 +11,24 @@ import { ProductRelationships } from "../../components/admin/products/ProductRel
 import { ProductSeo } from "../../components/admin/products/ProductSeo";
 import { ProductStatus } from "../../components/admin/products/ProductStatus";
 import type { ProductImageForm } from "../../components/admin/products/types";
+import {
+  cleanDescription,
+  cleanGalleryImages,
+  formatPrice,
+  parseOptionalPrice,
+  parseOptionalRating,
+  parsePrice,
+  parseReviewsCount,
+  validateGalleryImages,
+  validateUrl,
+  type ProductFormData,
+  type ProductWithMarketplaceLinks,
+} from "../../components/admin/products/productFormUtils";
 import { useAuth } from "../../contexts/useAuth";
 import { useMarketplaces } from "../../contexts/useMarketplaces";
 import { useProducts } from "../../contexts/useProducts";
 import { useSubcategories } from "../../contexts/useSubcategories";
+import { parseCurrencyBRL } from "../../utils/formatCurrency";
 import {
   analyzeMercadoLivreProduct,
   importMercadoLivreProduct,
@@ -21,140 +36,8 @@ import {
   type MercadoLivreOffer,
   updateMercadoLivreProductOffer,
 } from "../../services/mercadoLivreService";
-import { parseCurrencyBRL } from "../../utils/formatCurrency";
 
 const MERCADO_LIVRE_MARKETPLACE_ID = "c255826b-2073-4c76-8966-b87f22403090";
-
-type ProductMarketplaceLink = {
-  id?: string;
-  marketplaceId?: string | null;
-  externalLink?: string | null;
-  affiliateUrl?: string | null;
-};
-
-type ProductWithMarketplaceLinks = {
-  marketplaceProducts?: ProductMarketplaceLink[] | null;
-};
-
-type ProductFormData = {
-  title: string;
-  description?: string;
-  shortDescription?: string;
-  imageUrl: string;
-  images: ProductImageForm[];
-  price: number;
-  originalPrice?: number;
-  currency: string;
-  rating?: number;
-  reviewsCount: number;
-  affiliateUrl: string;
-  subcategoryId: string;
-  marketplaceId: string;
-  destaque: boolean;
-  bestSeller: boolean;
-  available: boolean;
-  active: boolean;
-  seoTitle?: string;
-  seoDescription?: string;
-};
-
-function formatPrice(value: number): string {
-  return value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function cleanDescription(value: string): string | undefined {
-  const trimmedValue = value.trim();
-
-  if (trimmedValue === "<p></p>") {
-    return undefined;
-  }
-
-  return trimmedValue || undefined;
-}
-
-function cleanGalleryImages(images: ProductImageForm[]): ProductImageForm[] {
-  return images
-    .map((image) => ({
-      id: image.id,
-      imageUrl: image.imageUrl.trim(),
-      sortOrder: image.sortOrder,
-    }))
-    .filter((image) => image.imageUrl);
-}
-
-function validateUrl(value: string, errorMessage: string): void {
-  try {
-    new URL(value.trim());
-  } catch {
-    throw new Error(errorMessage);
-  }
-}
-
-function parsePrice(value: string, errorMessage: string): number {
-  const parsedValue = parseCurrencyBRL(value);
-
-  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
-    throw new Error(errorMessage);
-  }
-
-  return parsedValue;
-}
-
-function parseOptionalPrice(
-  value: string,
-  errorMessage: string,
-): number | undefined {
-  if (!value.trim()) {
-    return undefined;
-  }
-
-  return parsePrice(value, errorMessage);
-}
-
-function parseOptionalRating(value: string): number | undefined {
-  if (!value.trim()) {
-    return undefined;
-  }
-
-  const parsedRating = Number(value);
-
-  if (!Number.isFinite(parsedRating) || parsedRating < 0 || parsedRating > 5) {
-    throw new Error("A avaliação deve estar entre 0 e 5.");
-  }
-
-  return parsedRating;
-}
-
-function parseReviewsCount(value: string): number {
-  const parsedReviewsCount = Number(value);
-
-  if (!Number.isInteger(parsedReviewsCount) || parsedReviewsCount < 0) {
-    throw new Error("A quantidade de avaliações deve ser um número inteiro.");
-  }
-
-  return parsedReviewsCount;
-}
-
-function validateGalleryImages(images: ProductImageForm[]): ProductImageForm[] {
-  const cleanImages = cleanGalleryImages(images);
-
-  for (const image of cleanImages) {
-    try {
-      new URL(image.imageUrl);
-    } catch {
-      throw new Error(
-        `Informe uma URL válida para a imagem da galeria na posição ${
-          image.sortOrder + 1
-        }.`,
-      );
-    }
-  }
-
-  return cleanImages;
-}
 
 export function AdminProductsFormPage() {
   const { id } = useParams();
@@ -922,9 +805,7 @@ export function AdminProductsFormPage() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <FormErrorMessage message={error} className="mb-6" />
       )}
 
       <form

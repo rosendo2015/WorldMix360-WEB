@@ -1,7 +1,15 @@
 import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { RichTextEditor } from "../../components/admin/products/RichTextEditor";
+import {
+  BlogBasicInfo,
+  BlogFormActions,
+  BlogPublication,
+  BlogRelatedProducts,
+  BlogSeoFields,
+} from "../../components/admin/blog/BlogFormSections";
+import { FormErrorMessage } from "../../components/FormControls";
+import { BLOG_STATUS_OPTIONS } from "../../components/admin/blog/blogFormOptions";
 import { useAuth } from "../../contexts/useAuth";
 import { useBlog } from "../../contexts/useBlog";
 import { useBlogCategories } from "../../contexts/useBlogCategories";
@@ -11,16 +19,6 @@ import type {
   BlogPostProductFormData,
   BlogPostStatus,
 } from "../../types/Blog";
-
-const STATUS_OPTIONS: Array<{
-  value: BlogPostStatus;
-  label: string;
-}> = [
-  { value: "DRAFT", label: "Rascunho" },
-  { value: "PUBLISHED", label: "Publicado" },
-  { value: "SCHEDULED", label: "Agendado" },
-  { value: "ARCHIVED", label: "Arquivado" },
-];
 
 function formatDateTimeLocal(value?: string | null) {
   if (!value) {
@@ -300,12 +298,10 @@ export function AdminBlogFormPage() {
       </div>
 
       {error && (
-        <div
-          role="alert"
-          className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-        >
-          {error}
-        </div>
+        <FormErrorMessage
+          message={error}
+          className="mb-6 border border-red-200 p-4"
+        />
       )}
 
       {isLoading && isEditMode && loadingPost ? (
@@ -314,315 +310,46 @@ export function AdminBlogFormPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-lg font-semibold text-gray-900">
-              Informações do artigo
-            </h2>
+          <BlogBasicInfo
+            title={title}
+            excerpt={excerpt}
+            content={content}
+            coverImage={coverImage}
+            saving={saving}
+            loadingPost={loadingPost}
+            onTitleChange={setTitle}
+            onExcerptChange={setExcerpt}
+            onContentChange={setContent}
+            onCoverImageChange={setCoverImage}
+          />
 
-            <div className="space-y-5">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Título *
-                </label>
+          <BlogPublication
+            categories={categories}
+            categoryId={categoryId}
+            status={status}
+            publishedAt={publishedAt}
+            scheduledAt={scheduledAt}
+            statusOptions={BLOG_STATUS_OPTIONS}
+            onCategoryChange={setCategoryId}
+            onStatusChange={handleStatusChange}
+            onPublishedAtChange={setPublishedAt}
+            onScheduledAtChange={setScheduledAt}
+          />
 
-                <input
-                  id="title"
-                  type="text"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Digite o título do artigo"
-                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                  required
-                />
-              </div>
+          <BlogRelatedProducts
+            products={products}
+            selectedProductIds={selectedProductIds}
+            onProductToggle={handleProductToggle}
+          />
 
-              <div>
-                <label
-                  htmlFor="excerpt"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Resumo
-                </label>
+          <BlogSeoFields
+            seoTitle={seoTitle}
+            seoDescription={seoDescription}
+            onSeoTitleChange={setSeoTitle}
+            onSeoDescriptionChange={setSeoDescription}
+          />
 
-                <textarea
-                  id="excerpt"
-                  value={excerpt}
-                  onChange={(event) => setExcerpt(event.target.value)}
-                  placeholder="Breve resumo do artigo"
-                  rows={3}
-                  className="w-full resize-y rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="content"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Conteúdo *
-                </label>
-
-                <RichTextEditor
-                  value={content}
-                  onChange={setContent}
-                  disabled={saving || loadingPost}
-                  enableImages
-                  placeholder="Escreva o conteúdo completo do artigo..."
-                />
-
-                <p className="mt-2 text-xs text-gray-500">
-                  Use a barra de ferramentas para inserir imagens no meio do
-                  texto, adicionar links e formatar o artigo.
-                </p>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="coverImage"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Imagem de capa
-                </label>
-
-                <input
-                  id="coverImage"
-                  type="url"
-                  value={coverImage}
-                  onChange={(event) => setCoverImage(event.target.value)}
-                  placeholder="https://exemplo.com/imagem.jpg"
-                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-lg font-semibold text-gray-900">
-              Publicação
-            </h2>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="categoryId"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Categoria
-                </label>
-
-                <select
-                  id="categoryId"
-                  value={categoryId}
-                  onChange={(event) => setCategoryId(event.target.value)}
-                  className="w-full rounded-lg border border-gray-500 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                >
-                  <option value="">Sem categoria</option>
-
-                  {categories
-                    .filter((category) => category.active)
-                    .sort((a, b) => a.sortOrder - b.sortOrder)
-                    .map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="status"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Status *
-                </label>
-
-                <select
-                  id="status"
-                  value={status}
-                  onChange={handleStatusChange}
-                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {status === "PUBLISHED" && (
-                <div>
-                  <label
-                    htmlFor="publishedAt"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Data de publicação *
-                  </label>
-
-                  <input
-                    id="publishedAt"
-                    type="datetime-local"
-                    value={publishedAt}
-                    onChange={(event) => setPublishedAt(event.target.value)}
-                    className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                  />
-                </div>
-              )}
-
-              {status === "SCHEDULED" && (
-                <div>
-                  <label
-                    htmlFor="scheduledAt"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Data de agendamento *
-                  </label>
-
-                  <input
-                    id="scheduledAt"
-                    type="datetime-local"
-                    value={scheduledAt}
-                    onChange={(event) => setScheduledAt(event.target.value)}
-                    className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                  />
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-gray-900">
-              Produtos relacionados
-            </h2>
-
-            <p className="mb-5 text-sm text-gray-600">
-              Selecione os produtos que deseja apresentar relacionados ao
-              artigo.
-            </p>
-
-            {products.length === 0 ? (
-              <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                Nenhum produto disponível para seleção.
-              </p>
-            ) : (
-              <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
-                {products.map((product) => {
-                  const selected = selectedProductIds.includes(product.id);
-
-                  return (
-                    <label
-                      key={product.id}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-transparent p-3 transition hover:bg-gray-50"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={() => handleProductToggle(product.id)}
-                        className="h-4 w-4 rounded border-gray-500 text-blue-600 focus:ring-blue-500"
-                      />
-
-                      {product.imageUrl ? (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.title}
-                          className="h-12 w-12 rounded-md object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500">
-                          Sem imagem
-                        </div>
-                      )}
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900">
-                          {product.title}
-                        </p>
-
-                        <p className="text-xs text-gray-500">
-                          {product.currency}{" "}
-                          {Number(product.price).toLocaleString("pt-BR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-
-            <p className="mt-3 text-xs text-gray-500">
-              {selectedProductIds.length} produto(s) selecionado(s).
-            </p>
-          </section>
-
-          <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-lg font-semibold text-gray-900">SEO</h2>
-
-            <div className="space-y-5">
-              <div>
-                <label
-                  htmlFor="seoTitle"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Título SEO
-                </label>
-
-                <input
-                  id="seoTitle"
-                  type="text"
-                  value={seoTitle}
-                  onChange={(event) => setSeoTitle(event.target.value)}
-                  placeholder="Título otimizado para mecanismos de busca"
-                  className="w-full rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="seoDescription"
-                  className="mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Descrição SEO
-                </label>
-
-                <textarea
-                  id="seoDescription"
-                  value={seoDescription}
-                  onChange={(event) => setSeoDescription(event.target.value)}
-                  placeholder="Descrição otimizada para mecanismos de busca"
-                  rows={4}
-                  className="w-full resize-y rounded-lg border border-gray-500 px-4 py-2.5 text-sm outline-none transition focus:border-blue focus:ring-2 focus:ring-blue"
-                />
-              </div>
-            </div>
-          </section>
-
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Link
-              to="/admin/blog"
-              className="rounded-lg border border-gray-500 px-5 py-2.5 text-center text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Cancelar
-            </Link>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving
-                ? "Salvando..."
-                : isEditMode
-                  ? "Salvar alterações"
-                  : "Criar artigo"}
-            </button>
-          </div>
+          <BlogFormActions isEditing={isEditMode} saving={saving} />
         </form>
       )}
     </section>

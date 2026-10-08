@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { FormErrorMessage } from "../../components/FormControls";
 import { useAuth } from "../../contexts/useAuth";
 import { useBlog } from "../../contexts/useBlog";
 
@@ -145,9 +146,10 @@ export function AdminBlogPage() {
 
         {/* Erro de ação */}
         {actionError && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {actionError}
-          </div>
+          <FormErrorMessage
+            message={actionError}
+            className="mb-6 border border-red-200 p-4"
+          />
         )}
 
         {/* Erro da API */}

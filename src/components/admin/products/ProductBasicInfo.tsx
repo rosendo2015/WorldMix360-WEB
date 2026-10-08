@@ -1,4 +1,5 @@
 import { RichTextEditor } from "./RichTextEditor";
+import { FormInput, FormSection } from "../../FormControls";
 
 type ProductBasicInfoProps = {
   title: string;
@@ -24,54 +25,29 @@ export function ProductBasicInfo({
   onImageUrlChange,
 }: ProductBasicInfoProps) {
   return (
-    <div className="rounded-xl bg-white p-6 shadow-sm">
-      <h2 className="mb-5 text-lg font-semibold text-gray-900">
-        Informações do produto
-      </h2>
-
+    <FormSection title="Informações do produto">
       <div className="grid grid-cols-1 gap-6">
-        <div>
-          <label
-            htmlFor="title"
-            className="mb-2 block text-sm font-semibold text-gray-700"
-          >
-            Título *
-          </label>
+        <FormInput
+          id="title"
+          label="Título *"
+          type="text"
+          value={title}
+          onChange={(event) => onTitleChange(event.target.value)}
+          placeholder="Ex.: Smartphone Samsung Galaxy"
+          required
+          disabled={loading}
+          description="O slug será gerado automaticamente pela API."
+        />
 
-          <input
-            id="title"
-            type="text"
-            value={title}
-            onChange={(event) => onTitleChange(event.target.value)}
-            placeholder="Ex.: Smartphone Samsung Galaxy"
-            required
-            disabled={loading}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-          />
-
-          <p className="mt-2 text-xs text-gray-500">
-            O slug será gerado automaticamente pela API.
-          </p>
-        </div>
-
-        <div>
-          <label
-            htmlFor="shortDescription"
-            className="mb-2 block text-sm font-semibold text-gray-700"
-          >
-            Descrição curta
-          </label>
-
-          <input
-            id="shortDescription"
-            type="text"
-            value={shortDescription}
-            onChange={(event) => onShortDescriptionChange(event.target.value)}
-            placeholder="Resumo rápido do produto"
-            disabled={loading}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-          />
-        </div>
+        <FormInput
+          id="shortDescription"
+          label="Descrição curta"
+          type="text"
+          value={shortDescription}
+          onChange={(event) => onShortDescriptionChange(event.target.value)}
+          placeholder="Resumo rápido do produto"
+          disabled={loading}
+        />
 
         <div>
           <label
@@ -95,22 +71,15 @@ export function ProductBasicInfo({
         </div>
 
         <div>
-          <label
-            htmlFor="imageUrl"
-            className="mb-2 block text-sm font-semibold text-gray-700"
-          >
-            URL da imagem principal *
-          </label>
-
-          <input
+          <FormInput
             id="imageUrl"
+            label="URL da imagem principal *"
             type="url"
             value={imageUrl}
             onChange={(event) => onImageUrlChange(event.target.value)}
             placeholder="https://exemplo.com/produto.jpg"
             required
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
           />
 
           {imageUrl.trim() && (
@@ -130,6 +99,6 @@ export function ProductBasicInfo({
           )}
         </div>
       </div>
-    </div>
+    </FormSection>
   );
 }

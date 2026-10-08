@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { FiArrowLeft, FiArrowRight, FiGrid, FiHome } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
-import { ProductCard } from "../components/ProductCard";
+import { ProductGrid } from "../components/ProductGrid";
 import { useCategories } from "../contexts/useCategories";
 import { useProducts } from "../contexts/useProducts";
 import { useSubcategories } from "../contexts/useSubcategories";
@@ -362,11 +362,7 @@ export function SubcategoryPage() {
         </div>
       ) : (
         <>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {visibleProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid products={visibleProducts} gap="compact" />
 
           {visibleProducts.length === 4 && (
             <div className="mt-8 flex justify-center">

@@ -1,4 +1,6 @@
 import type { ProductImageForm } from "./types";
+import { FormInput } from "../../FormControls";
+import { Button } from "../../Button";
 
 type ProductGalleryProps = {
   galleryImages: ProductImageForm[];
@@ -28,14 +30,14 @@ export function ProductGallery({
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
           onClick={onAdd}
           disabled={loading}
-          className="inline-flex items-center justify-center rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
+          size="md"
         >
           + Adicionar imagem
-        </button>
+        </Button>
       </div>
 
       {galleryImages.length === 0 ? (
@@ -66,35 +68,29 @@ export function ProductGallery({
                   </p>
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={() => onRemove(image.id)}
                   disabled={loading}
-                  className="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  variant="danger"
+                  size="xs"
                 >
                   Remover
-                </button>
+                </Button>
               </div>
 
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto]">
-                <div>
-                  <label
-                    htmlFor={`gallery-image-${image.id}`}
-                    className="mb-2 block text-xs font-semibold text-gray-600"
-                  >
-                    URL da imagem
-                  </label>
-
-                  <input
+                <FormInput
                     id={`gallery-image-${image.id}`}
+                    label="URL da imagem"
+                    labelClassName="text-xs font-semibold text-gray-600"
                     type="url"
                     value={image.imageUrl}
                     onChange={(event) => onChange(image.id, event.target.value)}
                     placeholder="https://exemplo.com/imagem.jpg"
                     disabled={loading}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100"
-                  />
-                </div>
+                    className="bg-white"
+                />
 
                 <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white p-2">
                   {image.imageUrl.trim() ? (

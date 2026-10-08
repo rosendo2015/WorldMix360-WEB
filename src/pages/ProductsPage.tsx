@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { ProductCard } from "../components/ProductCard";
+import { Button } from "../components/Button";
+import { ProductGrid } from "../components/ProductGrid";
+import {
+  FormErrorMessage,
+  FormInput,
+  FormSelect,
+} from "../components/FormControls";
 import type { Product } from "../contexts/ProductsContext";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
@@ -207,21 +213,25 @@ export function ProductsPage() {
           onSubmit={handleSearch}
           className="flex flex-col gap-3 sm:flex-row"
         >
-          <input
+          <FormInput
+            id="product-search"
+            label="Buscar produtos"
+            labelClassName="sr-only"
+            wrapperClassName="min-w-0 flex-1"
             type="search"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Buscar produtos..."
-            aria-label="Buscar produtos"
-            className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue"
+            focusStyle="border"
+            className="focus:border-blue"
           />
 
-          <button
+          <Button
             type="submit"
-            className="rounded-lg bg-blue px-6 py-3 font-semibold text-white transition hover:bg-navy"
+            size="lg"
           >
             Buscar
-          </button>
+          </Button>
         </form>
 
         <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -233,52 +243,49 @@ export function ProductsPage() {
                 : "Não foi possível carregar os produtos"}
           </p>
 
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="product-sort"
-              className="shrink-0 text-sm text-gray-600"
-            >
-              Ordenar por
-            </label>
-
-            <select
+          <FormSelect
               id="product-sort"
+              label="Ordenar por"
+              labelClassName="mb-0 shrink-0 text-sm font-normal text-gray-600"
+              wrapperClassName="flex items-center gap-2"
               value={sort}
               onChange={(event) =>
                 updateFilters({
                   sort: event.target.value,
                 })
               }
-              className="min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue"
+              focusStyle="border"
+              className="w-auto min-w-0 px-3 py-2 focus:border-blue"
             >
               <option value="recent">Mais recentes</option>
               <option value="price_asc">Menor preço</option>
               <option value="price_desc">Maior preço</option>
               <option value="rating">Melhor avaliação</option>
-            </select>
-          </div>
+          </FormSelect>
         </div>
 
         {(search || category) && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {search && (
-              <button
+              <Button
                 type="button"
                 onClick={() => updateFilters({ search: null })}
-                className="rounded-full bg-blue/10 px-3 py-1 text-sm text-blue"
+                variant="chip"
+                size="xs"
               >
                 Pesquisa: {search} ×
-              </button>
+              </Button>
             )}
 
             {category && (
-              <button
+              <Button
                 type="button"
                 onClick={() => updateFilters({ category: null })}
-                className="rounded-full bg-blue/10 px-3 py-1 text-sm text-blue"
+                variant="chip"
+                size="xs"
               >
                 Categoria: {category} ×
-              </button>
+              </Button>
             )}
 
             <Link
@@ -307,12 +314,10 @@ export function ProductsPage() {
       )}
 
       {!loading && error && (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700"
-        >
-          {error}
-        </div>
+        <FormErrorMessage
+          message={error}
+          className="rounded-xl border border-red-200 p-6 text-center"
+        />
       )}
 
       {!loading && !error && products.length === 0 && (
@@ -340,51 +345,43 @@ export function ProductsPage() {
             Exibindo {startItem}–{endItem} de {pagination.total} produtos
           </p>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid products={products} />
 
           {pagination.totalPages > 1 && (
             <nav
               aria-label="Paginação de produtos"
               className="mt-12 flex flex-wrap items-center justify-center gap-2"
             >
-              <button
+              <Button
                 type="button"
                 disabled={page <= 1}
                 onClick={() => changePage(page - 1)}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                variant="pagination"
               >
                 Anterior
-              </button>
+              </Button>
 
               {pageNumbers.map((number) => (
-                <button
+                <Button
                   key={number}
                   type="button"
                   onClick={() => changePage(number)}
                   aria-label={`Página ${number}`}
                   aria-current={page === number ? "page" : undefined}
-                  className={
-                    page === number
-                      ? "rounded-lg bg-blue px-4 py-2 font-semibold text-white"
-                      : "rounded-lg border border-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  }
+                  variant={page === number ? "primary" : "pagination"}
                 >
                   {number}
-                </button>
+                </Button>
               ))}
 
-              <button
+              <Button
                 type="button"
                 disabled={page >= pagination.totalPages}
                 onClick={() => changePage(page + 1)}
-                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                variant="pagination"
               >
                 Próxima
-              </button>
+              </Button>
             </nav>
           )}
         </>

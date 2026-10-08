@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { Button } from "../components/Button";
+import { FormErrorMessage, FormInput } from "../components/FormControls";
+
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 export function RegisterPage() {
@@ -60,80 +63,62 @@ export function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Nome
-            </label>
+          <FormInput
+            id="name"
+            label="Nome"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Seu nome"
+            autoComplete="name"
+            required
+            focusStyle="border"
+            className="border-gray-500"
+          />
 
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Seu nome"
-              autoComplete="name"
-              required
-              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
-            />
-          </div>
+          <FormInput
+            id="register-email"
+            label="E-mail"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="seu@email.com"
+            autoComplete="email"
+            required
+            focusStyle="border"
+            className="border-gray-500"
+          />
 
-          <div>
-            <label
-              htmlFor="register-email"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              E-mail
-            </label>
-
-            <input
-              id="register-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="seu@email.com"
-              autoComplete="email"
-              required
-              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="register-password"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Senha
-            </label>
-
-            <input
-              id="register-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Crie uma senha"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              className="w-full rounded-lg border border-gray-500 px-4 py-3 outline-none transition focus:border-blue-500"
-            />
-          </div>
+          <FormInput
+            id="register-password"
+            label="Senha"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Crie uma senha"
+            autoComplete="new-password"
+            required
+            minLength={6}
+            focusStyle="border"
+            className="border-gray-500"
+          />
 
           {error && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-              {error}
-            </div>
+            <FormErrorMessage
+              message={error}
+              className="text-red-600"
+            />
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-[#1769e0] px-5 py-3 font-bold text-white transition hover:bg-[#0f56bd] disabled:cursor-not-allowed disabled:opacity-60"
+            variant="auth"
+            size="lg"
+            className="w-full font-bold"
           >
             {isLoading ? "Criando conta..." : "Criar conta"}
-          </button>
+          </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { FormErrorMessage } from "../../components/FormControls";
 
 import { useAuth } from "../../contexts/useAuth";
 import { useMarketplaces } from "../../contexts/useMarketplaces";
@@ -67,9 +68,7 @@ export function AdminMarketplacesPage() {
 
       {/* Erro */}
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <FormErrorMessage message={error} className="mb-6" />
       )}
 
       {/* Loading */}

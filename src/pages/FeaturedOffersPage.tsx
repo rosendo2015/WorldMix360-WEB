@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import { ProductCard } from "../components/ProductCard";
+import { ProductGrid } from "../components/ProductGrid";
 import type { Product } from "../contexts/ProductsContext";
 import { useProducts } from "../contexts/useProducts";
 
@@ -130,11 +130,7 @@ export function FeaturedOffersPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid products={featuredProducts} />
         </>
       )}
     </section>

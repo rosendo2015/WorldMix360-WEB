@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { FormActions } from "../../FormControls";
 
 type ProductFormActionsProps = {
   loading: boolean;
@@ -10,27 +10,12 @@ export function ProductFormActions({
   isEditing,
 }: ProductFormActionsProps) {
   return (
-    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-      <Link
-        to="/admin/products"
-        className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-      >
-        Cancelar
-      </Link>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-lg bg-blue px-4 py-2 text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {loading
-          ? isEditing
-            ? "Salvando..."
-            : "Cadastrando..."
-          : isEditing
-            ? "Salvar alterações"
-            : "Cadastrar produto"}
-      </button>
-    </div>
+    <FormActions
+      cancelTo="/admin/products"
+      isSubmitting={loading}
+      submitLabel={isEditing ? "Salvar alterações" : "Cadastrar produto"}
+      submittingLabel={isEditing ? "Salvando..." : "Cadastrando..."}
+      submitClassName="px-4 py-2 text-white"
+    />
   );
 }
